@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>OHI Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,18 +11,18 @@
   <script defer src="./dashboard.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-<header class="bg-white border-b">
-  <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-    <div class="font-semibold">OHI Dashboard</div>
-    <div class="text-sm">Connecté : <span id="userEmail"></span></div>
-  </div>
-</header>
-<main class="max-w-5xl mx-auto px-6 py-8">
-  <div class="bg-white rounded-xl p-6 shadow">
-    <h2 class="text-xl font-bold mb-2">Bienvenue 👋</h2>
-    <p class="text-gray-600">Cette page vérifie l'authentification Firebase et redirige si nécessaire.</p>
-    <button id="btnLogout" class="mt-4 px-4 py-2 border rounded">Déconnexion</button>
-  </div>
-</main>
+  <header class="bg-white border-b">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="font-semibold">OHI Dashboard</div>
+      <div class="text-sm">Connecté : <span id="userEmail"></span></div>
+    </div>
+  </header>
+  <main class="max-w-5xl mx-auto px-6 py-8">
+    <div class="bg-white rounded-xl p-6 shadow">
+      <h2 class="text-xl font-bold mb-2">Bienvenue 👋</h2>
+      <p class="text-gray-600">Page protégée par Firebase. Si vous n'êtes pas connecté, vous serez redirigé.</p>
+      <button id="btnLogout" class="mt-4 px-4 py-2 border rounded">Déconnexion</button>
+    </div>
+  </main>
 </body>
 </html>

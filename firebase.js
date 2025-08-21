@@ -1,3 +1,4 @@
+// Configuration Firebase (collée depuis ta console Firebase)
 const firebaseConfig = {
   apiKey: "AIzaSyD4JaJelN4LbkbLfGVJVbCAY6gK9sPAN3I",
   authDomain: "tableau-de-bord-intelligent.firebaseapp.com",
