@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coach Objectifs IA — OHI & Tourbillons (Firestore sync)</title>
+  <title>Coach Objectifs IA — OHI, Tourbillons & Rappels</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -19,6 +19,8 @@
     .progress-ring{transform:rotate(-90deg)}
     .chip{background:#eef2ff;color:#4338ca}
     .chip.active{background:#dbeafe;color:#1d4ed8}
+    /* Toasts */
+    #toasts{position:fixed;right:1rem;top:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -33,10 +35,11 @@
           </div>
           <div>
             <h1 class="text-2xl font-bold">Coach Objectifs IA</h1>
-            <p class="text-white/80 text-sm">OHI + 🌪️ Tourbillons — Firestore sync + offline</p>
+            <p class="text-white/80 text-sm">OHI + 🌪️ Tourbillons — Firestore + Rappels</p>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <button id="notifyBtn" class="hidden sm:inline bg-white/20 hover:bg-white/30 transition-colors text-white px-3 py-2 rounded-lg">🔔 Activer les notifications</button>
           <span id="userEmail" class="hidden sm:inline text-sm opacity-90"></span>
           <button id="logoutBtn" class="bg-white/20 hover:bg-white/30 transition-colors text-white px-4 py-2 rounded-lg">Déconnexion</button>
         </div>
@@ -181,6 +184,10 @@
         <div><label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label><input type="date" id="objectiveDeadline" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary"></div>
         <div><label class="block text-sm font-medium text-gray-700 mb-2">Tags (séparés par des virgules)</label><input type="text" id="objectiveTags" class="w-full border rounded-lg px-3 py-2" placeholder="ex: marketing, Q3"></div>
         <div><label class="block text-sm font-medium text-gray-700 mb-2">Description</label><textarea id="objectiveDescription" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary" placeholder="Décrivez votre objectif…"></textarea></div>
+        <div class="flex items-center gap-2">
+          <input id="objectiveReminders" type="checkbox" class="w-4 h-4 text-blue-600 rounded" checked>
+          <label for="objectiveReminders" class="text-sm text-gray-700">Activer les rappels (J-7 / J-3 / J-1 / jour-J)</label>
+        </div>
         <div class="flex gap-3 pt-4"><button type="button" id="cancelObjective" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300">Annuler</button><button type="submit" class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-blue-600">Créer</button></div>
       </form>
     </div>
@@ -203,10 +210,17 @@
           <div><label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label><input type="date" id="whirlwindDeadline" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500"></div>
         </div>
         <div><label class="block text-sm font-medium text-gray-700 mb-2">Notes</label><textarea id="whirlwindNotes" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500" placeholder="Détails, personnes impliquées, ressources nécessaires…"></textarea></div>
+        <div class="flex items-center gap-2">
+          <input id="whirlwindReminders" type="checkbox" class="w-4 h-4 text-orange-600 rounded" checked>
+          <label for="whirlwindReminders" class="text-sm text-gray-700">Activer les rappels (J-7 / J-3 / J-1 / jour-J)</label>
+        </div>
         <div class="flex gap-3 pt-4"><button type="button" id="cancelWhirlwind" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300">Annuler</button><button type="submit" class="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700">Créer</button></div>
       </form>
     </div>
   </div>
+
+  <!-- TOASTS -->
+  <div id="toasts"></div>
 
   <!-- Export PDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -227,6 +241,8 @@
     let activeTag = '';
     let db = null, auth = null, uid = null;
     let unsubOhis = null, unsubWhirls = null;
+    const DEFAULT_OFFSETS = [7,3,1,0]; // jours avant échéance
+    const NOTIFY_HOUR = 9; // 09:00 locale
 
     const $ = s => document.querySelector(s);
     const esc = s => (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
@@ -246,41 +262,25 @@
     // ====== FIRESTORE ======
     function bindRealtime() {
       if (!db || !uid) return;
-      // OHI
       unsubOhis?.();
+      unsubWhirls?.();
       unsubOhis = db.collection('users').doc(uid).collection('ohis')
         .orderBy('createdAt','desc').onSnapshot(snap=>{
           objectives = snap.docs.map(d=>({ id: d.id, ...d.data() }));
           renderTagBar(); renderObjectives(); updateStats();
-        }, err=>{ console.warn('ohis snapshot error', err); });
-      // Whirlwinds
-      unsubWhirls?.();
+        });
       unsubWhirls = db.collection('users').doc(uid).collection('whirlwinds')
         .orderBy('createdAt','desc').onSnapshot(snap=>{
           whirlwinds = snap.docs.map(d=>({ id: d.id, ...d.data() }));
           renderWhirlwinds();
-        }, err=>{ console.warn('whirlwinds snapshot error', err); });
+        });
     }
-    async function addOhiFS(obj){
-      const ref = await db.collection('users').doc(uid).collection('ohis').add(obj);
-      return ref.id;
-    }
-    async function updateOhiFS(id, patch){
-      await db.collection('users').doc(uid).collection('ohis').doc(String(id)).update(patch);
-    }
-    async function deleteOhiFS(id){
-      await db.collection('users').doc(uid).collection('ohis').doc(String(id)).delete();
-    }
-    async function addWhirlFS(w){
-      const ref = await db.collection('users').doc(uid).collection('whirlwinds').add(w);
-      return ref.id;
-    }
-    async function updateWhirlFS(id, patch){
-      await db.collection('users').doc(uid).collection('whirlwinds').doc(String(id)).update(patch);
-    }
-    async function deleteWhirlFS(id){
-      await db.collection('users').doc(uid).collection('whirlwinds').doc(String(id)).delete();
-    }
+    async function addOhiFS(obj){ const ref=await db.collection('users').doc(uid).collection('ohis').add(obj); return ref.id; }
+    async function updateOhiFS(id, patch){ await db.collection('users').doc(uid).collection('ohis').doc(String(id)).update(patch); }
+    async function deleteOhiFS(id){ await db.collection('users').doc(uid).collection('ohis').doc(String(id)).delete(); }
+    async function addWhirlFS(w){ const ref=await db.collection('users').doc(uid).collection('whirlwinds').add(w); return ref.id; }
+    async function updateWhirlFS(id, patch){ await db.collection('users').doc(uid).collection('whirlwinds').doc(String(id)).update(patch); }
+    async function deleteWhirlFS(id){ await db.collection('users').doc(uid).collection('whirlwinds').doc(String(id)).delete(); }
 
     // ====== FILTRES & TAGS ======
     function matchFilters(item){
@@ -341,6 +341,7 @@
           </label>`).join('') || `<div class="text-xs text-gray-400">Aucune sous-tâche</div>`;
         const commentsHtml = (o.comments||[]).slice(-3).map(c=>`
           <div class="text-xs text-gray-700"><span class="text-gray-400">${new Date(c.at).toLocaleString()}</span> — ${esc(c.text)}</div>`).join('') || `<div class="text-xs text-gray-400">Aucun commentaire</div>`;
+        const bellOn = o.reminders?.enabled;
         return `
           <div class="border rounded-xl p-4 card-hover">
             <div class="flex items-start justify-between gap-3">
@@ -353,7 +354,12 @@
                 </div>
               </div>
               <div class="text-right text-sm">
-                ${o.deadline?`<div class="text-gray-500">${o.deadline}</div>`:''}
+                <div class="flex items-center gap-2 justify-end">
+                  <button class="text-xs px-2 py-1 rounded border ${bellOn?'bg-green-50 text-green-700 border-green-200':'bg-gray-50 text-gray-700'}" onclick="toggleRemindersOHI('${o.id}')">
+                    ${bellOn?'🔔 Rappels':'🔕 Rappels'}
+                  </button>
+                </div>
+                ${o.deadline?`<div class="text-gray-500 mt-2">${o.deadline}</div>`:''}
                 <div class="${overdue?'text-red-600':'text-gray-600'}">${o.deadline?(overdue?`${Math.abs(daysLeft)}j de retard`:`${daysLeft}j restants`):'-'}</div>
               </div>
             </div>
@@ -399,11 +405,21 @@
       activeC.innerHTML = active.length ? active.map(w=>{
         const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline)-new Date())/86400000) : null;
         const od = daysLeft!==null && daysLeft<0;
+        const bellOn = w.reminders?.enabled;
         return `
         <div class="border-l-4 ${pCol[w.priority||'low']} p-4 rounded-lg">
           <div class="flex items-start justify-between mb-2">
-            <div class="flex items-center gap-2"><span class="text-lg">${cats[w.category]||'📌'}</span><h4 class="font-medium text-gray-900">${esc(w.title)}</h4>${w.createdBy==='manager'?'<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">👔 Responsable</span>':''}</div>
-            <span class="text-xs ${od?'text-red-600':'text-gray-600'}">${w.deadline?(od?`${Math.abs(daysLeft)}j retard`:`${daysLeft}j restants`):'-'}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-lg">${cats[w.category]||'📌'}</span>
+              <h4 class="font-medium text-gray-900">${esc(w.title)}</h4>
+              ${w.createdBy==='manager'?'<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">👔 Responsable</span>':''}
+            </div>
+            <div class="text-right">
+              <button class="text-xs px-2 py-1 rounded border ${bellOn?'bg-green-50 text-green-700 border-green-200':'bg-gray-50 text-gray-700'}" onclick="toggleRemindersWhirl('${w.id}')">
+                ${bellOn?'🔔':'🔕'}
+              </button>
+              <div class="text-xs ${od?'text-red-600':'text-gray-600'} mt-1">${w.deadline?(od?`${Math.abs(daysLeft)}j retard`:`${daysLeft}j restants`):'-'}</div>
+            </div>
           </div>
           <p class="text-sm text-gray-600 mb-3">${esc(w.notes||'')}</p>
           <div class="flex items-center justify-between">
@@ -427,7 +443,6 @@
     function updateStats(){
       const total = objectives.length;
       const completed = objectives.filter(o=>o.completed).length;
-      // calcule la progression via sous-tâches si présentes
       const avg = total ? Math.round(objectives.reduce((s,o)=>{
         const t=(o.subtasks||[]).length, d=(o.subtasks||[]).filter(x=>x.done).length;
         const p=t?Math.round(d/t*100):(o.progress||0); return s+p;
@@ -496,9 +511,91 @@
       else { whirlwinds = whirlwinds.filter(x=>String(x.id)!==String(id)); localStore.save(); renderWhirlwinds(); }
     }
 
+    // ====== RAPPELS (Notifications & Toasts) ======
+    const toasts = $('#toasts');
+    function toast(msg, type='info'){
+      const bg = type==='warn'?'bg-yellow-50 border-yellow-300 text-yellow-800'
+               : type==='ok' ?'bg-green-50 border-green-300 text-green-800'
+               : 'bg-white border-gray-200 text-gray-800';
+      const el = document.createElement('div');
+      el.className = `border rounded-lg px-3 py-2 shadow-sm ${bg}`;
+      el.innerHTML = `<div class="text-sm">${esc(msg)}</div>`;
+      toasts.appendChild(el);
+      setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-4px)'; }, 3500);
+      setTimeout(()=>{ el.remove(); }, 4200);
+    }
+    function canNotify(){ return 'Notification' in window; }
+    function notify(msg){
+      if (canNotify() && Notification.permission==='granted') {
+        new Notification('🕒 Rappel', { body: msg });
+      } else {
+        toast(msg, 'warn');
+      }
+    }
+    function scheduleCheckLoop(){
+      // vérifie toutes les 60s les échéances
+      setInterval(runReminderScan, 60000);
+      // premier scan immédiat
+      runReminderScan();
+    }
+    function getNotifiedKeySpace(){ const key = 'notifiedKeys_'+(uid||'local'); if(!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({})); return key; }
+    function markNotified(itemId, offset, type){ const key=getNotifiedKeySpace(); const map=JSON.parse(localStorage.getItem(key)); map[`${type}:${itemId}:${offset}`]=true; localStorage.setItem(key, JSON.stringify(map)); }
+    function wasNotified(itemId, offset, type){ const key=getNotifiedKeySpace(); const map=JSON.parse(localStorage.getItem(key)); return !!map[`${type}:${itemId}:${offset}`]; }
+
+    function dateAtHour(dateStr, hour=9){
+      if (!dateStr) return null;
+      const d = new Date(dateStr+'T00:00:00');
+      d.setHours(hour,0,0,0);
+      return d;
+    }
+
+    function runReminderScan(){
+      const now = new Date();
+      const scan = (item, type) => {
+        if (!item.deadline) return;
+        const enabled = !!(item.reminders?.enabled);
+        const offsets = (item.reminders?.offsets?.length ? item.reminders.offsets : DEFAULT_OFFSETS);
+        if (!enabled) return;
+        const due = dateAtHour(item.deadline, NOTIFY_HOUR);
+        offsets.forEach(off=>{
+          const when = new Date(due.getTime() - off*86400000);
+          // fenêtre de 60s autour de now (au cas où l’onglet n’était pas actif)
+          const diff = Math.abs(now.getTime() - when.getTime());
+          if (diff <= 60000 && !wasNotified(item.id, off, type) && !item.completed){
+            const label = off===0?'aujourd’hui':`J-${off}`;
+            notify(`${type==='OHI'?'🎯 OHI':'🌪️ Tourbillon'} « ${item.title} » — échéance ${label}`);
+            markNotified(item.id, off, type);
+          }
+        });
+      };
+      objectives.forEach(o=>scan(o,'OHI'));
+      whirlwinds.forEach(w=>scan(w,'WHIRL'));
+    }
+
+    async function toggleRemindersOHI(id){
+      const o = objectives.find(x=>String(x.id)===String(id)); if(!o) return;
+      const current = !!(o.reminders?.enabled);
+      const newVal = !current;
+      const patch = { reminders: { enabled:newVal, offsets: (o.reminders?.offsets || DEFAULT_OFFSETS) } };
+      if (db && uid) await updateOhiFS(id, patch);
+      else { o.reminders = patch.reminders; localStore.save(); }
+      toast(newVal?'Rappels activés pour cet OHI.':'Rappels désactivés pour cet OHI.', newVal?'ok':'info');
+      renderObjectives();
+    }
+    async function toggleRemindersWhirl(id){
+      const w = whirlwinds.find(x=>String(x.id)===String(id)); if(!w) return;
+      const current = !!(w.reminders?.enabled);
+      const newVal = !current;
+      const patch = { reminders: { enabled:newVal, offsets: (w.reminders?.offsets || DEFAULT_OFFSETS) } };
+      if (db && uid) await updateWhirlFS(id, patch);
+      else { w.reminders = patch.reminders; localStore.save(); }
+      toast(newVal?'Rappels activés pour ce Tourbillon.':'Rappels désactivés pour ce Tourbillon.', newVal?'ok':'info');
+      renderWhirlwinds();
+    }
+
     // ====== FORMULAIRES ======
     const objectiveModal = $('#objectiveModal'), whirlwindModal = $('#whirlwindModal');
-    $('#newObjectiveBtn').addEventListener('click', ()=>{ $('#objectiveForm').reset(); objectiveModal.classList.remove('hidden'); objectiveModal.classList.add('flex'); });
+    $('#newObjectiveBtn').addEventListener('click', ()=>{ $('#objectiveForm').reset(); $('#objectiveReminders').checked = true; objectiveModal.classList.remove('hidden'); objectiveModal.classList.add('flex'); });
     $('#cancelObjective').addEventListener('click', ()=>{ objectiveModal.classList.add('hidden'); objectiveModal.classList.remove('flex'); });
     $('#objectiveForm').addEventListener('submit', async e=>{
       e.preventDefault();
@@ -509,16 +606,18 @@
         deadline: $('#objectiveDeadline').value || null,
         description: $('#objectiveDescription').value.trim(),
         tags, subtasks: [], comments: [],
+        reminders: { enabled: $('#objectiveReminders').checked, offsets: DEFAULT_OFFSETS },
         progress: 0, completed: false,
         createdAt: new Date().toISOString()
       };
       if (db && uid) await addOhiFS(obj);
       else { obj.id=Date.now(); objectives.push(obj); localStore.save(); renderObjectives(); updateStats(); }
       objectiveModal.classList.add('hidden'); objectiveModal.classList.remove('flex');
+      runReminderScan(); // recalcul immédiat
     });
 
     $('#newWhirlwindBtn').addEventListener('click', ()=>{
-      $('#whirlwindForm').reset();
+      $('#whirlwindForm').reset(); $('#whirlwindReminders').checked = true;
       const d=new Date(); d.setMonth(d.getMonth()+1);
       $('#whirlwindDeadline').value=d.toISOString().split('T')[0];
       whirlwindModal.classList.remove('hidden'); whirlwindModal.classList.add('flex');
@@ -532,11 +631,13 @@
         priority: $('#whirlwindPriority').value,
         deadline: $('#whirlwindDeadline').value || null,
         notes: $('#whirlwindNotes').value.trim(),
+        reminders: { enabled: $('#whirlwindReminders').checked, offsets: DEFAULT_OFFSETS },
         completed:false, createdAt:new Date().toISOString(), createdBy: managerMode ? 'manager':'user'
       };
       if (db && uid) await addWhirlFS(w);
       else { w.id=Date.now(); whirlwinds.push(w); localStore.save(); renderWhirlwinds(); }
       whirlwindModal.classList.add('hidden'); whirlwindModal.classList.remove('flex');
+      runReminderScan();
     });
 
     // ====== MANAGER MODE ======
@@ -573,40 +674,47 @@
       doc.save('dashboard_export.pdf');
     });
 
-    // ====== AUTH / LOGOUT ======
-    const userEmail = $('#userEmail'), logoutBtn = $('#logoutBtn');
+    // ====== AUTH / LOGOUT / NOTIFICATIONS BTN ======
+    const userEmail = $('#userEmail'), logoutBtn = $('#logoutBtn'), notifyBtn = $('#notifyBtn');
     function setEmail(u){ userEmail.textContent = u?.isAnonymous ? '(anonyme)' : (u?.email||''); }
+    function updateNotifyBtn(){
+      if (!canNotify()) { notifyBtn.style.display='none'; return; }
+      notifyBtn.style.display='inline-block';
+      const perm = Notification.permission;
+      notifyBtn.textContent = perm==='granted' ? '🔔 Notifications activées' : (perm==='denied' ? '🔕 Notifications bloquées' : '🔔 Activer les notifications');
+      notifyBtn.disabled = perm==='denied';
+      notifyBtn.classList.toggle('opacity-60', perm==='denied');
+    }
+    notifyBtn.addEventListener('click', async ()=>{
+      if (!canNotify()) return;
+      const perm = await Notification.requestPermission();
+      updateNotifyBtn();
+      if (perm==='granted') toast('Notifications activées ✔', 'ok');
+      else if (perm==='denied') toast('Notifications bloquées par le navigateur.');
+    });
     logoutBtn.addEventListener('click', async ()=>{
       try { if (auth) await auth.signOut(); } catch(e){}
-      // on retombe en anonyme + UI fraîche
       location.reload();
     });
 
     // ====== INIT ======
     (async function init(){
-      // Firebase dispo ?
-      try {
-        db = firebase.firestore(); auth = firebase.auth();
-      } catch(e) { db=null; auth=null; }
-
+      try { db = firebase.firestore(); auth = firebase.auth(); } catch(e){ db=null; auth=null; }
+      updateNotifyBtn();
       if (auth) {
         auth.onAuthStateChanged(async (user)=>{
           if (!user) {
-            // connexion anonyme pour activer Firestore per-user
-            try { await auth.signInAnonymously(); } catch(e){ console.warn('anonymous sign-in failed, fallback local', e); db=null; }
+            try { await auth.signInAnonymously(); } catch(e){ db=null; }
             return;
           }
           uid = user.uid; setEmail(user);
-          if (db) {
-            bindRealtime();
-          } else {
-            // fallback local
-            localStore.load(); seed(); renderTagBar(); renderObjectives(); renderWhirlwinds(); updateStats();
-          }
+          if (db) { bindRealtime(); }
+          else { localStore.load(); seed(); renderTagBar(); renderObjectives(); renderWhirlwinds(); updateStats(); }
+          scheduleCheckLoop();
         });
       } else {
-        // aucun Firebase -> localStorage
         localStore.load(); seed(); renderTagBar(); renderObjectives(); renderWhirlwinds(); updateStats();
+        scheduleCheckLoop();
       }
     })();
 
@@ -617,16 +725,19 @@
         objectives = [{
           id: Date.now(),
           title:'Développer mon activité', category:'business',
-          deadline:new Date(now.getFullYear(), now.getMonth()+3, now.getDate()).toISOString().split('T')[0],
+          deadline:new Date(now.getFullYear(), now.getMonth()+1, now.getDate()).toISOString().split('T')[0],
           description:'Augmenter le CA de 20%', tags:['marketing','Q3'],
           subtasks:[{id:Date.now()+1,title:'Créer l’offre',done:true},{id:Date.now()+2,title:'Landing page',done:false},{id:Date.now()+3,title:'Campagne emailing',done:false}],
           comments:[{at:now.toISOString(),text:'Kickoff effectué ✅'}],
+          reminders:{enabled:true, offsets:DEFAULT_OFFSETS},
           progress:0, completed:false, createdAt:now.toISOString()
         }];
         whirlwinds = [{
           id: Date.now()+10, title:'Lancer Facebook Ads', category:'operations', priority:'high',
-          deadline:new Date(now.getFullYear(), now.getMonth()+1, now.getDate()).toISOString().split('T')[0],
-          notes:'Budget test 200€', completed:false, createdAt:now.toISOString(), createdBy:'user'
+          deadline:new Date(now.getFullYear(), now.getMonth(), now.getDate()+7).toISOString().split('T')[0],
+          notes:'Budget test 200€',
+          reminders:{enabled:true, offsets:DEFAULT_OFFSETS},
+          completed:false, createdAt:now.toISOString(), createdBy:'user'
         }];
         localStore.save();
       }
@@ -641,6 +752,8 @@
     window.promptAddComment = promptAddComment;
     window.completeWhirlwind = completeWhirlwind;
     window.deleteWhirlwind = deleteWhirlwind;
+    window.toggleRemindersOHI = toggleRemindersOHI;
+    window.toggleRemindersWhirl = toggleRemindersWhirl;
   </script>
 </body>
 </html>
