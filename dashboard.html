@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coach Objectifs IA — OHI & Tourbillons</title>
+  <title>Coach Objectifs IA — OHI & Tourbillons (subtasks + tags)</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,79 +12,61 @@
       theme: {
         extend: {
           colors: {
-            primary: '#3b82f6',
-            secondary: '#8b5cf6',
-            success: '#10b981',
-            warning: '#f59e0b',
-            danger: '#ef4444'
+            primary:'#3b82f6', secondary:'#8b5cf6',
+            success:'#10b981', warning:'#f59e0b', danger:'#ef4444'
           }
         }
       }
     }
   </script>
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .card-hover { transition: all 0.25s ease; }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -6px rgba(0,0,0,0.12); }
-    .progress-ring { transform: rotate(-90deg); }
-    .pulse-dot { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.5 } }
+    body{font-family:'Inter',sans-serif}
+    .gradient-bg{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+    .card-hover{transition:.2s ease}
+    .card-hover:hover{transform:translateY(-2px);box-shadow:0 10px 25px -8px rgba(0,0,0,.12)}
+    .progress-ring{transform:rotate(-90deg)}
+    .chip{background:#eef2ff;color:#4338ca}
+    .chip.active{background:#dbeafe;color:#1d4ed8}
   </style>
 </head>
-
 <body class="bg-gray-50 min-h-screen">
 
   <!-- HEADER -->
   <header class="gradient-bg text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center py-6">
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center gap-4">
           <div class="w-12 h-12 bg-white/20 rounded-xl grid place-items-center">
-            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
           <div>
             <h1 class="text-2xl font-bold">Coach Objectifs IA</h1>
-            <p class="text-white/80 text-sm">OHI (Objectifs) & 🌪️ Tourbillons</p>
+            <p class="text-white/80 text-sm">OHI + 🌪️ Tourbillons — sous-tâches, tags, commentaires</p>
           </div>
         </div>
-
         <div class="flex items-center gap-3">
-          <div class="hidden md:flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
-            <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>
-            <span class="text-sm">Coach actif</span>
-          </div>
           <span id="userEmail" class="hidden sm:inline text-sm opacity-90"></span>
-          <button id="logoutBtn"
-                  class="bg-white/20 hover:bg-white/30 transition-colors text-white px-4 py-2 rounded-lg">
-            Déconnexion
-          </button>
+          <button id="logoutBtn" class="bg-white/20 hover:bg-white/30 transition-colors text-white px-4 py-2 rounded-lg">Déconnexion</button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- BARRE D’OUTILS -->
+  <!-- BARRE OUTILS -->
   <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
     <div class="bg-white rounded-2xl shadow-sm border p-4 md:p-6">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
-        <!-- Recherche -->
         <div class="md:col-span-2">
           <label class="text-xs text-gray-600">Rechercher</label>
           <div class="relative">
-            <input id="searchInput" type="text" placeholder="Titre, description…"
+            <input id="searchInput" type="text" placeholder="Titre, description, commentaire…"
                    class="w-full border rounded-xl pl-10 pr-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"/>
             <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>
             </svg>
           </div>
         </div>
-
-        <!-- Filtres -->
         <div>
           <label class="text-xs text-gray-600">Catégorie</label>
           <select id="filterCategory" class="w-full border rounded-xl p-2">
@@ -95,77 +77,58 @@
             <option value="health">💪 Santé</option>
           </select>
         </div>
-
-        <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 md:col-span-1">
-          <div>
-            <label class="text-xs text-gray-600">Priorité</label>
-            <select id="filterPriority" class="w-full border rounded-xl p-2">
-              <option value="">Toutes</option>
-              <option value="high">🔴 Haute</option>
-              <option value="medium">🟡 Moyenne</option>
-              <option value="low">🟢 Basse</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-xs text-gray-600">Statut</label>
-            <select id="filterStatus" class="w-full border rounded-xl p-2">
-              <option value="">Tous</option>
-              <option value="open">En cours</option>
-              <option value="done">Terminés</option>
-            </select>
-          </div>
+        <div>
+          <label class="text-xs text-gray-600">Statut</label>
+          <select id="filterStatus" class="w-full border rounded-xl p-2">
+            <option value="">Tous</option>
+            <option value="open">En cours</option>
+            <option value="done">Terminés</option>
+          </select>
         </div>
       </div>
 
-      <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div class="md:col-span-2">
+          <label class="text-xs text-gray-600">Tag</label>
+          <div class="flex gap-2 flex-wrap" id="tagBar">
+            <!-- tags dynamiques -->
+          </div>
+        </div>
         <div>
           <label class="text-xs text-gray-600">Trier par</label>
           <select id="sortBy" class="w-full border rounded-xl p-2">
             <option value="createdAt_desc">Création (récent → ancien)</option>
-            <option value="createdAt_asc">Création (ancien → récent)</option>
             <option value="deadline_asc">Échéance (proche → loin)</option>
             <option value="progress_desc">Progression (haut → bas)</option>
-            <option value="priority_desc">Priorité (haute → basse)</option>
+            <option value="title_asc">Titre (A → Z)</option>
           </select>
         </div>
-
-        <div class="col-span-1 flex items-end gap-2">
-          <button id="exportCsvBtn" class="w-full border rounded-xl py-2 hover:bg-gray-50">Exporter CSV</button>
-          <button id="exportPdfBtn" class="w-full border rounded-xl py-2 hover:bg-gray-50">Exporter PDF</button>
+        <div class="flex items-end gap-2">
+          <button id="exportCsvBtn" class="w-full border rounded-xl py-2 hover:bg-gray-50">Export CSV</button>
+          <button id="exportPdfBtn" class="w-full border rounded-xl py-2 hover:bg-gray-50">Export PDF</button>
         </div>
-
-        <div class="col-span-2 md:col-span-1 flex items-end gap-2 justify-end">
-          <button id="newObjectiveBtn" class="bg-primary text-white px-4 py-2 rounded-xl hover:bg-blue-600">+ Nouvel OHI</button>
+        <div class="flex items-end justify-end gap-2">
+          <button id="newObjectiveBtn" class="bg-primary text-white px-4 py-2 rounded-xl hover:bg-blue-600">+ OHI</button>
           <button id="newWhirlwindBtn" class="bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700">+ Tourbillon</button>
         </div>
-
-        <div class="hidden md:flex items-end justify-end text-sm text-gray-500">
-          <span id="filterCount">0 éléments</span>
-        </div>
       </div>
+      <div class="mt-2 text-right text-sm text-gray-500"><span id="filterCount">0 élément</span></div>
     </div>
   </section>
 
   <!-- CONTENU -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-
-    <!-- Grille principale -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-      <!-- Colonne gauche : OHI -->
+      <!-- OHI -->
       <section class="lg:col-span-2">
         <div class="bg-white rounded-2xl p-6 shadow-sm border">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-semibold text-gray-900">📌 Mes OHI</h3>
-          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-6">📌 Mes OHI</h3>
           <div id="objectivesList" class="space-y-4"></div>
-          <div id="emptyObjectives" class="text-center text-gray-500 py-10 hidden">
-            <p>Aucun OHI correspondant aux filtres.</p>
-          </div>
+          <div id="emptyObjectives" class="text-center text-gray-500 py-10 hidden">Aucun OHI pour ces filtres.</div>
         </div>
       </section>
 
-      <!-- Colonne droite : Progression -->
+      <!-- Stats -->
       <aside>
         <div class="bg-white rounded-2xl p-6 shadow-sm border">
           <h3 class="text-xl font-semibold text-gray-900 mb-6">Progression Globale</h3>
@@ -193,22 +156,16 @@
     <!-- Tourbillons -->
     <section class="bg-white rounded-2xl p-6 shadow-sm border border-orange-200">
       <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-orange-100 rounded-lg grid place-items-center">
-            <svg class="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
-            </svg>
+            <svg class="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
           </div>
           <div>
-            <h3 class="text-xl font-semibold text-gray-900">🌪️ Tourbillons du Mois</h3>
-            <p class="text-sm text-gray-600">Actions importantes pour ne pas se disperser</p>
+            <h3 class="text-xl font-semibold text-gray-900">🌪️ Tourbillons</h3>
+            <p class="text-sm text-gray-600">Actions clés à court terme</p>
           </div>
         </div>
-        <div class="flex gap-2">
-          <button id="toggleManagerBtn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300">
-            👔 Mode Responsable
-          </button>
-        </div>
+        <button id="toggleManagerBtn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300">👔 Mode Responsable</button>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
@@ -230,11 +187,11 @@
       <form id="objectiveForm" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Titre</label>
-          <input type="text" id="objectiveTitle" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Ex: Lancer mon produit" required>
+          <input type="text" id="objectiveTitle" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent" required>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
-          <select id="objectiveCategory" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+          <select id="objectiveCategory" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary">
             <option value="business">🚀 Business</option>
             <option value="personal">🎯 Personnel</option>
             <option value="learning">📚 Apprentissage</option>
@@ -243,11 +200,15 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label>
-          <input type="date" id="objectiveDeadline" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+          <input type="date" id="objectiveDeadline" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Tags (séparés par des virgules)</label>
+          <input type="text" id="objectiveTags" class="w-full border rounded-lg px-3 py-2" placeholder="ex: marketing, Q3">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-          <textarea id="objectiveDescription" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Décrivez votre objectif…"></textarea>
+          <textarea id="objectiveDescription" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary" placeholder="Décrivez votre objectif…"></textarea>
         </div>
         <div class="flex gap-3 pt-4">
           <button type="button" id="cancelObjective" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300">Annuler</button>
@@ -264,7 +225,7 @@
       <form id="whirlwindForm" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Action</label>
-          <input type="text" id="whirlwindTitle" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Ex: Lancer la campagne pub" required>
+          <input type="text" id="whirlwindTitle" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500" required>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -303,161 +264,220 @@
     </div>
   </div>
 
-  <!-- Librairies export PDF -->
+  <!-- Export PDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.3/dist/jspdf.plugin.autotable.min.js"></script>
 
-  <!-- Firebase (facultatif, pour déconnexion) -->
+  <!-- Firebase (optionnel pour logout) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="./firebase.js"></script>
 
   <!-- LOGIQUE -->
   <script>
-    // ---- ÉTAT ----
+    // ---------- ÉTAT ----------
     let objectives = JSON.parse(localStorage.getItem('objectives') || '[]');
     let whirlwinds = JSON.parse(localStorage.getItem('whirlwinds') || '[]');
     let managerMode = false;
+    let activeTag = '';
 
-    // ---- HELPERS ----
-    const $ = (sel) => document.querySelector(sel);
-    const saveAll = () => {
+    // ---------- HELPERS ----------
+    const $ = s => document.querySelector(s);
+    const esc = s => (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+    const save = () => {
       localStorage.setItem('objectives', JSON.stringify(objectives));
       localStorage.setItem('whirlwinds', JSON.stringify(whirlwinds));
+      renderTagBar();
     };
+    const catIcon = { business:'🚀', personal:'🎯', learning:'📚', health:'💪' };
 
-    const categoryIcons = { business:'🚀', personal:'🎯', learning:'📚', health:'💪' };
-    const priorityRank = { high:3, medium:2, low:1 };
-
-    // ---- FILTRES & TRI ----
+    // ---------- FILTRES ----------
     const ui = {
-      search: $('#searchInput'),
-      fCat: $('#filterCategory'),
-      fPri: $('#filterPriority'),
-      fSta: $('#filterStatus'),
+      q: $('#searchInput'),
+      cat: $('#filterCategory'),
+      sta: $('#filterStatus'),
       sort: $('#sortBy'),
       count: $('#filterCount')
     };
 
-    function applyFilters(list) {
-      const q = ui.search.value.trim().toLowerCase();
-      const cat = ui.fCat.value;
-      const pri = ui.fPri.value;
-      const sta = ui.fSta.value;
-
-      let filtered = list.filter(item => {
-        const txt = (item.title + ' ' + (item.description||'') + ' ' + (item.notes||'')).toLowerCase();
-        if (q && !txt.includes(q)) return false;
-        if (cat && item.category !== cat) return false;
-        if (pri && (item.priority || '') !== pri) return false;
-        if (sta) {
-          const isDone = !!item.completed;
-          if (sta === 'open' && isDone) return false;
-          if (sta === 'done' && !isDone) return false;
-        }
-        return true;
-      });
-
-      // TRI
-      const [key, dir] = ui.sort.value.split('_');
-      filtered.sort((a,b)=>{
-        const mul = dir === 'asc' ? 1 : -1;
-        if (key === 'deadline') {
-          const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-          const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-          return (da - db) * mul;
-        }
-        if (key === 'progress') return ((a.progress||0) - (b.progress||0)) * mul;
-        if (key === 'priority') return ((priorityRank[a.priority||'low']) - (priorityRank[b.priority||'low'])) * mul;
-        // createdAt
-        return ((new Date(a.createdAt||0).getTime()) - (new Date(b.createdAt||0).getTime())) * mul;
-      });
-
-      ui.count.textContent = filtered.length + ' éléments';
-      return filtered;
+    function matchFilters(item, type='ohi') {
+      const text = (item.title+' '+(item.description||'')+' '+(item.notes||'')+' '+(item.comments||[]).map(c=>c.text).join(' ')).toLowerCase();
+      const q = ui.q.value.trim().toLowerCase();
+      if (q && !text.includes(q)) return false;
+      if (ui.cat.value && item.category !== ui.cat.value) return false;
+      if (ui.sta.value) {
+        const done = !!item.completed;
+        if (ui.sta.value === 'open' && done) return false;
+        if (ui.sta.value === 'done' && !done) return false;
+      }
+      if (activeTag) {
+        const tags = (item.tags||[]);
+        if (!tags.map(t=>t.toLowerCase()).includes(activeTag.toLowerCase())) return false;
+      }
+      return true;
     }
 
-    // ---- RENDUS ----
+    function sortList(list) {
+      const [key, dir] = ($('#sortBy').value||'createdAt_desc').split('_');
+      const mul = dir === 'asc' ? 1 : -1;
+      return list.sort((a,b)=>{
+        if (key==='deadline') {
+          const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+          const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+          return (da-db)*mul;
+        }
+        if (key==='progress') return ((a.progress||0)-(b.progress||0))*mul;
+        if (key==='title') return (a.title||'').localeCompare(b.title||'')*mul;
+        // createdAt
+        return ((new Date(a.createdAt||0)) - (new Date(b.createdAt||0))) * mul;
+      });
+    }
+
+    // ---------- TAGS ----------
+    function collectAllTags() {
+      const set = new Set();
+      objectives.forEach(o => (o.tags||[]).forEach(t=>t && set.add(t)));
+      return Array.from(set).sort((a,b)=>a.localeCompare(b));
+    }
+    function renderTagBar() {
+      const bar = $('#tagBar');
+      const tags = collectAllTags();
+      bar.innerHTML = '';
+      if (!tags.length) {
+        bar.innerHTML = `<span class="text-xs text-gray-400">Aucun tag pour l’instant</span>`;
+        return;
+      }
+      const clear = document.createElement('button');
+      clear.className = `px-3 py-1 rounded-full text-xs border ${activeTag?'':'chip'}`
+      clear.textContent = 'Tous';
+      clear.onclick = () => { activeTag=''; renderObjectives(); renderWhirlwinds(); renderTagBar(); };
+      bar.appendChild(clear);
+
+      tags.forEach(t=>{
+        const b = document.createElement('button');
+        b.className = `px-3 py-1 rounded-full text-xs border chip ${activeTag===t?'active':''}`;
+        b.textContent = t;
+        b.onclick = ()=>{ activeTag = (activeTag===t?'':t); renderObjectives(); renderWhirlwinds(); renderTagBar(); };
+        bar.appendChild(b);
+      });
+    }
+
+    // ---------- RENDU OHI ----------
     function renderObjectives() {
-      const container = $('#objectivesList');
-      container.innerHTML = '';
-      const items = applyFilters(objectives);
-      $('#emptyObjectives').classList.toggle('hidden', items.length !== 0);
+      const wrap = $('#objectivesList');
+      wrap.innerHTML = '';
+      const filtered = sortList(objectives.filter(o => matchFilters(o,'ohi')));
+      $('#emptyObjectives').classList.toggle('hidden', filtered.length !== 0);
+      ui.count.textContent = filtered.length + ' élément' + (filtered.length>1?'s':'');
 
-      if (items.length === 0) return;
+      wrap.innerHTML = filtered.map(o=>{
+        // progress = si sous-tâches, % done ; sinon valeur stockée
+        const totalSub = (o.subtasks||[]).length;
+        const doneSub = (o.subtasks||[]).filter(s=>s.done).length;
+        const progress = totalSub ? Math.round(doneSub/totalSub*100) : (o.progress||0);
+        o.progress = progress; // garde aligné
 
-      container.innerHTML = items.map(obj => {
-        const daysLeft = obj.deadline ? Math.ceil((new Date(obj.deadline) - new Date())/86400000) : null;
-        const overdue = daysLeft !== null && daysLeft < 0;
+        const daysLeft = o.deadline ? Math.ceil((new Date(o.deadline)-new Date())/86400000) : null;
+        const overdue = daysLeft!==null && daysLeft<0;
+
+        const tags = (o.tags||[]).map(t=>`<span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border">${esc(t)}</span>`).join(' ');
+
+        const subtasksHtml = (o.subtasks||[]).map(s=>`
+          <label class="flex items-start gap-2 text-sm">
+            <input type="checkbox" ${s.done?'checked':''} onchange="toggleSubtask(${o.id},${s.id})" class="mt-1 w-4 h-4 text-green-600 rounded">
+            <span class="${s.done?'line-through text-gray-400':''}">${esc(s.title)}</span>
+          </label>
+        `).join('') || `<div class="text-xs text-gray-400">Aucune sous-tâche</div>`;
+
+        const commentsHtml = (o.comments||[]).slice(-3).map(c=>`
+          <div class="text-xs text-gray-700"><span class="text-gray-400">${new Date(c.at).toLocaleString()}</span> — ${esc(c.text)}</div>
+        `).join('') || `<div class="text-xs text-gray-400">Aucun commentaire</div>`;
+
         return `
           <div class="border rounded-xl p-4 card-hover">
-            <div class="flex items-start justify-between mb-3">
+            <div class="flex items-start justify-between gap-3">
               <div class="flex items-start gap-3">
-                <span class="text-2xl">${categoryIcons[obj.category]||'🎯'}</span>
+                <span class="text-2xl">${catIcon[o.category]||'🎯'}</span>
                 <div>
-                  <h4 class="font-semibold text-gray-900">${escapeHTML(obj.title)}</h4>
-                  <p class="text-sm text-gray-600">${escapeHTML(obj.description||'')}</p>
+                  <h4 class="font-semibold text-gray-900">${esc(o.title)}</h4>
+                  <p class="text-sm text-gray-600">${esc(o.description||'')}</p>
+                  <div class="mt-2 flex flex-wrap gap-2">${tags}</div>
                 </div>
               </div>
-              <div class="text-right">
-                ${obj.deadline ? `<span class="text-xs text-gray-500 block">${obj.deadline}</span>`:''}
-                <span class="text-sm ${overdue ? 'text-red-600':'text-gray-600'}">
-                  ${obj.deadline ? (overdue ? `${Math.abs(daysLeft)}j de retard` : `${daysLeft}j restants`) : '-'}
-                </span>
+              <div class="text-right text-sm">
+                ${o.deadline?`<div class="text-gray-500">${o.deadline}</div>`:''}
+                <div class="${overdue?'text-red-600':'text-gray-600'}">
+                  ${o.deadline?(overdue?`${Math.abs(daysLeft)}j de retard`:`${daysLeft}j restants`):'-'}
+                </div>
               </div>
             </div>
 
-            <div class="mb-3">
+            <div class="mt-3">
               <div class="flex justify-between text-sm mb-1">
                 <span class="text-gray-600">Progression</span>
-                <span class="font-medium">${obj.progress||0}%</span>
+                <span class="font-medium">${progress}%</span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-primary h-2 rounded-full transition-all" style="width:${obj.progress||0}%"></div>
+                <div class="bg-primary h-2 rounded-full transition-all" style="width:${progress}%"></div>
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-2">
-              <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" onclick="updateProgress(${obj.id}, -10)">-10%</button>
-              <button class="px-3 py-1 bg-primary text-white hover:bg-blue-600 rounded text-sm" onclick="updateProgress(${obj.id}, 10)">+10%</button>
-              <button class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm" onclick="completeObjective(${obj.id})">Terminé</button>
-              <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" onclick="deleteObjective(${obj.id})">Supprimer</button>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <h5 class="text-sm font-medium text-gray-900">Sous-tâches</h5>
+                  <button class="text-xs text-primary" onclick="promptAddSubtask(${o.id})">+ Ajouter</button>
+                </div>
+                <div class="space-y-2">${subtasksHtml}</div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <h5 class="text-sm font-medium text-gray-900">Commentaires</h5>
+                  <button class="text-xs text-primary" onclick="promptAddComment(${o.id})">+ Ajouter</button>
+                </div>
+                <div class="space-y-1">${commentsHtml}</div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700" onclick="completeObjective(${o.id})">Terminé</button>
+              <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" onclick="nudgeProgress(${o.id},10)">+10%</button>
+              <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" onclick="nudgeProgress(${o.id},-10)">-10%</button>
+              <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" onclick="deleteObjective(${o.id})">Supprimer</button>
             </div>
           </div>
         `;
       }).join('');
     }
 
+    // ---------- RENDU TOURBILLONS ----------
     function renderWhirlwinds() {
       const activeC = $('#activeWhirlwinds');
       const doneC = $('#completedWhirlwinds');
 
-      const active = applyFilters(whirlwinds.filter(w=>!w.completed));
-      const done = applyFilters(whirlwinds.filter(w=>w.completed));
+      const active = sortList(whirlwinds.filter(w => !w.completed && matchFilters(w,'whirl')));
+      const done = sortList(whirlwinds.filter(w => w.completed && matchFilters(w,'whirl')));
 
-      // Actifs
-      activeC.innerHTML = active.length ? active.map(w => {
-        const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline) - new Date())/86400000) : null;
-        const overdue = daysLeft !== null && daysLeft < 0;
-        const priorityColors = { high:'border-red-500 bg-red-50', medium:'border-yellow-500 bg-yellow-50', low:'border-green-500 bg-green-50' };
-        const priorityLabels = { high:'🔴 Haute', medium:'🟡 Moyenne', low:'🟢 Basse' };
-        const cats = { management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢' };
+      const pCol = {high:'border-red-500 bg-red-50',medium:'border-yellow-500 bg-yellow-50',low:'border-green-500 bg-green-50'};
+      const pLbl = {high:'🔴 Haute',medium:'🟡 Moyenne',low:'🟢 Basse'};
+      const cats = {management:'👥',finance:'💰',operations:'⚙️',strategy:'🎯',hr:'👔',communication:'📢'};
 
+      activeC.innerHTML = active.length ? active.map(w=>{
+        const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline)-new Date())/86400000) : null;
+        const od = daysLeft!==null && daysLeft<0;
         return `
-          <div class="border-l-4 ${priorityColors[w.priority||'low']} p-4 rounded-lg">
+          <div class="border-l-4 ${pCol[w.priority||'low']} p-4 rounded-lg">
             <div class="flex items-start justify-between mb-2">
               <div class="flex items-center gap-2">
                 <span class="text-lg">${cats[w.category]||'📌'}</span>
-                <h4 class="font-medium text-gray-900">${escapeHTML(w.title)}</h4>
-                ${w.createdBy === 'manager' ? '<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">👔 Responsable</span>' : ''}
+                <h4 class="font-medium text-gray-900">${esc(w.title)}</h4>
+                ${w.createdBy==='manager'?'<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">👔 Responsable</span>':''}
               </div>
-              <span class="text-xs ${overdue ? 'text-red-600':'text-gray-600'}">
-                ${w.deadline ? (overdue ? `${Math.abs(daysLeft)}j retard` : `${daysLeft}j restants`) : '-'}
-              </span>
+              <span class="text-xs ${od?'text-red-600':'text-gray-600'}">${w.deadline?(od?`${Math.abs(daysLeft)}j retard`:`${daysLeft}j restants`):'-'}</span>
             </div>
-            <p class="text-sm text-gray-600 mb-3">${escapeHTML(w.notes||'')}</p>
+            <p class="text-sm text-gray-600 mb-3">${esc(w.notes||'')}</p>
             <div class="flex items-center justify-between">
-              <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">${priorityLabels[w.priority||'low']}</span>
+              <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">${pLbl[w.priority||'low']}</span>
               <div class="space-x-2">
                 <button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700" onclick="completeWhirlwind(${w.id})">✓ Terminé</button>
                 <button class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200" onclick="deleteWhirlwind(${w.id})">Supprimer</button>
@@ -467,18 +487,18 @@
         `;
       }).join('') : `<div class="text-sm text-gray-500">Aucune action en cours</div>`;
 
-      // Terminés
-      doneC.innerHTML = done.length ? done.slice(-10).map(w => `
+      doneC.innerHTML = done.length ? done.slice(-10).map(w=>`
         <div class="border p-3 rounded-lg bg-gray-50 opacity-80">
           <div class="flex items-center gap-2 mb-1">
             <span class="text-sm">✅</span>
-            <h4 class="text-sm font-medium text-gray-700 line-through">${escapeHTML(w.title)}</h4>
+            <h4 class="text-sm font-medium text-gray-700 line-through">${esc(w.title)}</h4>
           </div>
-          <p class="text-xs text-gray-500">${escapeHTML(w.notes||'')}</p>
+          <p class="text-xs text-gray-500">${esc(w.notes||'')}</p>
         </div>
       `).join('') : `<div class="text-sm text-gray-500">Aucune action terminée</div>`;
     }
 
+    // ---------- STATISTIQUES ----------
     function updateStats() {
       const total = objectives.length;
       const completed = objectives.filter(o=>o.completed).length;
@@ -487,89 +507,111 @@
       $('#completedCount').textContent = `${completed}/${total}`;
       $('#globalProgress').textContent = `${avg}%`;
 
-      const circle = $('#progressCircle');
       const circ = 2 * Math.PI * 56;
-      circle.style.strokeDashoffset = (circ - (avg/100)*circ);
+      $('#progressCircle').style.strokeDashoffset = (circ - (avg/100)*circ);
 
       $('#currentStreak').textContent = `${Math.min(total*3, 30)} jours`;
       if (objectives.length) {
         const next = objectives.filter(o=>!o.completed && o.deadline)
                                .sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
         $('#nextDeadline').textContent = next ? `${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours` : '-';
-      } else {
-        $('#nextDeadline').textContent = '-';
-      }
+      } else $('#nextDeadline').textContent = '-';
     }
 
-    // ---- ACTIONS OHI ----
-    function updateProgress(id, delta) {
-      const o = objectives.find(x=>x.id===id);
-      if (!o) return;
+    // ---------- OHI : opérations ----------
+    function nudgeProgress(id,delta){
+      const o = objectives.find(x=>x.id===id); if(!o) return;
+      if (o.subtasks && o.subtasks.length) return; // progression auto si sous-tâches
       o.progress = Math.max(0, Math.min(100, (o.progress||0)+delta));
-      if (o.progress === 100) o.completed = true;
-      saveAll(); renderObjectives(); updateStats();
+      if (o.progress===100) o.completed = true;
+      save(); renderObjectives(); updateStats();
     }
-    function completeObjective(id) {
-      const o = objectives.find(x=>x.id===id);
-      if (!o) return;
-      o.progress = 100; o.completed = true;
-      saveAll(); renderObjectives(); updateStats();
+    function completeObjective(id){
+      const o = objectives.find(x=>x.id===id); if(!o) return;
+      o.completed = true; o.progress = 100;
+      if (o.subtasks) o.subtasks.forEach(s=>s.done=true);
+      save(); renderObjectives(); updateStats();
     }
-    function deleteObjective(id) {
+    function deleteObjective(id){
       objectives = objectives.filter(x=>x.id!==id);
-      saveAll(); renderObjectives(); updateStats();
+      save(); renderObjectives(); updateStats();
     }
 
-    // ---- ACTIONS TOURBILLON ----
-    function completeWhirlwind(id) {
-      const w = whirlwinds.find(x=>x.id===id);
-      if (!w) return;
-      w.completed = true;
-      saveAll(); renderWhirlwinds();
+    // Sous-tâches
+    function promptAddSubtask(oid){
+      const title = prompt('Titre de la sous-tâche :');
+      if(!title) return;
+      const o = objectives.find(x=>x.id===oid); if(!o) return;
+      o.subtasks = o.subtasks||[];
+      o.subtasks.push({ id: Date.now(), title: title.trim(), done:false });
+      save(); renderObjectives(); updateStats();
     }
-    function deleteWhirlwind(id) {
+    function toggleSubtask(oid, sid){
+      const o = objectives.find(x=>x.id===oid); if(!o) return;
+      const s = (o.subtasks||[]).find(u=>u.id===sid); if(!s) return;
+      s.done = !s.done;
+      // recalcul progress
+      const total = (o.subtasks||[]).length, done = (o.subtasks||[]).filter(x=>x.done).length;
+      o.progress = total ? Math.round(done/total*100) : (o.progress||0);
+      if (o.progress===100) o.completed = true; else o.completed = false;
+      save(); renderObjectives(); updateStats();
+    }
+
+    // Commentaires
+    function promptAddComment(oid){
+      const text = prompt('Votre commentaire :');
+      if(!text) return;
+      const o = objectives.find(x=>x.id===oid); if(!o) return;
+      o.comments = o.comments||[];
+      o.comments.push({ at: new Date().toISOString(), text: text.trim() });
+      save(); renderObjectives();
+    }
+
+    // ---------- TOURBILLONS : opérations ----------
+    function completeWhirlwind(id){
+      const w = whirlwinds.find(x=>x.id===id); if(!w) return;
+      w.completed = true; save(); renderWhirlwinds();
+    }
+    function deleteWhirlwind(id){
       whirlwinds = whirlwinds.filter(x=>x.id!==id);
-      saveAll(); renderWhirlwinds();
+      save(); renderWhirlwinds();
     }
 
-    // ---- FORMULAIRES ----
+    // ---------- FORMULAIRES ----------
     const objectiveModal = $('#objectiveModal');
     const whirlwindModal = $('#whirlwindModal');
 
-    $('#newObjectiveBtn').addEventListener('click', ()=>{
-      $('#objectiveForm').reset();
-      objectiveModal.classList.remove('hidden'); objectiveModal.classList.add('flex');
-    });
+    $('#newObjectiveBtn').addEventListener('click', ()=>{ $('#objectiveForm').reset(); objectiveModal.classList.remove('hidden'); objectiveModal.classList.add('flex'); });
     $('#cancelObjective').addEventListener('click', ()=>{ objectiveModal.classList.add('hidden'); objectiveModal.classList.remove('flex'); });
 
     $('#newWhirlwindBtn').addEventListener('click', ()=>{
       $('#whirlwindForm').reset();
-      // défaut: échéance +1 mois
       const d = new Date(); d.setMonth(d.getMonth()+1);
       $('#whirlwindDeadline').value = d.toISOString().split('T')[0];
       whirlwindModal.classList.remove('hidden'); whirlwindModal.classList.add('flex');
     });
     $('#cancelWhirlwind').addEventListener('click', ()=>{ whirlwindModal.classList.add('hidden'); whirlwindModal.classList.remove('flex'); });
 
-    $('#objectiveForm').addEventListener('submit', (e)=>{
+    $('#objectiveForm').addEventListener('submit', e=>{
       e.preventDefault();
+      const tags = ($('#objectiveTags').value||'').split(',').map(t=>t.trim()).filter(Boolean);
       const obj = {
         id: Date.now(),
         title: $('#objectiveTitle').value.trim(),
         category: $('#objectiveCategory').value,
         deadline: $('#objectiveDeadline').value || null,
         description: $('#objectiveDescription').value.trim(),
-        progress: 0,
-        completed: false,
-        createdAt: new Date().toISOString(),
-        priority: null // pour filtres cohérents, laissé à null
+        tags,
+        subtasks: [], comments: [],
+        progress: 0, completed: false,
+        createdAt: new Date().toISOString()
       };
-      objectives.push(obj); saveAll();
+      objectives.push(obj); save();
       objectiveModal.classList.add('hidden'); objectiveModal.classList.remove('flex');
       renderObjectives(); updateStats();
     });
 
-    $('#whirlwindForm').addEventListener('submit', (e)=>{
+    $('#whirlwindForm').addEventListener('submit', e=>{
       e.preventDefault();
       const w = {
         id: Date.now(),
@@ -582,153 +624,99 @@
         createdAt: new Date().toISOString(),
         createdBy: managerMode ? 'manager':'user'
       };
-      whirlwinds.push(w); saveAll();
+      whirlwinds.push(w); save();
       whirlwindModal.classList.add('hidden'); whirlwindModal.classList.remove('flex');
       renderWhirlwinds();
     });
 
-    // ---- MANAGER MODE ----
+    // ---------- MANAGER MODE ----------
     $('#toggleManagerBtn').addEventListener('click', ()=>{
       managerMode = !managerMode;
       const btn = $('#toggleManagerBtn');
-      if (managerMode) {
-        btn.textContent = '👤 Mode Utilisateur';
-        btn.classList.remove('bg-gray-200','text-gray-700');
-        btn.classList.add('bg-orange-600','text-white');
-      } else {
-        btn.textContent = '👔 Mode Responsable';
-        btn.classList.add('bg-gray-200','text-gray-700');
-        btn.classList.remove('bg-orange-600','text-white');
-      }
+      if (managerMode) { btn.textContent='👤 Mode Utilisateur'; btn.classList.remove('bg-gray-200','text-gray-700'); btn.classList.add('bg-orange-600','text-white'); }
+      else { btn.textContent='👔 Mode Responsable'; btn.classList.add('bg-gray-200','text-gray-700'); btn.classList.remove('bg-orange-600','text-white'); }
     });
 
-    // ---- RECHERCHE (debounce) & FILTRES ----
-    ;['input','change'].forEach(ev=>{
-      ui.search.addEventListener(ev, debounce(()=>{
-        renderObjectives(); renderWhirlwinds();
-      }, 200));
-    });
-    [ui.fCat, ui.fPri, ui.fSta, ui.sort].forEach(el=>{
-      el.addEventListener('change', ()=>{ renderObjectives(); renderWhirlwinds(); });
-    });
+    // ---------- RECHERCHE/FILTRES ----------
+    function refreshAll(){ renderObjectives(); renderWhirlwinds(); updateStats(); }
+    $('#searchInput').addEventListener('input', debounce(refreshAll, 180));
+    [ui.cat, ui.sta, ui.sort].forEach(el=>el.addEventListener('change', refreshAll));
+    function debounce(fn, d){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), d); }; }
 
-    function debounce(fn, d){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), d); } }
-    function escapeHTML(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
-
-    // ---- EXPORTS ----
+    // ---------- EXPORT ----------
     $('#exportCsvBtn').addEventListener('click', ()=>{
-      const rows = [
-        ['Type','Titre','Catégorie','Priorité','Échéance','Progression','Statut','Créé le']
-      ];
-
-      const objRows = applyFilters(objectives).map(o=>[
-        'OHI', o.title, o.category||'', '', o.deadline||'', (o.progress||0)+'%', o.completed?'Terminé':'En cours', o.createdAt||''
+      const header = ['Type','Titre','Catégorie','Échéance','Progression','Statut','Tags','Créé le'];
+      const oRows = objectives.filter(o=>matchFilters(o)).map(o=>[
+        'OHI', o.title, o.category||'', o.deadline||'', (o.progress||0)+'%', o.completed?'Terminé':'En cours', (o.tags||[]).join('|'), o.createdAt||''
       ]);
-      const whRows = applyFilters(whirlwinds).map(w=>[
-        'Tourbillon', w.title, w.category||'', w.priority||'', w.deadline||'', '', w.completed?'Terminé':'En cours', w.createdAt||''
+      const wRows = whirlwinds.filter(w=>matchFilters(w)).map(w=>[
+        'Tourbillon', w.title, w.category||'', w.deadline||'', '', w.completed?'Terminé':'En cours', '', w.createdAt||''
       ]);
-
-      const data = rows.concat(objRows, whRows);
-      const csv = data.map(r=>r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'dashboard_export.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      const data = [header].concat(oRows, wRows);
+      const csv = data.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'dashboard_export.csv'; a.click(); URL.revokeObjectURL(a.href);
     });
 
     $('#exportPdfBtn').addEventListener('click', ()=>{
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit:'pt', format:'a4' });
+      const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:'pt', format:'a4' });
+      doc.setFontSize(16); doc.text('Export OHI & Tourbillons', 40, 40);
 
-      doc.setFontSize(16);
-      doc.text('Export OHI & Tourbillons', 40, 40);
-
-      // OHI
-      const o = applyFilters(objectives).map(x=>[
-        x.title, x.category||'', x.deadline||'', (x.progress||0)+'%', x.completed?'Terminé':'En cours'
+      const o = objectives.filter(o=>matchFilters(o)).map(x=>[
+        x.title, x.category||'', x.deadline||'', (x.progress||0)+'%', (x.tags||[]).join(', ')
       ]);
-      doc.autoTable({
-        startY: 60,
-        head: [['OHI','Catégorie','Échéance','Progression','Statut']],
-        body: o.length ? o : [['(aucun)','-','-','-','-']]
-      });
+      doc.autoTable({ startY:60, head:[['OHI','Catégorie','Échéance','Progression','Tags']], body: o.length?o:[['(aucun)','-','-','-','-']] });
 
-      // Tourbillons
       const y = doc.lastAutoTable.finalY + 20;
-      const w = applyFilters(whirlwinds).map(x=>[
+      const w = whirlwinds.filter(w=>matchFilters(w)).map(x=>[
         x.title, x.category||'', x.priority||'', x.deadline||'', x.completed?'Terminé':'En cours'
       ]);
-      doc.autoTable({
-        startY: y,
-        head: [['Tourbillon','Catégorie','Priorité','Échéance','Statut']],
-        body: w.length ? w : [['(aucun)','-','-','-','-']]
-      });
+      doc.autoTable({ startY:y, head:[['Tourbillon','Catégorie','Priorité','Échéance','Statut']], body: w.length?w:[['(aucun)','-','-','-','-']] });
 
       doc.save('dashboard_export.pdf');
     });
 
-    // ---- DÉCONNEXION ----
+    // ---------- DÉCONNEXION ----------
     const logoutBtn = document.getElementById('logoutBtn');
     const userEmail = document.getElementById('userEmail');
-
-    // Affichage email si Firebase Auth dispo
     try {
       if (window.firebase?.auth) {
-        firebase.auth().onAuthStateChanged((u)=>{
-          userEmail.textContent = u?.email || '';
-        });
+        firebase.auth().onAuthStateChanged(u => { userEmail.textContent = u?.email || ''; });
       }
-    } catch(e){ /* ignore */ }
-
+    } catch(e){}
     logoutBtn.addEventListener('click', async ()=>{
-      // Si Firebase Auth existe, on signOut
-      try {
-        if (window.firebase?.auth) {
-          await firebase.auth().signOut();
-        }
-      } catch(e){ console.warn('SignOut Firebase:', e); }
-      // Fallback: nettoyage local
-      // (on garde objectifs/tourbillons locaux volontairement)
-      window.location.reload();
+      try { if (window.firebase?.auth) await firebase.auth().signOut(); } catch(e){}
+      location.reload();
     });
 
-    // ---- INIT ----
-    function initDefaults() {
-      // si première fois, initialise des exemples
+    // ---------- INIT ----------
+    function seed() {
       if (!objectives.length && !whirlwinds.length) {
-        const d = new Date(); const threeM = new Date(); threeM.setMonth(threeM.getMonth()+3);
-        objectives = [{
+        const now = new Date();
+        const o1 = {
           id: Date.now(),
           title: 'Développer mon activité',
           category: 'business',
-          deadline: threeM.toISOString().split('T')[0],
-          description: 'Augmenter mon chiffre d’affaires',
-          progress: 20,
-          completed: false,
-          createdAt: d.toISOString()
-        }];
-        const oneM = new Date(); oneM.setMonth(oneM.getMonth()+1);
-        whirlwinds = [{
-          id: Date.now()+1,
-          title: 'Lancer une campagne Facebook Ads',
-          category: 'marketing',
-          priority: 'high',
-          deadline: oneM.toISOString().split('T')[0],
-          notes: 'Budget test 200€',
-          completed: false,
-          createdAt: d.toISOString(),
-          createdBy: 'user'
-        }];
-        saveAll();
+          deadline: new Date(now.getFullYear(), now.getMonth()+3, now.getDate()).toISOString().split('T')[0],
+          description: 'Augmenter le CA de 20%',
+          tags: ['marketing','Q3'],
+          subtasks: [
+            {id:Date.now()+1, title:'Créer l’offre', done:true},
+            {id:Date.now()+2, title:'Landing page', done:false},
+            {id:Date.now()+3, title:'Campagne emailing', done:false},
+          ],
+          comments: [{at: now.toISOString(), text:'Kickoff effectué ✅'}],
+          progress: 0, completed:false, createdAt: now.toISOString()
+        };
+        const w1 = {
+          id: Date.now()+10, title:'Lancer Facebook Ads', category:'operations', priority:'high',
+          deadline: new Date(now.getFullYear(), now.getMonth()+1, now.getDate()).toISOString().split('T')[0],
+          notes:'Budget test 200€', completed:false, createdAt: now.toISOString(), createdBy:'user'
+        };
+        objectives = [o1]; whirlwinds = [w1]; save();
       }
     }
-
-    initDefaults();
-    renderObjectives();
-    renderWhirlwinds();
-    updateStats();
+    seed(); renderTagBar(); renderObjectives(); renderWhirlwinds(); updateStats();
   </script>
 </body>
 </html>
