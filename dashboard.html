@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coach Objectifs IA – Tableau de Bord</title>
+  <title>Coach Objectifs IA — OHI & Tourbillons</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,135 +23,178 @@
     }
   </script>
 
-  <!-- Police -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
     .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .card-hover { transition: all 0.3s ease; }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,.1); }
+    .card-hover { transition: all 0.25s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -6px rgba(0,0,0,0.12); }
     .progress-ring { transform: rotate(-90deg); }
-    .chat-bubble { animation: slideIn .3s ease-out; }
-    @keyframes slideIn { from { opacity:.0; transform: translateY(10px);} to { opacity:1; transform: translateY(0);} }
     .pulse-dot { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.5 } }
   </style>
 </head>
+
 <body class="bg-gray-50 min-h-screen">
 
-  <!-- Header -->
+  <!-- HEADER -->
   <header class="gradient-bg text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center py-6">
         <div class="flex items-center space-x-4">
-          <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <div class="w-12 h-12 bg-white/20 rounded-xl grid place-items-center">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
           <div>
             <h1 class="text-2xl font-bold">Coach Objectifs IA</h1>
-            <p class="text-white/80 text-sm">Votre compagnon intelligent pour atteindre vos objectifs</p>
+            <p class="text-white/80 text-sm">OHI (Objectifs) & 🌪️ Tourbillons</p>
           </div>
         </div>
 
-        <!-- Zone utilisateur + déconnexion -->
         <div class="flex items-center gap-3">
-          <div class="hidden md:flex items-center space-x-2 bg-white/20 rounded-lg px-3 py-2">
-            <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
+          <div class="hidden md:flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
+            <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>
             <span class="text-sm">Coach actif</span>
           </div>
-          <span id="userEmail" class="text-sm opacity-90"></span>
+          <span id="userEmail" class="hidden sm:inline text-sm opacity-90"></span>
           <button id="logoutBtn"
-                  class="w-auto px-3 h-10 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-all">
+                  class="bg-white/20 hover:bg-white/30 transition-colors text-white px-4 py-2 rounded-lg">
             Déconnexion
-          </button>
-          <button onclick="toggleCoach()"
-                  class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-all">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/>
-            </svg>
           </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Coach IA Chat -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div id="coachPanel" class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-primary">
-      <div class="flex items-start space-x-4">
-        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-          <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"/>
-          </svg>
+  <!-- BARRE D’OUTILS -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+    <div class="bg-white rounded-2xl shadow-sm border p-4 md:p-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+        <!-- Recherche -->
+        <div class="md:col-span-2">
+          <label class="text-xs text-gray-600">Rechercher</label>
+          <div class="relative">
+            <input id="searchInput" type="text" placeholder="Titre, description…"
+                   class="w-full border rounded-xl pl-10 pr-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"/>
+            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>
+            </svg>
+          </div>
         </div>
-        <div class="flex-1">
-          <div class="flex items-center space-x-2 mb-2">
-            <h3 class="font-semibold text-gray-900">Coach IA</h3>
-            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">En ligne</span>
+
+        <!-- Filtres -->
+        <div>
+          <label class="text-xs text-gray-600">Catégorie</label>
+          <select id="filterCategory" class="w-full border rounded-xl p-2">
+            <option value="">Toutes</option>
+            <option value="business">🚀 Business</option>
+            <option value="personal">🎯 Personnel</option>
+            <option value="learning">📚 Apprentissage</option>
+            <option value="health">💪 Santé</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 md:col-span-1">
+          <div>
+            <label class="text-xs text-gray-600">Priorité</label>
+            <select id="filterPriority" class="w-full border rounded-xl p-2">
+              <option value="">Toutes</option>
+              <option value="high">🔴 Haute</option>
+              <option value="medium">🟡 Moyenne</option>
+              <option value="low">🟢 Basse</option>
+            </select>
           </div>
-          <div id="coachMessage" class="text-gray-700 mb-4">
-            Bonjour ! 👋 Je suis votre coach personnel. Commençons par définir votre premier objectif. Que souhaitez-vous accomplir ?
+          <div>
+            <label class="text-xs text-gray-600">Statut</label>
+            <select id="filterStatus" class="w-full border rounded-xl p-2">
+              <option value="">Tous</option>
+              <option value="open">En cours</option>
+              <option value="done">Terminés</option>
+            </select>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="quickObjective('business')" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm hover:bg-blue-200 transition-colors">🚀 Objectif Business</button>
-            <button onclick="quickObjective('personal')" class="px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm hover:bg-green-200 transition-colors">🎯 Objectif Personnel</button>
-            <button onclick="quickObjective('learning')" class="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg text-sm hover:bg-purple-200 transition-colors">📚 Apprentissage</button>
-            <button onclick="quickObjective('health')" class="px-4 py-2 bg-orange-100 text-orange-800 rounded-lg text-sm hover:bg-orange-200 transition-colors">💪 Santé & Bien-être</button>
-          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div>
+          <label class="text-xs text-gray-600">Trier par</label>
+          <select id="sortBy" class="w-full border rounded-xl p-2">
+            <option value="createdAt_desc">Création (récent → ancien)</option>
+            <option value="createdAt_asc">Création (ancien → récent)</option>
+            <option value="deadline_asc">Échéance (proche → loin)</option>
+            <option value="progress_desc">Progression (haut → bas)</option>
+            <option value="priority_desc">Priorité (haute → basse)</option>
+          </select>
+        </div>
+
+        <div class="col-span-1 flex items-end gap-2">
+          <button id="exportCsvBtn" class="w-full border rounded-xl py-2 hover:bg-gray-50">Exporter CSV</button>
+          <button id="exportPdfBtn" class="w-full border rounded-xl py-2 hover:bg-gray-50">Exporter PDF</button>
+        </div>
+
+        <div class="col-span-2 md:col-span-1 flex items-end gap-2 justify-end">
+          <button id="newObjectiveBtn" class="bg-primary text-white px-4 py-2 rounded-xl hover:bg-blue-600">+ Nouvel OHI</button>
+          <button id="newWhirlwindBtn" class="bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700">+ Tourbillon</button>
+        </div>
+
+        <div class="hidden md:flex items-end justify-end text-sm text-gray-500">
+          <span id="filterCount">0 éléments</span>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Objectifs + Progression -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-      <div class="lg:col-span-2">
-        <div class="bg-white rounded-2xl p-6 shadow-sm">
+  <!-- CONTENU -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+    <!-- Grille principale -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- Colonne gauche : OHI -->
+      <section class="lg:col-span-2">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-semibold text-gray-900">Mes Objectifs</h3>
-            <button onclick="addObjective()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors">+ Nouvel Objectif</button>
+            <h3 class="text-xl font-semibold text-gray-900">📌 Mes OHI</h3>
           </div>
           <div id="objectivesList" class="space-y-4"></div>
+          <div id="emptyObjectives" class="text-center text-gray-500 py-10 hidden">
+            <p>Aucun OHI correspondant aux filtres.</p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="bg-white rounded-2xl p-6 shadow-sm">
-        <h3 class="text-xl font-semibold text-gray-900 mb-6">Progression Globale</h3>
-        <div class="flex items-center justify-center mb-6">
-          <div class="relative w-32 h-32">
-            <svg class="w-32 h-32 progress-ring">
-              <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
-              <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none"
-                      stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span id="globalProgress" class="text-2xl font-bold text-gray-900">0%</span>
+      <!-- Colonne droite : Progression -->
+      <aside>
+        <div class="bg-white rounded-2xl p-6 shadow-sm border">
+          <h3 class="text-xl font-semibold text-gray-900 mb-6">Progression Globale</h3>
+          <div class="flex items-center justify-center mb-6">
+            <div class="relative w-32 h-32">
+              <svg class="w-32 h-32 progress-ring">
+                <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none"
+                        stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
+              </svg>
+              <div class="absolute inset-0 grid place-items-center">
+                <span id="globalProgress" class="text-2xl font-bold text-gray-900">0%</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Objectifs complétés</span>
-            <span id="completedCount" class="font-medium">0/0</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Streak actuel</span>
-            <span id="currentStreak" class="font-medium text-green-600">0 jours</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Prochaine échéance</span>
-            <span id="nextDeadline" class="font-medium text-orange-600">-</span>
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between"><span class="text-gray-600">Objectifs complétés</span><span id="completedCount" class="font-medium">0/0</span></div>
+            <div class="flex justify-between"><span class="text-gray-600">Streak actuel</span><span id="currentStreak" class="font-medium text-green-600">0 jours</span></div>
+            <div class="flex justify-between"><span class="text-gray-600">Prochaine échéance</span><span id="nextDeadline" class="font-medium text-orange-600">-</span></div>
           </div>
         </div>
-      </div>
+      </aside>
     </div>
 
     <!-- Tourbillons -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-orange-500">
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-orange-200">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+          <div class="w-10 h-10 bg-orange-100 rounded-lg grid place-items-center">
             <svg class="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
             </svg>
@@ -161,103 +204,37 @@
             <p class="text-sm text-gray-600">Actions importantes pour ne pas se disperser</p>
           </div>
         </div>
-        <div class="flex space-x-2">
-          <button onclick="addWhirlwind()" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700 transition-colors">+ Nouveau Tourbillon</button>
-          <button onclick="toggleManagerMode()" id="managerModeBtn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300 transition-colors">👔 Mode Responsable</button>
+        <div class="flex gap-2">
+          <button id="toggleManagerBtn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300">
+            👔 Mode Responsable
+          </button>
         </div>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
-          <h4 class="font-medium text-gray-900 mb-3">Actions en cours</h4>
+          <h4 class="font-medium text-gray-900 mb-3">En cours</h4>
           <div id="activeWhirlwinds" class="space-y-3"></div>
         </div>
         <div>
-          <h4 class="font-medium text-gray-900 mb-3">Actions terminées</h4>
+          <h4 class="font-medium text-gray-900 mb-3">Terminés</h4>
           <div id="completedWhirlwinds" class="space-y-3"></div>
         </div>
       </div>
-    </div>
+    </section>
+  </main>
 
-    <!-- Livrables & Actions -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <div class="bg-white rounded-2xl p-6 shadow-sm">
-        <h3 class="text-xl font-semibold text-gray-900 mb-6">Livrables Générés</h3>
-        <div id="deliverablesList" class="space-y-3">
-          <div class="text-center text-gray-500 py-8">
-            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clip-rule="evenodd"/>
-            </svg>
-            <p>Aucun livrable généré pour le moment</p>
-            <p class="text-sm">Définissez un objectif pour commencer</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold text-gray-900">Actions Recommandées</h3>
-          <button onclick="refreshRecommendations()" class="text-primary hover:text-blue-600 text-sm">🔄 Actualiser</button>
-        </div>
-        <div id="actionsList" class="space-y-3">
-          <div class="text-center text-gray-500 py-8">
-            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
-            </svg>
-            <p>Aucune action recommandée</p>
-            <p class="text-sm">Le coach analysera vos objectifs</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Insights -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm">
-      <h3 class="text-xl font-semibold text-gray-900 mb-6">Insights & Statistiques</h3>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="text-center">
-          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg>
-          </div>
-          <p class="text-2xl font-bold text-gray-900" id="totalObjectives">0</p>
-          <p class="text-sm text-gray-600">Objectifs créés</p>
-        </div>
-        <div class="text-center">
-          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-          </div>
-          <p class="text-2xl font-bold text-gray-900" id="completedObjectives">0</p>
-          <p class="text-sm text-gray-600">Objectifs atteints</p>
-        </div>
-        <div class="text-center">
-          <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>
-          </div>
-          <p class="text-2xl font-bold text-gray-900" id="averageProgress">0%</p>
-          <p class="text-sm text-gray-600">Progression moyenne</p>
-        </div>
-        <div class="text-center">
-          <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
-          </div>
-          <p class="text-2xl font-bold text-gray-900" id="daysActive">0</p>
-          <p class="text-sm text-gray-600">Jours actifs</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Nouvel Objectif -->
+  <!-- MODAL OHI -->
   <div id="objectiveModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-      <h3 class="text-xl font-semibold text-gray-900 mb-6">Créer un Nouvel Objectif</h3>
+      <h3 class="text-xl font-semibold text-gray-900 mb-6">Créer un OHI</h3>
       <form id="objectiveForm" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Titre de l'objectif</label>
-          <input type="text" id="objectiveTitle" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Ex: Lancer mon entreprise">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Titre</label>
+          <input type="text" id="objectiveTitle" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Ex: Lancer mon produit" required>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
-          <select id="objectiveCategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+          <select id="objectiveCategory" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
             <option value="business">🚀 Business</option>
             <option value="personal">🎯 Personnel</option>
             <option value="learning">📚 Apprentissage</option>
@@ -265,710 +242,493 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Date limite</label>
-          <input type="date" id="objectiveDeadline" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label>
+          <input type="date" id="objectiveDeadline" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Description (optionnel)</label>
-          <textarea id="objectiveDescription" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Décrivez votre objectif..."></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <textarea id="objectiveDescription" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Décrivez votre objectif…"></textarea>
         </div>
-        <div class="flex space-x-3 pt-4">
-          <button type="button" onclick="closeModal()" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Annuler</button>
-          <button type="submit" class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">Créer</button>
+        <div class="flex gap-3 pt-4">
+          <button type="button" id="cancelObjective" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300">Annuler</button>
+          <button type="submit" class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-blue-600">Créer</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal Nouveau Tourbillon -->
+  <!-- MODAL TOURBILLON -->
   <div id="whirlwindModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
       <h3 class="text-xl font-semibold text-gray-900 mb-6">🌪️ Nouveau Tourbillon</h3>
       <form id="whirlwindForm" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Action à mener</label>
-          <input type="text" id="whirlwindTitle" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Ex: Établir la masse salariale">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Action</label>
+          <input type="text" id="whirlwindTitle" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Ex: Lancer la campagne pub" required>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
-          <select id="whirlwindCategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-            <option value="management">👥 Management</option>
-            <option value="finance">💰 Finance</option>
-            <option value="operations">⚙️ Opérations</option>
-            <option value="strategy">🎯 Stratégie</option>
-            <option value="hr">👔 RH</option>
-            <option value="communication">📢 Communication</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
-          <select id="whirlwindPriority" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-            <option value="high">🔴 Haute</option>
-            <option value="medium">🟡 Moyenne</option>
-            <option value="low">🟢 Basse</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label>
-          <input type="date" id="whirlwindDeadline" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+            <select id="whirlwindCategory" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500">
+              <option value="management">👥 Management</option>
+              <option value="finance">💰 Finance</option>
+              <option value="operations">⚙️ Opérations</option>
+              <option value="strategy">🎯 Stratégie</option>
+              <option value="hr">👔 RH</option>
+              <option value="communication">📢 Communication</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+            <select id="whirlwindPriority" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500">
+              <option value="high">🔴 Haute</option>
+              <option value="medium">🟡 Moyenne</option>
+              <option value="low">🟢 Basse</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label>
+            <input type="date" id="whirlwindDeadline" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500">
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-          <textarea id="whirlwindNotes" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Détails, personnes impliquées, ressources nécessaires..."></textarea>
+          <textarea id="whirlwindNotes" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500" placeholder="Détails, personnes impliquées, ressources nécessaires…"></textarea>
         </div>
-        <div class="flex space-x-3 pt-4">
-          <button type="button" onclick="closeWhirlwindModal()" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Annuler</button>
-          <button type="submit" class="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors">Créer</button>
+        <div class="flex gap-3 pt-4">
+          <button type="button" id="cancelWhirlwind" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300">Annuler</button>
+          <button type="submit" class="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700">Créer</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Firebase (compat) -->
+  <!-- Librairies export PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.3/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Firebase (facultatif, pour déconnexion) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <!-- Ton fichier d'init Firebase (firebase.initializeApp(...)) -->
   <script src="./firebase.js"></script>
 
+  <!-- LOGIQUE -->
   <script>
-    /* =========================
-       ÉTAT / PERSISTENCE LOCALE
-       ========================= */
-    let objectives = [];
-    let whirlwinds = [];
-    let coachVisible = true;
+    // ---- ÉTAT ----
+    let objectives = JSON.parse(localStorage.getItem('objectives') || '[]');
+    let whirlwinds = JSON.parse(localStorage.getItem('whirlwinds') || '[]');
     let managerMode = false;
 
-    const STORAGE_KEY = 'coach_ohi_v1';
-    function saveToStorage() {
-      try {
-        const payload = { objectives, whirlwinds, ts: Date.now() };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      } catch (e) {}
-    }
-    function loadFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return false;
-        const data = JSON.parse(raw);
-        objectives = Array.isArray(data.objectives) ? data.objectives : [];
-        whirlwinds = Array.isArray(data.whirlwinds) ? data.whirlwinds : [];
-        return true;
-      } catch (e) { return false; }
-    }
-
-    /* =========================
-       COACH – MESSAGES & UI
-       ========================= */
-    const coachMessages = {
-      welcome: "Bonjour ! 👋 Je suis votre coach personnel. Commençons par définir votre premier objectif. Que souhaitez-vous accomplir ?",
-      firstObjective: "Excellent choix ! 🎯 Je vais générer un plan d'action personnalisé pour vous aider à atteindre cet objectif. Voici mes recommandations :",
-      progress: "Bravo pour vos progrès ! 🌟 Continuez sur cette lancée. Voici ce que je recommande pour la suite :",
-      motivation: "Je remarque que vous n'avez pas mis à jour vos objectifs récemment. 💪 Prenons quelques minutes pour faire le point ensemble !",
-      celebration: "Félicitations ! 🎉 Vous avez atteint un objectif important. Êtes-vous prêt pour le prochain défi ?"
+    // ---- HELPERS ----
+    const $ = (sel) => document.querySelector(sel);
+    const saveAll = () => {
+      localStorage.setItem('objectives', JSON.stringify(objectives));
+      localStorage.setItem('whirlwinds', JSON.stringify(whirlwinds));
     };
 
-    function toggleCoach() {
-      const panel = document.getElementById('coachPanel');
-      coachVisible = !coachVisible;
-      panel.style.display = coachVisible ? 'block' : 'none';
-    }
-    function updateCoachMessage(type, customMessage = null) {
-      const messageElement = document.getElementById('coachMessage');
-      const message = customMessage || coachMessages[type];
-      messageElement.innerHTML = message;
-      messageElement.classList.add('chat-bubble');
-      setTimeout(() => messageElement.classList.remove('chat-bubble'), 350);
-    }
+    const categoryIcons = { business:'🚀', personal:'🎯', learning:'📚', health:'💪' };
+    const priorityRank = { high:3, medium:2, low:1 };
 
-    function quickObjective(type) {
-      const templates = {
-        business: { title: "Développer mon activité", category: "business", description: "Augmenter mon chiffre d'affaires et développer ma clientèle" },
-        personal: { title: "Améliorer mon équilibre vie-travail", category: "personal", description: "Consacrer plus de temps à ma famille et mes loisirs" },
-        learning: { title: "Apprendre une nouvelle compétence", category: "learning", description: "Maîtriser une nouvelle technologie ou langue" },
-        health: { title: "Améliorer ma condition physique", category: "health", description: "Adopter une routine d'exercice régulière" }
-      };
-      const template = templates[type];
-      document.getElementById('objectiveTitle').value = template.title;
-      document.getElementById('objectiveCategory').value = template.category;
-      document.getElementById('objectiveDescription').value = template.description;
+    // ---- FILTRES & TRI ----
+    const ui = {
+      search: $('#searchInput'),
+      fCat: $('#filterCategory'),
+      fPri: $('#filterPriority'),
+      fSta: $('#filterStatus'),
+      sort: $('#sortBy'),
+      count: $('#filterCount')
+    };
 
-      const deadline = new Date(); deadline.setMonth(deadline.getMonth() + 3);
-      document.getElementById('objectiveDeadline').value = deadline.toISOString().split('T')[0];
+    function applyFilters(list) {
+      const q = ui.search.value.trim().toLowerCase();
+      const cat = ui.fCat.value;
+      const pri = ui.fPri.value;
+      const sta = ui.fSta.value;
 
-      document.getElementById('objectiveModal').classList.remove('hidden');
-      document.getElementById('objectiveModal').classList.add('flex');
-    }
+      let filtered = list.filter(item => {
+        const txt = (item.title + ' ' + (item.description||'') + ' ' + (item.notes||'')).toLowerCase();
+        if (q && !txt.includes(q)) return false;
+        if (cat && item.category !== cat) return false;
+        if (pri && (item.priority || '') !== pri) return false;
+        if (sta) {
+          const isDone = !!item.completed;
+          if (sta === 'open' && isDone) return false;
+          if (sta === 'done' && !isDone) return false;
+        }
+        return true;
+      });
 
-    function addObjective() {
-      document.getElementById('objectiveModal').classList.remove('hidden');
-      document.getElementById('objectiveModal').classList.add('flex');
-    }
-    function closeModal() {
-      document.getElementById('objectiveModal').classList.add('hidden');
-      document.getElementById('objectiveModal').classList.remove('flex');
-      document.getElementById('objectiveForm').reset();
-    }
+      // TRI
+      const [key, dir] = ui.sort.value.split('_');
+      filtered.sort((a,b)=>{
+        const mul = dir === 'asc' ? 1 : -1;
+        if (key === 'deadline') {
+          const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+          const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+          return (da - db) * mul;
+        }
+        if (key === 'progress') return ((a.progress||0) - (b.progress||0)) * mul;
+        if (key === 'priority') return ((priorityRank[a.priority||'low']) - (priorityRank[b.priority||'low'])) * mul;
+        // createdAt
+        return ((new Date(a.createdAt||0).getTime()) - (new Date(b.createdAt||0).getTime())) * mul;
+      });
 
-    /* =========================
-       GÉNÉRATION LIVRABLES/ACTIONS
-       ========================= */
-    function generateDeliverables(objective) {
-      const deliverables = {
-        business: ["Plan d'affaires détaillé","Stratégie marketing","Analyse de la concurrence","Prévisions financières"],
-        personal: ["Planning hebdomadaire optimisé","Liste de priorités personnelles","Routine de bien-être","Objectifs de développement personnel"],
-        learning: ["Programme d'apprentissage structuré","Ressources et supports de cours","Planning de révisions","Projets pratiques"],
-        health: ["Programme d'entraînement personnalisé","Plan nutritionnel équilibré","Suivi des progrès","Objectifs hebdomadaires"]
-      };
-      return deliverables[objective.category] || ["Plan d'action personnalisé"];
+      ui.count.textContent = filtered.length + ' éléments';
+      return filtered;
     }
 
-    function generateActions(objective) {
-      const simpleActions = {
-        business: [
-          { action: "Créer un plan d'affaires simple", description: "Définissez votre idée, votre marché et vos revenus",
-            steps: ["Décrire votre idée en une phrase","Identifier 3 clients potentiels","Calculer vos coûts de base","Définir votre prix de vente"],
-            progress: 0, advancedResources: ["📖 Business Model Canvas - Alexander Osterwalder","📚 The Lean Startup - Eric Ries","🎓 Coursera: Entrepreneurship","🌐 SCORE.org - Mentoring"]
-          },
-          { action: "Analyser la concurrence", description: "Étudiez 5 concurrents directs pour vous positionner",
-            steps: ["Lister 5 concurrents principaux","Analyser leurs prix et services","Identifier leurs points faibles","Définir votre avantage unique"],
-            progress: 0, advancedResources: ["📖 Blue Ocean Strategy","🔍 SEMrush","📊 SimilarWeb","🎯 Five Forces"]
-          },
-          { action: "Définir votre clientèle cible", description: "Créez le profil de votre client idéal",
-            steps: ["Définir l'âge et le sexe","Identifier les besoins principaux","Localiser où ils se trouvent","Comprendre leur budget"],
-            progress: 0, advancedResources: ["📖 The Mom Test","🎯 Persona Templates","📊 Google Analytics","🔬 Jobs-to-be-Done"]
-          }
-        ],
-        personal: [
-          { action: "Organiser votre temps quotidien", description: "Créez une routine qui fonctionne pour vous",
-            steps: ["Noter vos activités actuelles","Identifier 3 priorités quotidiennes","Bloquer du temps pour chaque priorité","Éliminer 2 activités non essentielles"],
-            progress: 0, advancedResources: ["📖 Getting Things Done","⏰ Pomodoro","📱 Todoist/Notion/Trello","🎓 Time Management"]
-          },
-          { action: "Améliorer votre équilibre vie-travail", description: "Définissez des limites claires entre travail et vie privée",
-            steps: ["Fixer des heures de travail précises","Créer un espace de travail dédié","Planifier du temps pour vos loisirs","Apprendre à dire non"],
-            progress: 0, advancedResources: ["📖 4-Hour Workweek","🧘 Mindfulness at Work","📱 Headspace/Calm","🎯 Boundary Setting"]
-          },
-          { action: "Développer une habitude positive", description: "Intégrez une nouvelle habitude bénéfique",
-            steps: ["Choisir une habitude simple","La lier à une habitude existante","Commencer par 2 minutes/jour","Suivre vos progrès"],
-            progress: 0, advancedResources: ["📖 Atomic Habits","🧠 Power of Habit","📱 Habitica/Streaks","🎓 Behavior Change"]
-          }
-        ],
-        learning: [
-          { action: "Apprendre une nouvelle compétence", description: "Maîtrisez les bases en 30 jours",
-            steps: ["Choisir une compétence","Trouver 3 ressources","Pratiquer 30 min/jour","Créer un projet"],
-            progress: 0, advancedResources: ["📖 Peak (Ericsson)","🎓 Coursera/Udemy","🧠 Technique Feynman","📚 Anki (SRS)"]
-          },
-          { action: "Lire plus efficacement", description: "Vitesse & compréhension",
-            steps: ["Mesurer votre vitesse","Réduire la subvocalisation","Utiliser un guide visuel","Pratiquer 15 min/jour"],
-            progress: 0, advancedResources: ["📖 How to Read a Book","⚡ Speed Reading","📱 Spreeder/ReadMe","🎯 SQ3R"]
-          },
-          { action: "Mémoriser plus facilement", description: "Techniques de rétention",
-            steps: ["Associations visuelles","Répétition espacée","Enseigner ce que vous apprenez","Tests réguliers"],
-            progress: 0, advancedResources: ["📖 Moonwalking w/ Einstein","🧠 Memory Palace","📱 Anki/Quizlet","🎓 Learning How to Learn"]
-          }
-        ],
-        health: [
-          { action: "Bouger plus au quotidien", description: "Ajoutez du mouvement",
-            steps: ["Marcher 10 min après repas","Prendre les escaliers","Étirements chaque heure","3 séances/semaine"],
-            progress: 0, advancedResources: ["📖 Spark (Ratey)","💪 7 Minute Workout","🏃 C25K","🎯 HIIT"]
-          },
-          { action: "Améliorer votre alimentation", description: "Habitudes saines",
-            steps: ["Verre d'eau avant repas","Des légumes à chaque repas","Réduire portions 20%","Meal prep"],
-            progress: 0, advancedResources: ["📖 How Not to Die","🥗 Méditerranéenne","📱 MyFitnessPal","🎓 edX Nutrition"]
-          },
-          { action: "Mieux dormir", description: "Sommeil optimal",
-            steps: ["Heure de coucher fixe","Sans écran 1h avant","Chambre fraîche & sombre","Routine de relaxation"],
-            progress: 0, advancedResources: ["📖 Why We Sleep","😴 Sleep Hygiene","📱 Sleep Cycle","🌙 Rythme circadien"]
-          }
-        ]
-      };
-      return simpleActions[objective.category] || [{
-        action: "Définir un plan d'action",
-        description: "Créez un plan simple pour atteindre votre objectif",
-        steps: ["Définir l'objectif précisément","Lister les étapes","Fixer des échéances","Commencer par la première étape"],
-        progress: 0, advancedResources: ["📖 SMART","🎯 OKR","📊 PM Basics","🔄 Agile"]
-      }];
-    }
-
-    /* =========================
-       OBJECTIFS – FORM / RENDER
-       ========================= */
-    document.getElementById('objectiveForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const objective = {
-        id: Date.now(),
-        title: document.getElementById('objectiveTitle').value,
-        category: document.getElementById('objectiveCategory').value,
-        deadline: document.getElementById('objectiveDeadline').value,
-        description: document.getElementById('objectiveDescription').value,
-        progress: 0, completed: false, createdAt: new Date(),
-        deliverables: [], actions: []
-      };
-      objective.deliverables = generateDeliverables(objective);
-      objective.actions = generateActions(objective);
-
-      objectives.push(objective);
-      saveToStorage();
-
-      renderObjectives();
-      renderDeliverables();
-      renderActions();
-      updateStats();
-      closeModal();
-
-      if (objectives.length === 1) updateCoachMessage('firstObjective');
-      else updateCoachMessage('progress');
-    });
-
+    // ---- RENDUS ----
     function renderObjectives() {
-      const container = document.getElementById('objectivesList');
-      if (objectives.length === 0) {
-        container.innerHTML = `
-          <div class="text-center text-gray-500 py-8">
-            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <p>Aucun objectif défini</p>
-            <p class="text-sm">Créez votre premier objectif pour commencer</p>
-          </div>`;
-        return;
-      }
-      container.innerHTML = objectives.map(obj => {
-        const categoryIcons = { business: '🚀', personal: '🎯', learning: '📚', health: '💪' };
-        const daysLeft = Math.ceil((new Date(obj.deadline) - new Date()) / (1000*60*60*24));
-        const isOverdue = daysLeft < 0;
+      const container = $('#objectivesList');
+      container.innerHTML = '';
+      const items = applyFilters(objectives);
+      $('#emptyObjectives').classList.toggle('hidden', items.length !== 0);
+
+      if (items.length === 0) return;
+
+      container.innerHTML = items.map(obj => {
+        const daysLeft = obj.deadline ? Math.ceil((new Date(obj.deadline) - new Date())/86400000) : null;
+        const overdue = daysLeft !== null && daysLeft < 0;
         return `
-          <div class="border border-gray-200 rounded-xl p-4 card-hover">
+          <div class="border rounded-xl p-4 card-hover">
             <div class="flex items-start justify-between mb-3">
-              <div class="flex items-start space-x-3">
-                <span class="text-2xl">${categoryIcons[obj.category] || '🎯'}</span>
+              <div class="flex items-start gap-3">
+                <span class="text-2xl">${categoryIcons[obj.category]||'🎯'}</span>
                 <div>
-                  <h4 class="font-semibold text-gray-900">${obj.title}</h4>
-                  <p class="text-sm text-gray-600">${obj.description || ''}</p>
+                  <h4 class="font-semibold text-gray-900">${escapeHTML(obj.title)}</h4>
+                  <p class="text-sm text-gray-600">${escapeHTML(obj.description||'')}</p>
                 </div>
               </div>
               <div class="text-right">
-                <span class="text-sm ${isOverdue ? 'text-red-600' : 'text-gray-600'}">
-                  ${isOverdue ? `${Math.abs(daysLeft)} jours de retard` : `${daysLeft} jours restants`}
+                ${obj.deadline ? `<span class="text-xs text-gray-500 block">${obj.deadline}</span>`:''}
+                <span class="text-sm ${overdue ? 'text-red-600':'text-gray-600'}">
+                  ${obj.deadline ? (overdue ? `${Math.abs(daysLeft)}j de retard` : `${daysLeft}j restants`) : '-'}
                 </span>
               </div>
             </div>
+
             <div class="mb-3">
               <div class="flex justify-between text-sm mb-1">
                 <span class="text-gray-600">Progression</span>
-                <span class="font-medium">${obj.progress}%</span>
+                <span class="font-medium">${obj.progress||0}%</span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-primary h-2 rounded-full transition-all duration-300" style="width:${obj.progress}%"></div>
+                <div class="bg-primary h-2 rounded-full transition-all" style="width:${obj.progress||0}%"></div>
               </div>
             </div>
-            <div class="flex space-x-2">
-              <button onclick="updateProgress(${obj.id}, -10)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm">-10%</button>
-              <button onclick="updateProgress(${obj.id}, 10)" class="px-3 py-1 bg-primary text-white hover:bg-blue-600 rounded text-sm">+10%</button>
-              <button onclick="completeObjective(${obj.id})" class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm">Terminé</button>
-              <button onclick="deleteObjective(${obj.id})" class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm">Supprimer</button>
+
+            <div class="flex flex-wrap gap-2">
+              <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" onclick="updateProgress(${obj.id}, -10)">-10%</button>
+              <button class="px-3 py-1 bg-primary text-white hover:bg-blue-600 rounded text-sm" onclick="updateProgress(${obj.id}, 10)">+10%</button>
+              <button class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm" onclick="completeObjective(${obj.id})">Terminé</button>
+              <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" onclick="deleteObjective(${obj.id})">Supprimer</button>
             </div>
-          </div>`;
+          </div>
+        `;
       }).join('');
     }
 
-    function renderDeliverables() {
-      const container = document.getElementById('deliverablesList');
-      if (objectives.length === 0) {
-        container.innerHTML = `
-          <div class="text-center text-gray-500 py-8">
-            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clip-rule="evenodd"/>
-            </svg>
-            <p>Aucun livrable généré</p>
-            <p class="text-sm">Créez un objectif pour voir les livrables</p>
-          </div>`;
-        return;
-      }
-      container.innerHTML = objectives.map(obj => `
-        <div class="mb-4">
-          <h4 class="font-medium text-gray-900 mb-2">${obj.title}</h4>
-          <div class="space-y-2">
-            ${obj.deliverables.map(del => `
-              <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
-                <svg class="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clip-rule="evenodd"/>
-                </svg>
-                <span class="text-sm text-gray-700">${del}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `).join('');
-    }
+    function renderWhirlwinds() {
+      const activeC = $('#activeWhirlwinds');
+      const doneC = $('#completedWhirlwinds');
 
-    function renderActions() {
-      const container = document.getElementById('actionsList');
-      if (objectives.length === 0) {
-        container.innerHTML = `
-          <div class="text-center text-gray-500 py-8">
-            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
-            </svg>
-            <p>Aucune action recommandée</p>
-            <p class="text-sm">Le coach analysera vos objectifs</p>
-          </div>`;
-        return;
-      }
-      const latest = objectives[objectives.length - 1];
-      container.innerHTML = `
-        <div class="space-y-4">
-          ${latest.actions.map((a, index) => `
-            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <div class="flex items-start space-x-3">
-                <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">${index+1}</div>
-                <div class="flex-1">
-                  <h4 class="font-semibold text-gray-900 mb-1">${a.action}</h4>
-                  <p class="text-sm text-gray-600 mb-3">${a.description}</p>
-                  <div class="mb-3">
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-gray-600">Progression</span>
-                      <span class="font-medium">${a.progress}%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                      <div class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width:${a.progress}%"></div>
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <h5 class="text-xs font-medium text-gray-900 mb-2">Étapes à suivre :</h5>
-                    <div class="space-y-1">
-                      ${a.steps.map((step, si) => `
-                        <label class="flex items-start space-x-2 text-xs text-gray-700 cursor-pointer">
-                          <input type="checkbox" onchange="updateActionProgress(${index}, ${si})" class="mt-1 w-3 h-3 text-green-600 rounded">
-                          <span>${step}</span>
-                        </label>
-                      `).join('')}
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <button onclick="toggleAdvancedResources(${index})" class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full hover:bg-purple-200 transition-colors">
-                      📚 Ressources pour aller plus loin
-                    </button>
-                    <div id="advancedResources${index}" class="hidden mt-2 bg-white rounded-lg p-3 border border-purple-200">
-                      <h5 class="font-medium text-gray-900 mb-2 text-xs">Pour approfondir :</h5>
-                      <div class="space-y-1 text-xs text-gray-700">
-                        ${a.advancedResources.map(r => `
-                          <div class="flex items-start space-x-2">
-                            <span class="text-purple-600">•</span><span>${r}</span>
-                          </div>
-                        `).join('')}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Action recommandée</span>
-                    <button onclick="markActionCompleted(${index})" class="text-xs text-primary hover:text-blue-600 font-medium">✓ Action terminée</button>
-                  </div>
-                </div>
+      const active = applyFilters(whirlwinds.filter(w=>!w.completed));
+      const done = applyFilters(whirlwinds.filter(w=>w.completed));
+
+      // Actifs
+      activeC.innerHTML = active.length ? active.map(w => {
+        const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline) - new Date())/86400000) : null;
+        const overdue = daysLeft !== null && daysLeft < 0;
+        const priorityColors = { high:'border-red-500 bg-red-50', medium:'border-yellow-500 bg-yellow-50', low:'border-green-500 bg-green-50' };
+        const priorityLabels = { high:'🔴 Haute', medium:'🟡 Moyenne', low:'🟢 Basse' };
+        const cats = { management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢' };
+
+        return `
+          <div class="border-l-4 ${priorityColors[w.priority||'low']} p-4 rounded-lg">
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">${cats[w.category]||'📌'}</span>
+                <h4 class="font-medium text-gray-900">${escapeHTML(w.title)}</h4>
+                ${w.createdBy === 'manager' ? '<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">👔 Responsable</span>' : ''}
+              </div>
+              <span class="text-xs ${overdue ? 'text-red-600':'text-gray-600'}">
+                ${w.deadline ? (overdue ? `${Math.abs(daysLeft)}j retard` : `${daysLeft}j restants`) : '-'}
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">${escapeHTML(w.notes||'')}</p>
+            <div class="flex items-center justify-between">
+              <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">${priorityLabels[w.priority||'low']}</span>
+              <div class="space-x-2">
+                <button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700" onclick="completeWhirlwind(${w.id})">✓ Terminé</button>
+                <button class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200" onclick="deleteWhirlwind(${w.id})">Supprimer</button>
               </div>
             </div>
-          `).join('')}
-        </div>`;
-    }
+          </div>
+        `;
+      }).join('') : `<div class="text-sm text-gray-500">Aucune action en cours</div>`;
 
-    function updateActionProgress(actionIndex, stepIndex) {
-      const latestObjective = objectives[objectives.length - 1];
-      const action = latestObjective.actions[actionIndex];
-      // recompute based on checkboxes visible (ids are dynamic by index)
-      // simpler: incrementally compute with count of checked in DOM for that action
-      const boxes = Array.from(document.querySelectorAll('#actionsList input[type="checkbox"]'))
-        .filter(el => el.onchange && el.getAttribute('onchange').startsWith(`updateActionProgress(${actionIndex},`));
-      const checked = boxes.filter(b => b.checked).length;
-      action.progress = Math.round((checked / action.steps.length) * 100);
-      saveToStorage();
-      renderActions();
-    }
-
-    function toggleAdvancedResources(index) {
-      const el = document.getElementById(`advancedResources${index}`);
-      el.classList.toggle('hidden');
-    }
-    function markActionCompleted(actionIndex) {
-      const latestObjective = objectives[objectives.length - 1];
-      const action = latestObjective.actions[actionIndex];
-      action.progress = 100;
-      saveToStorage();
-      renderActions();
-      updateCoachMessage('celebration', '🎉 Excellent travail ! Vous avez terminé cette action. Continuez sur cette lancée !');
-    }
-
-    function updateProgress(id, change) {
-      const o = objectives.find(x => x.id === id);
-      if (!o) return;
-      o.progress = Math.max(0, Math.min(100, o.progress + change));
-      if (o.progress === 100) { o.completed = true; updateCoachMessage('celebration'); }
-      saveToStorage();
-      renderObjectives();
-      updateStats();
-    }
-    function completeObjective(id) {
-      const o = objectives.find(x => x.id === id);
-      if (!o) return;
-      o.progress = 100; o.completed = true;
-      saveToStorage();
-      renderObjectives();
-      updateStats();
-      updateCoachMessage('celebration');
-    }
-    function deleteObjective(id) {
-      objectives = objectives.filter(x => x.id !== id);
-      saveToStorage();
-      renderObjectives();
-      renderDeliverables();
-      renderActions();
-      updateStats();
+      // Terminés
+      doneC.innerHTML = done.length ? done.slice(-10).map(w => `
+        <div class="border p-3 rounded-lg bg-gray-50 opacity-80">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm">✅</span>
+            <h4 class="text-sm font-medium text-gray-700 line-through">${escapeHTML(w.title)}</h4>
+          </div>
+          <p class="text-xs text-gray-500">${escapeHTML(w.notes||'')}</p>
+        </div>
+      `).join('') : `<div class="text-sm text-gray-500">Aucune action terminée</div>`;
     }
 
     function updateStats() {
       const total = objectives.length;
-      const completed = objectives.filter(o => o.completed).length;
-      const avg = total ? Math.round(objectives.reduce((s,o) => s + o.progress, 0)/total) : 0;
+      const completed = objectives.filter(o=>o.completed).length;
+      const avg = total ? Math.round(objectives.reduce((s,o)=>s+(o.progress||0),0)/total) : 0;
 
-      document.getElementById('totalObjectives').textContent = total;
-      document.getElementById('completedObjectives').textContent = completed;
-      document.getElementById('completedCount').textContent = `${completed}/${total}`;
-      document.getElementById('averageProgress').textContent = `${avg}%`;
-      document.getElementById('globalProgress').textContent = `${avg}%`;
+      $('#completedCount').textContent = `${completed}/${total}`;
+      $('#globalProgress').textContent = `${avg}%`;
 
-      const circle = document.getElementById('progressCircle');
-      const circumference = 2 * Math.PI * 56;
-      circle.style.strokeDashoffset = (circumference - (avg/100) * circumference);
+      const circle = $('#progressCircle');
+      const circ = 2 * Math.PI * 56;
+      circle.style.strokeDashoffset = (circ - (avg/100)*circ);
 
-      document.getElementById('daysActive').textContent = Math.max(1, total * 7);
-      document.getElementById('currentStreak').textContent = `${Math.min(total * 3, 30)} jours`;
-
-      if (objectives.length > 0) {
-        const next = objectives.filter(o => !o.completed).sort((a,b) => new Date(a.deadline)-new Date(b.deadline))[0];
-        if (next) {
-          const days = Math.ceil((new Date(next.deadline) - new Date()) / (1000*60*60*24));
-          document.getElementById('nextDeadline').textContent = `${days} jours`;
-        } else {
-          document.getElementById('nextDeadline').textContent = `-`;
-        }
+      $('#currentStreak').textContent = `${Math.min(total*3, 30)} jours`;
+      if (objectives.length) {
+        const next = objectives.filter(o=>!o.completed && o.deadline)
+                               .sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
+        $('#nextDeadline').textContent = next ? `${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours` : '-';
       } else {
-        document.getElementById('nextDeadline').textContent = `-`;
+        $('#nextDeadline').textContent = '-';
       }
     }
 
-    /* =========================
-       TOURBILLONS – FORM / RENDER
-       ========================= */
-    function addWhirlwind() {
-      document.getElementById('whirlwindModal').classList.remove('hidden');
-      document.getElementById('whirlwindModal').classList.add('flex');
-      const d = new Date(); d.setMonth(d.getMonth() + 1);
-      document.getElementById('whirlwindDeadline').value = d.toISOString().split('T')[0];
+    // ---- ACTIONS OHI ----
+    function updateProgress(id, delta) {
+      const o = objectives.find(x=>x.id===id);
+      if (!o) return;
+      o.progress = Math.max(0, Math.min(100, (o.progress||0)+delta));
+      if (o.progress === 100) o.completed = true;
+      saveAll(); renderObjectives(); updateStats();
     }
-    function closeWhirlwindModal() {
-      document.getElementById('whirlwindModal').classList.add('hidden');
-      document.getElementById('whirlwindModal').classList.remove('flex');
-      document.getElementById('whirlwindForm').reset();
+    function completeObjective(id) {
+      const o = objectives.find(x=>x.id===id);
+      if (!o) return;
+      o.progress = 100; o.completed = true;
+      saveAll(); renderObjectives(); updateStats();
     }
-    function toggleManagerMode() {
+    function deleteObjective(id) {
+      objectives = objectives.filter(x=>x.id!==id);
+      saveAll(); renderObjectives(); updateStats();
+    }
+
+    // ---- ACTIONS TOURBILLON ----
+    function completeWhirlwind(id) {
+      const w = whirlwinds.find(x=>x.id===id);
+      if (!w) return;
+      w.completed = true;
+      saveAll(); renderWhirlwinds();
+    }
+    function deleteWhirlwind(id) {
+      whirlwinds = whirlwinds.filter(x=>x.id!==id);
+      saveAll(); renderWhirlwinds();
+    }
+
+    // ---- FORMULAIRES ----
+    const objectiveModal = $('#objectiveModal');
+    const whirlwindModal = $('#whirlwindModal');
+
+    $('#newObjectiveBtn').addEventListener('click', ()=>{
+      $('#objectiveForm').reset();
+      objectiveModal.classList.remove('hidden'); objectiveModal.classList.add('flex');
+    });
+    $('#cancelObjective').addEventListener('click', ()=>{ objectiveModal.classList.add('hidden'); objectiveModal.classList.remove('flex'); });
+
+    $('#newWhirlwindBtn').addEventListener('click', ()=>{
+      $('#whirlwindForm').reset();
+      // défaut: échéance +1 mois
+      const d = new Date(); d.setMonth(d.getMonth()+1);
+      $('#whirlwindDeadline').value = d.toISOString().split('T')[0];
+      whirlwindModal.classList.remove('hidden'); whirlwindModal.classList.add('flex');
+    });
+    $('#cancelWhirlwind').addEventListener('click', ()=>{ whirlwindModal.classList.add('hidden'); whirlwindModal.classList.remove('flex'); });
+
+    $('#objectiveForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const obj = {
+        id: Date.now(),
+        title: $('#objectiveTitle').value.trim(),
+        category: $('#objectiveCategory').value,
+        deadline: $('#objectiveDeadline').value || null,
+        description: $('#objectiveDescription').value.trim(),
+        progress: 0,
+        completed: false,
+        createdAt: new Date().toISOString(),
+        priority: null // pour filtres cohérents, laissé à null
+      };
+      objectives.push(obj); saveAll();
+      objectiveModal.classList.add('hidden'); objectiveModal.classList.remove('flex');
+      renderObjectives(); updateStats();
+    });
+
+    $('#whirlwindForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const w = {
+        id: Date.now(),
+        title: $('#whirlwindTitle').value.trim(),
+        category: $('#whirlwindCategory').value,
+        priority: $('#whirlwindPriority').value,
+        deadline: $('#whirlwindDeadline').value || null,
+        notes: $('#whirlwindNotes').value.trim(),
+        completed: false,
+        createdAt: new Date().toISOString(),
+        createdBy: managerMode ? 'manager':'user'
+      };
+      whirlwinds.push(w); saveAll();
+      whirlwindModal.classList.add('hidden'); whirlwindModal.classList.remove('flex');
+      renderWhirlwinds();
+    });
+
+    // ---- MANAGER MODE ----
+    $('#toggleManagerBtn').addEventListener('click', ()=>{
       managerMode = !managerMode;
-      const btn = document.getElementById('managerModeBtn');
+      const btn = $('#toggleManagerBtn');
       if (managerMode) {
         btn.textContent = '👤 Mode Utilisateur';
         btn.classList.remove('bg-gray-200','text-gray-700');
         btn.classList.add('bg-orange-600','text-white');
-        updateCoachMessage('motivation','👔 Mode Responsable activé ! Vous pouvez maintenant suggérer des actions futures à votre équipe.');
       } else {
         btn.textContent = '👔 Mode Responsable';
-        btn.classList.remove('bg-orange-600','text-white');
         btn.classList.add('bg-gray-200','text-gray-700');
-        updateCoachMessage('motivation','👤 Retour au mode utilisateur. Concentrez-vous sur vos objectifs personnels.');
+        btn.classList.remove('bg-orange-600','text-white');
       }
-    }
-    function generateManagerSuggestions() {
-      const list = [
-        { title: "Révision des processus qualité", category: "operations", priority: "high", notes: "Audit des procédures actuelles et identification des améliorations possibles" },
-        { title: "Formation équipe sur nouvelles technologies", category: "hr", priority: "medium", notes: "Planifier sessions de formation pour maintenir la compétitivité" },
-        { title: "Analyse des coûts opérationnels", category: "finance", priority: "high", notes: "Identifier les postes de dépenses optimisables" },
-        { title: "Réunion stratégique trimestrielle", category: "strategy", priority: "medium", notes: "Faire le point sur les objectifs et ajuster la stratégie" }
+    });
+
+    // ---- RECHERCHE (debounce) & FILTRES ----
+    ;['input','change'].forEach(ev=>{
+      ui.search.addEventListener(ev, debounce(()=>{
+        renderObjectives(); renderWhirlwinds();
+      }, 200));
+    });
+    [ui.fCat, ui.fPri, ui.fSta, ui.sort].forEach(el=>{
+      el.addEventListener('change', ()=>{ renderObjectives(); renderWhirlwinds(); });
+    });
+
+    function debounce(fn, d){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), d); } }
+    function escapeHTML(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
+
+    // ---- EXPORTS ----
+    $('#exportCsvBtn').addEventListener('click', ()=>{
+      const rows = [
+        ['Type','Titre','Catégorie','Priorité','Échéance','Progression','Statut','Créé le']
       ];
-      return list[Math.floor(Math.random()*list.length)];
-    }
-    document.getElementById('whirlwindForm').addEventListener('submit', function(e){
-      e.preventDefault();
-      const w = {
-        id: Date.now(),
-        title: document.getElementById('whirlwindTitle').value,
-        category: document.getElementById('whirlwindCategory').value,
-        priority: document.getElementById('whirlwindPriority').value,
-        deadline: document.getElementById('whirlwindDeadline').value,
-        notes: document.getElementById('whirlwindNotes').value,
-        completed: false, createdAt: new Date(),
-        createdBy: managerMode ? 'manager' : 'user'
-      };
-      whirlwinds.push(w);
-      saveToStorage();
-      renderWhirlwinds();
-      closeWhirlwindModal();
-      updateCoachMessage('motivation', managerMode
-        ? '👔 Action ajoutée avec succès ! Votre équipe sera notifiée de cette nouvelle priorité.'
-        : '🌪️ Nouveau tourbillon ajouté ! Gardez le focus sur cette action pour ne pas vous disperser.');
+
+      const objRows = applyFilters(objectives).map(o=>[
+        'OHI', o.title, o.category||'', '', o.deadline||'', (o.progress||0)+'%', o.completed?'Terminé':'En cours', o.createdAt||''
+      ]);
+      const whRows = applyFilters(whirlwinds).map(w=>[
+        'Tourbillon', w.title, w.category||'', w.priority||'', w.deadline||'', '', w.completed?'Terminé':'En cours', w.createdAt||''
+      ]);
+
+      const data = rows.concat(objRows, whRows);
+      const csv = data.map(r=>r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'dashboard_export.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
     });
 
-    function renderWhirlwinds() {
-      const activeC = document.getElementById('activeWhirlwinds');
-      const completedC = document.getElementById('completedWhirlwinds');
-      const active = whirlwinds.filter(w => !w.completed);
-      const done = whirlwinds.filter(w => w.completed);
+    $('#exportPdfBtn').addEventListener('click', ()=>{
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:'pt', format:'a4' });
 
-      if (active.length === 0) {
-        activeC.innerHTML = `<div class="text-center text-gray-500 py-4"><p class="text-sm">Aucune action en cours</p></div>`;
-      } else {
-        activeC.innerHTML = active.map(w => {
-          const icons = { management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢' };
-          const priorityColors = { high:'border-red-500 bg-red-50', medium:'border-yellow-500 bg-yellow-50', low:'border-green-500 bg-green-50' };
-          const priorityLabels = { high:'🔴 Haute', medium:'🟡 Moyenne', low:'🟢 Basse' };
-          const daysLeft = Math.ceil((new Date(w.deadline) - new Date())/(1000*60*60*24));
-          const isOverdue = daysLeft < 0;
-          return `
-            <div class="border-l-4 ${priorityColors[w.priority]} p-4 rounded-lg">
-              <div class="flex items-start justify-between mb-2">
-                <div class="flex items-center space-x-2">
-                  <span class="text-lg">${icons[w.category] || '⚙️'}</span>
-                  <h4 class="font-medium text-gray-900">${w.title}</h4>
-                  ${w.createdBy === 'manager' ? '<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">👔 Responsable</span>' : ''}
-                </div>
-                <span class="text-xs ${isOverdue ? 'text-red-600' : 'text-gray-600'}">
-                  ${isOverdue ? `${Math.abs(daysLeft)}j retard` : `${daysLeft}j restants`}
-                </span>
-              </div>
-              <p class="text-sm text-gray-600 mb-3">${w.notes || ''}</p>
-              <div class="flex items-center justify-between">
-                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">${priorityLabels[w.priority]}</span>
-                <div class="space-x-2">
-                  <button onclick="completeWhirlwind(${w.id})" class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">✓ Terminé</button>
-                  <button onclick="deleteWhirlwind(${w.id})" class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200">Supprimer</button>
-                </div>
-              </div>
-            </div>`;
-        }).join('');
-      }
+      doc.setFontSize(16);
+      doc.text('Export OHI & Tourbillons', 40, 40);
 
-      if (done.length === 0) {
-        completedC.innerHTML = `<div class="text-center text-gray-500 py-4"><p class="text-sm">Aucune action terminée</p></div>`;
-      } else {
-        completedC.innerHTML = done.slice(-3).map(w => {
-          const icons = { management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢' };
-          return `
-            <div class="border border-gray-200 p-3 rounded-lg bg-gray-50 opacity-75">
-              <div class="flex items-center space-x-2 mb-1">
-                <span class="text-sm">${icons[w.category] || '⚙️'}</span>
-                <h4 class="text-sm font-medium text-gray-700 line-through">${w.title}</h4>
-                <span class="text-xs text-green-600">✓</span>
-              </div>
-              <p class="text-xs text-gray-500">${w.notes || ''}</p>
-            </div>`;
-        }).join('');
-      }
-    }
-
-    function completeWhirlwind(id) {
-      const w = whirlwinds.find(x => x.id === id);
-      if (!w) return;
-      w.completed = true; w.completedAt = new Date();
-      saveToStorage();
-      renderWhirlwinds();
-      updateCoachMessage('celebration', '🎉 Excellent ! Une action de moins dans le tourbillon. Vous gardez le cap !');
-    }
-    function deleteWhirlwind(id) {
-      whirlwinds = whirlwinds.filter(x => x.id !== id);
-      saveToStorage();
-      renderWhirlwinds();
-    }
-    function refreshRecommendations() {
-      if (managerMode && whirlwinds.length < 5) {
-        const s = generateManagerSuggestions();
-        const d = new Date(); d.setMonth(d.getMonth() + 1);
-        const nw = {
-          id: Date.now(), title: s.title, category: s.category, priority: s.priority,
-          deadline: d.toISOString().split('T')[0], notes: s.notes, completed: false,
-          createdAt: new Date(), createdBy: 'manager'
-        };
-        whirlwinds.push(nw);
-        saveToStorage();
-        renderWhirlwinds();
-        updateCoachMessage('motivation',"💡 J'ai ajouté une suggestion d'action basée sur les meilleures pratiques managériales !");
-      } else {
-        updateCoachMessage('motivation', "🔄 Recommandations actualisées ! Concentrez-vous sur vos objectifs actuels avant d'en ajouter de nouveaux.");
-      }
-    }
-
-    /* =========================
-       INITIALISATION
-       ========================= */
-    function initUI() {
-      loadFromStorage();
-      renderObjectives();
-      renderDeliverables();
-      renderActions();
-      renderWhirlwinds();
-      updateStats();
-
-      // Messages périodiques du coach (demo)
-      setInterval(() => {
-        if (objectives.length > 0 && Math.random() > 0.7) {
-          const tips = [
-            "💡 Astuce : Divisez vos grands objectifs en petites étapes quotidiennes !",
-            "🌟 Vous progressez bien ! N'oubliez pas de célébrer vos petites victoires.",
-            "⏰ Il est temps de faire le point sur vos objectifs. Comment vous sentez-vous ?",
-            "🚀 Prêt pour un nouveau défi ? Vos progrès sont impressionnants !",
-            "💪 La constance est la clé du succès. Continuez sur cette lancée !"
-          ];
-          updateCoachMessage('motivation', tips[Math.floor(Math.random()*tips.length)]);
-        }
-      }, 30000);
-    }
-
-    /* =========================
-       AUTH FIREBASE – DÉCONNEXION
-       ========================= */
-    const AFTER_LOGOUT_REDIRECT = './login.html'; // ← change si besoin
-
-    function wireAuth() {
-      const auth = firebase.auth();
-      const userEmailSpan = document.getElementById('userEmail');
-      const logoutBtn = document.getElementById('logoutBtn');
-
-      auth.onAuthStateChanged((user) => {
-        if (user) {
-          userEmailSpan.textContent = user.email || '';
-          logoutBtn.classList.remove('hidden');
-        } else {
-          // Pas connecté → rediriger vers login (si la page existe), sinon recharger
-          if (AFTER_LOGOUT_REDIRECT) {
-            window.location.href = AFTER_LOGOUT_REDIRECT;
-          } else {
-            window.location.reload();
-          }
-        }
+      // OHI
+      const o = applyFilters(objectives).map(x=>[
+        x.title, x.category||'', x.deadline||'', (x.progress||0)+'%', x.completed?'Terminé':'En cours'
+      ]);
+      doc.autoTable({
+        startY: 60,
+        head: [['OHI','Catégorie','Échéance','Progression','Statut']],
+        body: o.length ? o : [['(aucun)','-','-','-','-']]
       });
 
-      logoutBtn.addEventListener('click', async () => {
-        try {
-          await auth.signOut();
-        } catch (e) {
-          console.error('Erreur de déconnexion :', e);
-          // Fallback visuel
-          alert("Déconnexion échouée. Réessayez.");
-        }
+      // Tourbillons
+      const y = doc.lastAutoTable.finalY + 20;
+      const w = applyFilters(whirlwinds).map(x=>[
+        x.title, x.category||'', x.priority||'', x.deadline||'', x.completed?'Terminé':'En cours'
+      ]);
+      doc.autoTable({
+        startY: y,
+        head: [['Tourbillon','Catégorie','Priorité','Échéance','Statut']],
+        body: w.length ? w : [['(aucun)','-','-','-','-']]
       });
-    }
 
-    // Boot
-    document.addEventListener('DOMContentLoaded', () => {
-      initUI();
-      try { wireAuth(); } catch (e) { console.warn("Auth non initialisée (firebase.js requis).", e); }
+      doc.save('dashboard_export.pdf');
     });
+
+    // ---- DÉCONNEXION ----
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userEmail = document.getElementById('userEmail');
+
+    // Affichage email si Firebase Auth dispo
+    try {
+      if (window.firebase?.auth) {
+        firebase.auth().onAuthStateChanged((u)=>{
+          userEmail.textContent = u?.email || '';
+        });
+      }
+    } catch(e){ /* ignore */ }
+
+    logoutBtn.addEventListener('click', async ()=>{
+      // Si Firebase Auth existe, on signOut
+      try {
+        if (window.firebase?.auth) {
+          await firebase.auth().signOut();
+        }
+      } catch(e){ console.warn('SignOut Firebase:', e); }
+      // Fallback: nettoyage local
+      // (on garde objectifs/tourbillons locaux volontairement)
+      window.location.reload();
+    });
+
+    // ---- INIT ----
+    function initDefaults() {
+      // si première fois, initialise des exemples
+      if (!objectives.length && !whirlwinds.length) {
+        const d = new Date(); const threeM = new Date(); threeM.setMonth(threeM.getMonth()+3);
+        objectives = [{
+          id: Date.now(),
+          title: 'Développer mon activité',
+          category: 'business',
+          deadline: threeM.toISOString().split('T')[0],
+          description: 'Augmenter mon chiffre d’affaires',
+          progress: 20,
+          completed: false,
+          createdAt: d.toISOString()
+        }];
+        const oneM = new Date(); oneM.setMonth(oneM.getMonth()+1);
+        whirlwinds = [{
+          id: Date.now()+1,
+          title: 'Lancer une campagne Facebook Ads',
+          category: 'marketing',
+          priority: 'high',
+          deadline: oneM.toISOString().split('T')[0],
+          notes: 'Budget test 200€',
+          completed: false,
+          createdAt: d.toISOString(),
+          createdBy: 'user'
+        }];
+        saveAll();
+      }
+    }
+
+    initDefaults();
+    renderObjectives();
+    renderWhirlwinds();
+    updateStats();
   </script>
 </body>
 </html>
