@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>OHI – Auth + Dashboard</title>
+  <title>OHI – Coach & Dashboard</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -12,176 +14,204 @@
           colors: {
             primary: '#3b82f6',
             secondary: '#8b5cf6',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger:  '#ef4444',
           }
         }
       }
     }
   </script>
+
+  <!-- Police -->
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    html,body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .card-hover { transition: all .25s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,.1); }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 p-6 text-gray-900">
 
-  <!-- === AUTH VIEW === -->
-  <div id="authView" class="max-w-md mx-auto bg-white/95 backdrop-blur-lg shadow-2xl rounded-3xl p-8">
-    <h1 class="text-2xl font-bold mb-2">🔐 Connexion à OHI</h1>
-    <p class="text-sm text-gray-600 mb-6">Identifie-toi pour accéder à ton tableau de bord.</p>
+<body class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="gradient-bg text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold">Coach Objectifs IA</h1>
+            <p class="text-white/80 text-sm">Votre compagnon intelligent pour atteindre vos objectifs</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="headerUserEmail" class="hidden text-sm text-white/90"></span>
+          <button id="logoutBtn" class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl">Déconnexion</button>
+        </div>
+      </div>
+    </div>
+  </header>
 
-    <div class="grid grid-cols-1 gap-3 mb-6">
-      <button id="googleBtn" class="w-full flex items-center justify-center gap-2 bg-white border hover:bg-gray-50 rounded-xl py-3">
-        <span>Se connecter avec Google</span>
-      </button>
-      <button id="microsoftBtn" class="w-full flex items-center justify-center gap-2 bg-white border hover:bg-gray-50 rounded-xl py-3">
-        <span>Se connecter avec Microsoft</span>
-      </button>
+  <!-- ===== AUTH VIEW ===== -->
+  <main id="authView" class="max-w-md mx-auto -mt-10">
+    <div class="bg-white shadow-2xl rounded-3xl p-8 card-hover">
+      <h2 class="text-2xl font-bold mb-2">🔐 Connexion</h2>
+      <p class="text-sm text-gray-600 mb-6">Connectez-vous pour accéder à votre tableau de bord.</p>
+
+      <div class="grid grid-cols-1 gap-3 mb-6">
+        <button id="googleBtn" class="w-full flex items-center justify-center gap-2 bg-white border hover:bg-gray-50 rounded-xl py-3">
+          <span>Se connecter avec Google</span>
+        </button>
+        <button id="microsoftBtn" class="w-full flex items-center justify-center gap-2 bg-white border hover:bg-gray-50 rounded-xl py-3">
+          <span>Se connecter avec Microsoft</span>
+        </button>
+      </div>
+
+      <div class="relative my-6">
+        <div class="border-t"></div>
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-3 text-xs text-gray-500">ou e-mail</span>
+      </div>
+
+      <div class="flex mb-4 rounded-xl bg-gray-100 p-1">
+        <button id="tabLogin"  class="flex-1 py-2 rounded-lg text-sm font-semibold bg-white">Se connecter</button>
+        <button id="tabSignup" class="flex-1 py-2 rounded-lg text-sm font-semibold text-gray-600">Créer un compte</button>
+      </div>
+
+      <!-- Login -->
+      <form id="loginForm" class="grid gap-3">
+        <input id="loginEmail" type="email" placeholder="Email" required class="border rounded-xl p-3">
+        <input id="loginPassword" type="password" placeholder="Mot de passe" required class="border rounded-xl p-3">
+        <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3 font-semibold">Se connecter</button>
+      </form>
+
+      <!-- Signup -->
+      <form id="signupForm" class="grid gap-3 hidden mt-4">
+        <input id="signupEmail" type="email" placeholder="Email" required class="border rounded-xl p-3">
+        <input id="signupPassword" type="password" placeholder="Mot de passe (6+ caractères)" minlength="6" required class="border rounded-xl p-3">
+        <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3 font-semibold">Créer mon compte</button>
+      </form>
+
+      <p id="authError" class="text-sm text-red-600 mt-4 hidden"></p>
+      <p id="authHint" class="text-xs text-gray-500 mt-3">
+        Astuce: si la fenêtre pop-up est bloquée ou si votre domaine n’est pas autorisé, on repassera automatiquement en mode redirection.
+      </p>
+    </div>
+  </main>
+
+  <!-- ===== APP VIEW ===== -->
+  <section id="appView" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Coach -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-primary">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+          <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"/>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            <h3 class="font-semibold text-gray-900">Coach IA</h3>
+            <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">En ligne</span>
+          </div>
+          <div id="coachMessage" class="text-gray-700 mb-4">Bonjour 👋 ! Commence par définir ton 1er objectif.</div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="quickObjective('business')" class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm hover:bg-blue-200">🚀 Business</button>
+            <button onclick="quickObjective('personal')" class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-sm hover:bg-green-200">🎯 Personnel</button>
+            <button onclick="quickObjective('learning')" class="px-3 py-1.5 bg-purple-100 text-purple-800 rounded-lg text-sm hover:bg-purple-200">📚 Apprentissage</button>
+            <button onclick="quickObjective('health')" class="px-3 py-1.5 bg-orange-100 text-orange-800 rounded-lg text-sm hover:bg-orange-200">💪 Santé</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="relative my-6">
-      <div class="border-t"></div>
-      <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-3 text-xs text-gray-500">ou avec e-mail</span>
+    <!-- Form OHI -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm mb-8 card-hover">
+      <h2 class="text-xl font-semibold mb-4">➕ Ajouter un OHI</h2>
+      <form id="addOhiForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input id="title" type="text" placeholder="Titre" required class="border rounded-xl p-3"/>
+        <input id="deadline" type="date" required class="border rounded-xl p-3"/>
+        <textarea id="description" placeholder="Description" class="border rounded-xl p-3 md:col-span-2"></textarea>
+        <select id="priority" class="border rounded-xl p-3">
+          <option value="high">Haute</option>
+          <option value="medium">Moyenne</option>
+          <option value="low">Basse</option>
+        </select>
+        <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3">Ajouter</button>
+      </form>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex mb-4 rounded-xl bg-gray-100 p-1">
-      <button id="tabLogin" class="flex-1 py-2 rounded-lg text-sm font-semibold bg-white">Se connecter</button>
-      <button id="tabSignup" class="flex-1 py-2 rounded-lg text-sm font-semibold text-gray-600">Créer un compte</button>
+    <!-- Liste OHI -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm mb-8 card-hover">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">📌 Mes OHI</h2>
+      </div>
+      <div id="ohiList" class="space-y-4"></div>
     </div>
 
-    <!-- Login form -->
-    <form id="loginForm" class="grid gap-3">
-      <input id="loginEmail" type="email" placeholder="Email" required class="border rounded-xl p-3">
-      <input id="loginPassword" type="password" placeholder="Mot de passe" required class="border rounded-xl p-3">
-      <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3 font-semibold">Se connecter</button>
-    </form>
-
-    <!-- Signup form -->
-    <form id="signupForm" class="grid gap-3 hidden mt-4">
-      <input id="signupEmail" type="email" placeholder="Email" required class="border rounded-xl p-3">
-      <input id="signupPassword" type="password" placeholder="Mot de passe (6+ caractères)" minlength="6" required class="border rounded-xl p-3">
-      <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3 font-semibold">Créer mon compte</button>
-    </form>
-
-    <p id="authError" class="text-sm text-red-600 mt-4 hidden"></p>
-  </div>
-
-  <!-- === DASHBOARD VIEW === -->
-  <div id="appView" class="hidden">
-    <div class="max-w-6xl mx-auto bg-white/90 backdrop-blur-lg shadow-2xl rounded-3xl p-8">
-      <header class="flex justify-between items-center mb-6">
+    <!-- Tourbillons -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm mb-2 border-l-4 border-orange-500 card-hover">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">🌪️</div>
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">Tourbillons du mois</h3>
+            <p class="text-sm text-gray-600">Actions importantes à forte dispersion</p>
+          </div>
+        </div>
+        <button id="addWhirlwindBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700">+ Nouveau tourbillon</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h1 class="text-2xl font-bold">📊 Tableau de bord OHI</h1>
-          <p id="userEmail" class="text-sm text-gray-600"></p>
+          <h4 class="font-medium text-gray-900 mb-3">En cours</h4>
+          <div id="activeWhirlwinds" class="space-y-3"></div>
         </div>
-        <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl">Déconnexion</button>
-      </header>
-
-      <!-- Coach + boutons rapides -->
-      <section class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-primary">
-        <div class="flex items-start gap-4">
-          <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-            <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"/></svg>
-          </div>
-          <div class="flex-1">
-            <div class="flex items-center gap-2 mb-2">
-              <h3 class="font-semibold text-gray-900">Coach IA</h3>
-              <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">En ligne</span>
-            </div>
-            <div id="coachMessage" class="text-gray-700 mb-4">
-              Bonjour 👋 ! Commence par définir ton 1er objectif.
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button onclick="quickObjective('business')" class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm hover:bg-blue-200">🚀 Business</button>
-              <button onclick="quickObjective('personal')" class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-sm hover:bg-green-200">🎯 Personnel</button>
-              <button onclick="quickObjective('learning')" class="px-3 py-1.5 bg-purple-100 text-purple-800 rounded-lg text-sm hover:bg-purple-200">📚 Apprentissage</button>
-              <button onclick="quickObjective('health')" class="px-3 py-1.5 bg-orange-100 text-orange-800 rounded-lg text-sm hover:bg-orange-200">💪 Santé</button>
-            </div>
-          </div>
+        <div>
+          <h4 class="font-medium text-gray-900 mb-3">Terminés</h4>
+          <div id="completedWhirlwinds" class="space-y-3"></div>
         </div>
-      </section>
-
-      <!-- Formulaire OHI -->
-      <section class="mb-8">
-        <h2 class="text-xl font-semibold mb-4">➕ Ajouter un OHI</h2>
-        <form id="addOhiForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input id="title" type="text" placeholder="Titre" required class="border rounded-xl p-3"/>
-          <input id="deadline" type="date" required class="border rounded-xl p-3"/>
-          <textarea id="description" placeholder="Description" class="border rounded-xl p-3 md:col-span-2"></textarea>
-          <select id="priority" class="border rounded-xl p-3">
-            <option value="high">Haute</option>
-            <option value="medium">Moyenne</option>
-            <option value="low">Basse</option>
-          </select>
-          <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3">Ajouter</button>
-        </form>
-      </section>
-
-      <!-- Liste des OHI -->
-      <section class="mb-10">
-        <h2 class="text-xl font-semibold mb-4">📌 Mes OHI</h2>
-        <div id="ohiList" class="space-y-4"></div>
-      </section>
-
-      <!-- Tourbillons -->
-      <section class="bg-white rounded-2xl p-6 shadow-sm mb-2 border-l-4 border-orange-500">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <span>🌪️</span>
-            </div>
-            <div>
-              <h3 class="text-xl font-semibold text-gray-900">Tourbillons du mois</h3>
-              <p class="text-sm text-gray-600">Actions importantes à forte dispersion</p>
-            </div>
-          </div>
-          <button id="addWhirlwindBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700">+ Nouveau tourbillon</button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 class="font-medium text-gray-900 mb-3">En cours</h4>
-            <div id="activeWhirlwinds" class="space-y-3"></div>
-          </div>
-          <div>
-            <h4 class="font-medium text-gray-900 mb-3">Terminés</h4>
-            <div id="completedWhirlwinds" class="space-y-3"></div>
-          </div>
-        </div>
-      </section>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Firebase compat -->
+  <!-- Firebase Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <!-- Ta config Firebase -->
+  <!-- Ta config (doit appeler firebase.initializeApp({...})) -->
   <script src="./firebase.js"></script>
 
   <script>
-    // ----- Helpers UI
+    // === Utils UI
     const $ = (id) => document.getElementById(id);
     const show = (el) => el.classList.remove('hidden');
     const hide = (el) => el.classList.add('hidden');
 
-    // ----- Firebase init (depuis firebase.js)
-    // firebase.initializeApp({...}) doit déjà être appelé dans firebase.js
+    // === Firebase handles
+    if (!window.firebase?.apps?.length) {
+      console.warn('⚠️ firebase.initializeApp() doit être appelé dans firebase.js');
+    }
     const auth = firebase.auth();
-    const db = firebase.firestore();
+    const db   = firebase.firestore();
     auth.useDeviceLanguage();
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-    // ----- AUTH LOGIC
+    // === AUTH UI
     const authView = $('authView');
     const appView  = $('appView');
-    const authError = $('authError');
+    const headerUserEmail = $('headerUserEmail');
+    const logoutBtn = $('logoutBtn');
 
-    // Tabs
-    const tabLogin = $('tabLogin');
-    const tabSignup = $('tabSignup');
+    const authError = $('authError');
     const loginForm = $('loginForm');
     const signupForm = $('signupForm');
+    const tabLogin  = $('tabLogin');
+    const tabSignup = $('tabSignup');
 
     tabLogin.onclick = () => {
       tabLogin.classList.add('bg-white'); tabLogin.classList.remove('text-gray-600');
@@ -204,28 +234,28 @@
         'auth/email-already-in-use': "Un compte existe déjà avec cet e-mail.",
         'auth/user-not-found': "Aucun compte avec cet e-mail.",
         'auth/wrong-password': "Mot de passe incorrect.",
-        'auth/invalid-credential': "Identifiants invalides ou expirés.",
-        'auth/popup-closed-by-user': "Fenêtre fermée avant la connexion.",
+        'auth/invalid-credential': "Identifiants invalides/mal formés ou expirés.",
+        'auth/unauthorized-domain': "Domaine non autorisé : ajoute-le dans Firebase > Authentication > Authorized domains.",
+        'auth/popup-blocked': "Pop-up bloqué par le navigateur.",
         'auth/operation-not-allowed': "Provider non activé dans Firebase.",
       };
       return map[code] || "Une erreur s'est produite. Réessaie.";
     }
 
-    // Email login
+    // Email: login
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       authError.classList.add('hidden');
-      const email = $('loginEmail').value.trim();
-      const pass  = $('loginPassword').value;
       try {
-        await auth.signInWithEmailAndPassword(email, pass);
+        await auth.signInWithEmailAndPassword($('loginEmail').value.trim(), $('loginPassword').value);
       } catch (err) {
+        console.error('login error', err);
         authError.textContent = "Erreur: " + humanizeAuthError(err.code);
         authError.classList.remove('hidden');
       }
     });
 
-    // Email signup
+    // Email: signup
     signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       authError.classList.add('hidden');
@@ -233,7 +263,6 @@
       const pass  = $('signupPassword').value;
       try {
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
-        // Crée le profil
         await db.collection('users').doc(cred.user.uid).set({
           email,
           provider: 'password',
@@ -241,55 +270,77 @@
           lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
       } catch (err) {
+        console.error('signup error', err);
         authError.textContent = "Erreur: " + humanizeAuthError(err.code);
         authError.classList.remove('hidden');
       }
     });
 
-    // Google / Microsoft
+    // Google with popup -> fallback redirect
     $('googleBtn').onclick = async () => {
-      authError.classList.add('hidden');
       const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       try {
-        const cred = await auth.signInWithPopup(provider);
-        await db.collection('users').doc(cred.user.uid).set({
-          email: cred.user.email,
-          displayName: cred.user.displayName || null,
-          photoURL: cred.user.photoURL || null,
-          provider: 'google',
-          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        await auth.signInWithPopup(provider);
       } catch (err) {
-        authError.textContent = "Erreur: " + humanizeAuthError(err.code);
-        authError.classList.remove('hidden');
+        console.warn('Google popup failed, fallback to redirect', err);
+        if (['auth/popup-blocked','auth/unauthorized-domain','auth/operation-not-allowed'].includes(err.code)) {
+          await auth.signInWithRedirect(provider);
+        } else {
+          authError.textContent = "Erreur: " + humanizeAuthError(err.code);
+          authError.classList.remove('hidden');
+        }
       }
     };
 
+    // Microsoft with popup -> fallback redirect
     $('microsoftBtn').onclick = async () => {
-      authError.classList.add('hidden');
       const provider = new firebase.auth.OAuthProvider('microsoft.com');
       provider.setCustomParameters({ prompt: 'select_account' });
       try {
-        const cred = await auth.signInWithPopup(provider);
-        await db.collection('users').doc(cred.user.uid).set({
-          email: cred.user.email,
-          displayName: cred.user.displayName || null,
-          photoURL: cred.user.photoURL || null,
-          provider: 'microsoft',
-          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        await auth.signInWithPopup(provider);
       } catch (err) {
-        authError.textContent = "Erreur: " + humanizeAuthError(err.code);
-        authError.classList.remove('hidden');
+        console.warn('Microsoft popup failed, fallback to redirect', err);
+        if (['auth/popup-blocked','auth/unauthorized-domain','auth/operation-not-allowed'].includes(err.code)) {
+          await auth.signInWithRedirect(provider);
+        } else {
+          authError.textContent = "Erreur: " + humanizeAuthError(err.code);
+          authError.classList.remove('hidden');
+        }
       }
     };
 
-    // State
+    // Handle redirect result (after fallback)
+    auth.getRedirectResult().then(async (result) => {
+      if (result?.user) {
+        await db.collection('users').doc(result.user.uid).set({
+          email: result.user.email || null,
+          displayName: result.user.displayName || null,
+          photoURL: result.user.photoURL || null,
+          provider: (result.providerId || 'redirect'),
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
+    }).catch((err) => {
+      console.error('redirect result error', err);
+      authError.textContent = "Erreur: " + humanizeAuthError(err.code);
+      authError.classList.remove('hidden');
+    });
+
+    // State change
     auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // Maj profil minimal
+        // UI header
+        headerUserEmail.textContent = user.email || '';
+        show(headerUserEmail);
+        show(logoutBtn);
+
+        // show app
+        hide(authView);
+        show(appView);
+
+        // profile upsert
         await db.collection('users').doc(user.uid).set({
           email: user.email || null,
           displayName: user.displayName || null,
@@ -297,28 +348,39 @@
           lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
 
-        $('userEmail').textContent = user.email || '';
-        hide(authView);
-        show(appView);
         attachDataBindings(user.uid);
       } else {
         show(authView);
         hide(appView);
+        hide(headerUserEmail);
+        hide(logoutBtn);
       }
     });
 
-    // Déconnexion
-    $('logoutBtn').onclick = () => auth.signOut();
+    // Logout
+    logoutBtn.onclick = () => auth.signOut();
 
-    // ---------- DASHBOARD DATA (OHI + Tourbillons) ----------
-    let unsubOHIs = null;
-    let unsubWhirlwinds = null;
+    // ===== DATA (OHI + Tourbillons) =====
+    let unsubOHIs = null, unsubWhirlwinds = null;
+
+    function pill(priority) {
+      if (priority === 'high')   return 'bg-red-100 text-red-700';
+      if (priority === 'medium') return 'bg-yellow-100 text-yellow-700';
+      return 'bg-green-100 text-green-700';
+    }
+    function labelFor(p) {
+      return p === 'high' ? '🔴 Haute' : p === 'medium' ? '🟡 Moyenne' : '🟢 Basse';
+    }
+    function iconFor(cat) {
+      const map = { management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢' };
+      return map[cat] || '🗂️';
+    }
 
     function attachDataBindings(uid) {
-      // OHI – live list
+      // OHI
       unsubOHIs && unsubOHIs();
       unsubOHIs = db.collection('users').doc(uid).collection('ohis')
-        .orderBy('createdAt', 'desc')
+        .orderBy('createdAt','desc')
         .onSnapshot((snap) => {
           const list = $('ohiList'); list.innerHTML = '';
           if (snap.empty) {
@@ -339,33 +401,29 @@
                 <span class="px-2 py-1 text-xs rounded-full ${pill(o.priority)}">
                   ${o.priority === 'high' ? 'Haute' : o.priority === 'medium' ? 'Moyenne' : 'Basse'}
                 </span>
-              </div>
-            `;
+              </div>`;
             list.appendChild(el);
           });
         });
 
-      // Tourbillons – live list
+      // Tourbillons
       unsubWhirlwinds && unsubWhirlwinds();
       unsubWhirlwinds = db.collection('users').doc(uid).collection('whirlwinds')
-        .orderBy('createdAt', 'desc')
+        .orderBy('createdAt','desc')
         .onSnapshot((snap) => {
           const active = $('activeWhirlwinds'); active.innerHTML = '';
-          const done = $('completedWhirlwinds'); done.innerHTML = '';
-
+          const done   = $('completedWhirlwinds'); done.innerHTML = '';
           if (snap.empty) {
             active.innerHTML = '<div class="p-3 text-gray-500 border rounded-xl">Rien en cours.</div>';
-            done.innerHTML = '<div class="p-3 text-gray-500 border rounded-xl">Rien de terminé.</div>';
+            done.innerHTML   = '<div class="p-3 text-gray-500 border rounded-xl">Rien de terminé.</div>';
             return;
           }
-
           snap.forEach(doc => {
             const w = doc.data();
-            const card = document.createElement('div');
             const overdue = w.deadline ? (new Date(w.deadline) - new Date() < 0) : false;
+            const card = document.createElement('div');
             card.className = `border-l-4 p-4 rounded-lg ${w.completed ? 'bg-gray-50 border-gray-300 opacity-80' :
-              w.priority === 'high' ? 'bg-red-50 border-red-500' :
-              w.priority === 'medium' ? 'bg-yellow-50 border-yellow-500' : 'bg-green-50 border-green-500'}`;
+              w.priority==='high'?'bg-red-50 border-red-500': w.priority==='medium'?'bg-yellow-50 border-yellow-500':'bg-green-50 border-green-500'}`;
             card.innerHTML = `
               <div class="flex items-start justify-between mb-2">
                 <div class="flex items-center gap-2">
@@ -380,8 +438,7 @@
               <div class="flex items-center justify-between">
                 <span class="text-xs px-2 py-1 rounded-full bg-white/70 border">${labelFor(w.priority)}</span>
                 ${w.completed ? '' : `<button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">✓ Terminé</button>`}
-              </div>
-            `;
+              </div>`;
             if (!w.completed) {
               card.querySelector('button')?.addEventListener('click', async () => {
                 await db.collection('users').doc(uid).collection('whirlwinds').doc(doc.id).set({
@@ -397,24 +454,10 @@
         });
     }
 
-    function pill(priority) {
-      if (priority === 'high') return 'bg-red-100 text-red-700';
-      if (priority === 'medium') return 'bg-yellow-100 text-yellow-700';
-      return 'bg-green-100 text-green-700';
-    }
-    function labelFor(p) {
-      return p === 'high' ? '🔴 Haute' : p === 'medium' ? '🟡 Moyenne' : '🟢 Basse';
-    }
-    function iconFor(cat) {
-      const map = { management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢' };
-      return map[cat] || '🗂️';
-    }
-
-    // Ajouter un OHI
+    // Ajout OHI
     $('addOhiForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const user = auth.currentUser;
-      if (!user) return;
+      const user = auth.currentUser; if (!user) return;
       const data = {
         title: $('title').value.trim(),
         description: $('description').value.trim(),
@@ -426,26 +469,24 @@
       e.target.reset();
     });
 
-    // Ajout rapide d’objectif via Coach
+    // Coach – préremplit le formulaire
     function quickObjective(type) {
-      const defaults = {
+      const d = {
         business: { title: "Développer mon activité", description: "Augmenter le CA et la clientèle", priority: "high" },
-        personal: { title: "Équilibre vie-travail", description: "Mieux répartir mes priorités", priority: "medium" },
-        learning: { title: "Nouvelle compétence", description: "Apprendre une techno/langue", priority: "medium" },
-        health: { title: "Meilleure condition physique", description: "Routine sport + alimentation", priority: "high" },
-      };
-      const d = defaults[type] || defaults.business;
+        personal: { title: "Équilibre vie-travail",    description: "Mieux répartir mes priorités",   priority: "medium" },
+        learning: { title: "Nouvelle compétence",      description: "Apprendre une techno/langue",   priority: "medium" },
+        health:   { title: "Forme & énergie",          description: "Routine sport + alimentation",  priority: "high" },
+      }[type] || { title:"Nouvel objectif", description:"", priority:"medium" };
       $('title').value = d.title;
       $('description').value = d.description;
       $('priority').value = d.priority;
-      $('coachMessage').textContent = "Parfait, complète la date puis clique sur Ajouter ✅";
+      $('coachMessage').textContent = "Parfait, choisis une date puis clique sur Ajouter ✅";
     }
 
-    // Bouton "Nouveau tourbillon"
+    // Ajout Tourbillon minimal (bouton)
     $('addWhirlwindBtn').addEventListener('click', async () => {
       const user = auth.currentUser; if (!user) return;
-      // Exemple minimal : ajoute un brouillon rapide
-      const deadline = new Date(); deadline.setMonth(deadline.getMonth() + 1);
+      const deadline = new Date(); deadline.setMonth(deadline.getMonth()+1);
       await db.collection('users').doc(user.uid).collection('whirlwinds').add({
         title: "Nouvelle action prioritaire",
         category: "operations",
