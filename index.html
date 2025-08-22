@@ -1,213 +1,461 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion - Tableau de Bord OHI</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OHI – Auth + Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: { primary: '#2563eb', secondary: '#7c3aed', accent: '#059669' }
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#8b5cf6',
+          }
         }
       }
     }
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .glass-effect { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.95); }
-    .floating-animation { animation: float 6s ease-in-out infinite; }
-    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
-    .pulse-dot { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .slide-in { animation: slideIn 0.8s ease-out; }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    input:focus, select:focus { outline: none !important; z-index: 1; }
-    input, select, button { position: relative; z-index: 2; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; }
   </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 p-6 text-gray-900">
 
-  <!-- Firebase compat (simple HTML setup) -->
+  <!-- === AUTH VIEW === -->
+  <div id="authView" class="max-w-md mx-auto bg-white/95 backdrop-blur-lg shadow-2xl rounded-3xl p-8">
+    <h1 class="text-2xl font-bold mb-2">🔐 Connexion à OHI</h1>
+    <p class="text-sm text-gray-600 mb-6">Identifie-toi pour accéder à ton tableau de bord.</p>
+
+    <div class="grid grid-cols-1 gap-3 mb-6">
+      <button id="googleBtn" class="w-full flex items-center justify-center gap-2 bg-white border hover:bg-gray-50 rounded-xl py-3">
+        <span>Se connecter avec Google</span>
+      </button>
+      <button id="microsoftBtn" class="w-full flex items-center justify-center gap-2 bg-white border hover:bg-gray-50 rounded-xl py-3">
+        <span>Se connecter avec Microsoft</span>
+      </button>
+    </div>
+
+    <div class="relative my-6">
+      <div class="border-t"></div>
+      <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-3 text-xs text-gray-500">ou avec e-mail</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex mb-4 rounded-xl bg-gray-100 p-1">
+      <button id="tabLogin" class="flex-1 py-2 rounded-lg text-sm font-semibold bg-white">Se connecter</button>
+      <button id="tabSignup" class="flex-1 py-2 rounded-lg text-sm font-semibold text-gray-600">Créer un compte</button>
+    </div>
+
+    <!-- Login form -->
+    <form id="loginForm" class="grid gap-3">
+      <input id="loginEmail" type="email" placeholder="Email" required class="border rounded-xl p-3">
+      <input id="loginPassword" type="password" placeholder="Mot de passe" required class="border rounded-xl p-3">
+      <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3 font-semibold">Se connecter</button>
+    </form>
+
+    <!-- Signup form -->
+    <form id="signupForm" class="grid gap-3 hidden mt-4">
+      <input id="signupEmail" type="email" placeholder="Email" required class="border rounded-xl p-3">
+      <input id="signupPassword" type="password" placeholder="Mot de passe (6+ caractères)" minlength="6" required class="border rounded-xl p-3">
+      <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3 font-semibold">Créer mon compte</button>
+    </form>
+
+    <p id="authError" class="text-sm text-red-600 mt-4 hidden"></p>
+  </div>
+
+  <!-- === DASHBOARD VIEW === -->
+  <div id="appView" class="hidden">
+    <div class="max-w-6xl mx-auto bg-white/90 backdrop-blur-lg shadow-2xl rounded-3xl p-8">
+      <header class="flex justify-between items-center mb-6">
+        <div>
+          <h1 class="text-2xl font-bold">📊 Tableau de bord OHI</h1>
+          <p id="userEmail" class="text-sm text-gray-600"></p>
+        </div>
+        <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl">Déconnexion</button>
+      </header>
+
+      <!-- Coach + boutons rapides -->
+      <section class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-primary">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"/></svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-2">
+              <h3 class="font-semibold text-gray-900">Coach IA</h3>
+              <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">En ligne</span>
+            </div>
+            <div id="coachMessage" class="text-gray-700 mb-4">
+              Bonjour 👋 ! Commence par définir ton 1er objectif.
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="quickObjective('business')" class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm hover:bg-blue-200">🚀 Business</button>
+              <button onclick="quickObjective('personal')" class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-sm hover:bg-green-200">🎯 Personnel</button>
+              <button onclick="quickObjective('learning')" class="px-3 py-1.5 bg-purple-100 text-purple-800 rounded-lg text-sm hover:bg-purple-200">📚 Apprentissage</button>
+              <button onclick="quickObjective('health')" class="px-3 py-1.5 bg-orange-100 text-orange-800 rounded-lg text-sm hover:bg-orange-200">💪 Santé</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Formulaire OHI -->
+      <section class="mb-8">
+        <h2 class="text-xl font-semibold mb-4">➕ Ajouter un OHI</h2>
+        <form id="addOhiForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input id="title" type="text" placeholder="Titre" required class="border rounded-xl p-3"/>
+          <input id="deadline" type="date" required class="border rounded-xl p-3"/>
+          <textarea id="description" placeholder="Description" class="border rounded-xl p-3 md:col-span-2"></textarea>
+          <select id="priority" class="border rounded-xl p-3">
+            <option value="high">Haute</option>
+            <option value="medium">Moyenne</option>
+            <option value="low">Basse</option>
+          </select>
+          <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3">Ajouter</button>
+        </form>
+      </section>
+
+      <!-- Liste des OHI -->
+      <section class="mb-10">
+        <h2 class="text-xl font-semibold mb-4">📌 Mes OHI</h2>
+        <div id="ohiList" class="space-y-4"></div>
+      </section>
+
+      <!-- Tourbillons -->
+      <section class="bg-white rounded-2xl p-6 shadow-sm mb-2 border-l-4 border-orange-500">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+              <span>🌪️</span>
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold text-gray-900">Tourbillons du mois</h3>
+              <p class="text-sm text-gray-600">Actions importantes à forte dispersion</p>
+            </div>
+          </div>
+          <button id="addWhirlwindBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700">+ Nouveau tourbillon</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="font-medium text-gray-900 mb-3">En cours</h4>
+            <div id="activeWhirlwinds" class="space-y-3"></div>
+          </div>
+          <div>
+            <h4 class="font-medium text-gray-900 mb-3">Terminés</h4>
+            <div id="completedWhirlwinds" class="space-y-3"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-</head>
-<body class="min-h-screen gradient-bg flex items-center justify-center p-4">
-  <!-- Décor -->
-  <div class="absolute inset-0 overflow-hidden pointer-events-none">
-    <div class="absolute top-20 left-20 w-32 h-32 bg-white bg-opacity-10 rounded-full floating-animation"></div>
-    <div class="absolute top-40 right-32 w-24 h-24 bg-white bg-opacity-5 rounded-full floating-animation" style="animation-delay: -2s;"></div>
-    <div class="absolute bottom-32 left-1/4 w-40 h-40 bg-white bg-opacity-5 rounded-full floating-animation" style="animation-delay: -4s;"></div>
-  </div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <!-- Container -->
-  <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-    <!-- Branding -->
-    <div class="text-white space-y-8 slide-in">
-      <div class="space-y-4">
-        <div class="flex items-center space-x-4">
-          <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-4xl font-bold">Tableau de Bord OHI</h1>
-            <p class="text-xl text-white text-opacity-80">Objectifs Hautement Importants</p>
-          </div>
-        </div>
-        <p class="text-lg text-white text-opacity-90 leading-relaxed">
-          Transformez vos objectifs stratégiques en résultats concrets avec l'aide de notre IA spécialisée en performance d'entreprise.
-        </p>
-      </div>
-
-      <div class="space-y-3">
-        <h3 class="text-xl font-semibold mb-2">Fonctionnalités IA avancées :</h3>
-        <div class="flex items-center space-x-3">
-          <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
-          <span class="text-white text-opacity-90">🎯 Analyse prédictive des objectifs</span>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-2 h-2 bg-blue-400 rounded-full pulse-dot" style="animation-delay: 0.5s;"></div>
-          <span class="text-white text-opacity-90">📊 Recommandations personnalisées</span>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-2 h-2 bg-purple-400 rounded-full pulse-dot" style="animation-delay: 1s;"></div>
-          <span class="text-white text-opacity-90">🤖 Coach IA disponible 24/7</span>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-2 h-2 bg-yellow-400 rounded-full pulse-dot" style="animation-delay: 1.5s;"></div>
-          <span class="text-white text-opacity-90">📈 Suivi en temps réel des performances</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Formulaire -->
-    <div class="slide-in" style="animation-delay: .2s">
-      <div class="bg-white rounded-3xl shadow-2xl p-8 glass-effect backdrop-blur-sm">
-        <div class="text-center mb-8">
-          <div class="w-20 h-20 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">Connexion Entreprise</h2>
-          <p class="text-gray-600">Accédez à votre tableau de bord OHI personnalisé</p>
-        </div>
-
-        <!-- Statut -->
-        <div id="statusBox" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 mb-6 text-sm text-red-700"></div>
-
-        <form id="loginForm" class="space-y-6">
-          <div>
-            <label for="companyType" class="block text-sm font-medium text-gray-700 mb-2">Type d'organisation</label>
-            <select id="companyType" name="companyType" required class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent bg-white">
-              <option value="">Sélectionnez votre secteur</option>
-              <option value="startup">🚀 Startup / Scale-up</option>
-              <option value="sme">🏢 PME (10-250 employés)</option>
-              <option value="corporate">🏛️ Grande entreprise (+250 employés)</option>
-              <option value="nonprofit">🤝 Organisation à but non lucratif</option>
-              <option value="consulting">💼 Cabinet de conseil</option>
-              <option value="agency">🎨 Agence créative</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email professionnel</label>
-            <div class="relative">
-              <input type="email" id="email" name="email" required autocomplete="email" class="w-full border border-gray-300 rounded-xl px-4 py-3 pl-12 focus:ring-2 focus:ring-primary focus:border-transparent bg-white" placeholder="votre.nom@entreprise.com">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
-            <div class="relative">
-              <input type="password" id="password" name="password" required autocomplete="current-password" class="w-full border border-gray-300 rounded-xl px-4 py-3 pl-12 pr-12 focus:ring-2 focus:ring-primary focus:border-transparent bg-white" placeholder="••••••••">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"/>
-                </svg>
-              </div>
-              <button type="button" id="togglePwd" class="absolute inset-y-0 right-0 pr-4 flex items-center z-10">
-                <svg id="eyeIcon" class="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                  <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <label class="flex items-center cursor-pointer">
-              <input type="checkbox" id="remember" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2">
-              <span class="ml-2 text-sm text-gray-600">Se souvenir de moi</span>
-            </label>
-            <button type="button" id="btnForgot" class="text-sm text-primary hover:text-blue-700 font-medium">Mot de passe oublié ?</button>
-          </div>
-
-          <button type="submit" class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 focus:ring-4 focus:ring-blue-200 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
-            <span class="flex items-center justify-center space-x-2">
-              <span>Se connecter au tableau de bord OHI</span>
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
-              </svg>
-            </span>
-          </button>
-
-          <div class="relative">
-            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
-            <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-white text-gray-500">Ou continuer avec</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <button type="button" id="btnMicrosoft" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-              <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path fill="#00BCF2" d="M0 0h11.377v11.372H0z"/>
-                <path fill="#00BCF2" d="M12.623 0H24v11.372H12.623z"/>
-                <path fill="#00BCF2" d="M0 12.623h11.377V24H0z"/>
-                <path fill="#00BCF2" d="M12.623 12.623H24V24H12.623z"/>
-              </svg>
-              <span class="text-sm font-medium">Microsoft</span>
-            </button>
-            <button type="button" id="btnGoogle" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-              <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              <span class="text-sm font-medium">Google</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal de chargement -->
-  <div id="loadingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
-      <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-      </div>
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">Connexion en cours...</h3>
-      <p class="text-sm text-gray-600">Merci de patienter</p>
-    </div>
-  </div>
-
+  <!-- Ta config Firebase -->
   <script src="./firebase.js"></script>
-  <script src="./app.js"></script>
+
+  <script>
+    // ----- Helpers UI
+    const $ = (id) => document.getElementById(id);
+    const show = (el) => el.classList.remove('hidden');
+    const hide = (el) => el.classList.add('hidden');
+
+    // ----- Firebase init (depuis firebase.js)
+    // firebase.initializeApp({...}) doit déjà être appelé dans firebase.js
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    auth.useDeviceLanguage();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    // ----- AUTH LOGIC
+    const authView = $('authView');
+    const appView  = $('appView');
+    const authError = $('authError');
+
+    // Tabs
+    const tabLogin = $('tabLogin');
+    const tabSignup = $('tabSignup');
+    const loginForm = $('loginForm');
+    const signupForm = $('signupForm');
+
+    tabLogin.onclick = () => {
+      tabLogin.classList.add('bg-white'); tabLogin.classList.remove('text-gray-600');
+      tabSignup.classList.remove('bg-white'); tabSignup.classList.add('text-gray-600');
+      signupForm.classList.add('hidden'); loginForm.classList.remove('hidden');
+      authError.classList.add('hidden');
+    };
+    tabSignup.onclick = () => {
+      tabSignup.classList.add('bg-white'); tabSignup.classList.remove('text-gray-600');
+      tabLogin.classList.remove('bg-white'); tabLogin.classList.add('text-gray-600');
+      loginForm.classList.add('hidden'); signupForm.classList.remove('hidden');
+      authError.classList.add('hidden');
+    };
+
+    function humanizeAuthError(code) {
+      const map = {
+        'auth/invalid-email': "Adresse e-mail invalide.",
+        'auth/missing-password': "Mot de passe requis.",
+        'auth/weak-password': "Mot de passe trop faible (6+ caractères).",
+        'auth/email-already-in-use': "Un compte existe déjà avec cet e-mail.",
+        'auth/user-not-found': "Aucun compte avec cet e-mail.",
+        'auth/wrong-password': "Mot de passe incorrect.",
+        'auth/invalid-credential': "Identifiants invalides ou expirés.",
+        'auth/popup-closed-by-user': "Fenêtre fermée avant la connexion.",
+        'auth/operation-not-allowed': "Provider non activé dans Firebase.",
+      };
+      return map[code] || "Une erreur s'est produite. Réessaie.";
+    }
+
+    // Email login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authError.classList.add('hidden');
+      const email = $('loginEmail').value.trim();
+      const pass  = $('loginPassword').value;
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+      } catch (err) {
+        authError.textContent = "Erreur: " + humanizeAuthError(err.code);
+        authError.classList.remove('hidden');
+      }
+    });
+
+    // Email signup
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authError.classList.add('hidden');
+      const email = $('signupEmail').value.trim();
+      const pass  = $('signupPassword').value;
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        // Crée le profil
+        await db.collection('users').doc(cred.user.uid).set({
+          email,
+          provider: 'password',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      } catch (err) {
+        authError.textContent = "Erreur: " + humanizeAuthError(err.code);
+        authError.classList.remove('hidden');
+      }
+    });
+
+    // Google / Microsoft
+    $('googleBtn').onclick = async () => {
+      authError.classList.add('hidden');
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const cred = await auth.signInWithPopup(provider);
+        await db.collection('users').doc(cred.user.uid).set({
+          email: cred.user.email,
+          displayName: cred.user.displayName || null,
+          photoURL: cred.user.photoURL || null,
+          provider: 'google',
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      } catch (err) {
+        authError.textContent = "Erreur: " + humanizeAuthError(err.code);
+        authError.classList.remove('hidden');
+      }
+    };
+
+    $('microsoftBtn').onclick = async () => {
+      authError.classList.add('hidden');
+      const provider = new firebase.auth.OAuthProvider('microsoft.com');
+      provider.setCustomParameters({ prompt: 'select_account' });
+      try {
+        const cred = await auth.signInWithPopup(provider);
+        await db.collection('users').doc(cred.user.uid).set({
+          email: cred.user.email,
+          displayName: cred.user.displayName || null,
+          photoURL: cred.user.photoURL || null,
+          provider: 'microsoft',
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      } catch (err) {
+        authError.textContent = "Erreur: " + humanizeAuthError(err.code);
+        authError.classList.remove('hidden');
+      }
+    };
+
+    // State
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // Maj profil minimal
+        await db.collection('users').doc(user.uid).set({
+          email: user.email || null,
+          displayName: user.displayName || null,
+          photoURL: user.photoURL || null,
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        $('userEmail').textContent = user.email || '';
+        hide(authView);
+        show(appView);
+        attachDataBindings(user.uid);
+      } else {
+        show(authView);
+        hide(appView);
+      }
+    });
+
+    // Déconnexion
+    $('logoutBtn').onclick = () => auth.signOut();
+
+    // ---------- DASHBOARD DATA (OHI + Tourbillons) ----------
+    let unsubOHIs = null;
+    let unsubWhirlwinds = null;
+
+    function attachDataBindings(uid) {
+      // OHI – live list
+      unsubOHIs && unsubOHIs();
+      unsubOHIs = db.collection('users').doc(uid).collection('ohis')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snap) => {
+          const list = $('ohiList'); list.innerHTML = '';
+          if (snap.empty) {
+            list.innerHTML = '<div class="p-4 text-gray-500 border rounded-xl">Aucun OHI pour l’instant.</div>';
+            return;
+          }
+          snap.forEach(doc => {
+            const o = doc.data();
+            const el = document.createElement('div');
+            el.className = 'border rounded-xl p-4 bg-white';
+            el.innerHTML = `
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-semibold">${o.title || ''}</h4>
+                  <p class="text-sm text-gray-600">${o.description || ''}</p>
+                  <p class="text-xs text-gray-500 mt-1">Échéance: ${o.deadline || '-'}</p>
+                </div>
+                <span class="px-2 py-1 text-xs rounded-full ${pill(o.priority)}">
+                  ${o.priority === 'high' ? 'Haute' : o.priority === 'medium' ? 'Moyenne' : 'Basse'}
+                </span>
+              </div>
+            `;
+            list.appendChild(el);
+          });
+        });
+
+      // Tourbillons – live list
+      unsubWhirlwinds && unsubWhirlwinds();
+      unsubWhirlwinds = db.collection('users').doc(uid).collection('whirlwinds')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snap) => {
+          const active = $('activeWhirlwinds'); active.innerHTML = '';
+          const done = $('completedWhirlwinds'); done.innerHTML = '';
+
+          if (snap.empty) {
+            active.innerHTML = '<div class="p-3 text-gray-500 border rounded-xl">Rien en cours.</div>';
+            done.innerHTML = '<div class="p-3 text-gray-500 border rounded-xl">Rien de terminé.</div>';
+            return;
+          }
+
+          snap.forEach(doc => {
+            const w = doc.data();
+            const card = document.createElement('div');
+            const overdue = w.deadline ? (new Date(w.deadline) - new Date() < 0) : false;
+            card.className = `border-l-4 p-4 rounded-lg ${w.completed ? 'bg-gray-50 border-gray-300 opacity-80' :
+              w.priority === 'high' ? 'bg-red-50 border-red-500' :
+              w.priority === 'medium' ? 'bg-yellow-50 border-yellow-500' : 'bg-green-50 border-green-500'}`;
+            card.innerHTML = `
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <span>${iconFor(w.category)}</span>
+                  <h4 class="font-medium text-gray-900">${w.title || ''}</h4>
+                </div>
+                <span class="text-xs ${overdue ? 'text-red-600' : 'text-gray-600'}">
+                  ${w.deadline ? (overdue ? 'En retard' : w.deadline) : ''}
+                </span>
+              </div>
+              <p class="text-sm text-gray-600 mb-3">${w.notes || ''}</p>
+              <div class="flex items-center justify-between">
+                <span class="text-xs px-2 py-1 rounded-full bg-white/70 border">${labelFor(w.priority)}</span>
+                ${w.completed ? '' : `<button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">✓ Terminé</button>`}
+              </div>
+            `;
+            if (!w.completed) {
+              card.querySelector('button')?.addEventListener('click', async () => {
+                await db.collection('users').doc(uid).collection('whirlwinds').doc(doc.id).set({
+                  completed: true,
+                  completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+              });
+              active.appendChild(card);
+            } else {
+              done.appendChild(card);
+            }
+          });
+        });
+    }
+
+    function pill(priority) {
+      if (priority === 'high') return 'bg-red-100 text-red-700';
+      if (priority === 'medium') return 'bg-yellow-100 text-yellow-700';
+      return 'bg-green-100 text-green-700';
+    }
+    function labelFor(p) {
+      return p === 'high' ? '🔴 Haute' : p === 'medium' ? '🟡 Moyenne' : '🟢 Basse';
+    }
+    function iconFor(cat) {
+      const map = { management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢' };
+      return map[cat] || '🗂️';
+    }
+
+    // Ajouter un OHI
+    $('addOhiForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      if (!user) return;
+      const data = {
+        title: $('title').value.trim(),
+        description: $('description').value.trim(),
+        deadline: $('deadline').value || null,
+        priority: $('priority').value || 'medium',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await db.collection('users').doc(user.uid).collection('ohis').add(data);
+      e.target.reset();
+    });
+
+    // Ajout rapide d’objectif via Coach
+    function quickObjective(type) {
+      const defaults = {
+        business: { title: "Développer mon activité", description: "Augmenter le CA et la clientèle", priority: "high" },
+        personal: { title: "Équilibre vie-travail", description: "Mieux répartir mes priorités", priority: "medium" },
+        learning: { title: "Nouvelle compétence", description: "Apprendre une techno/langue", priority: "medium" },
+        health: { title: "Meilleure condition physique", description: "Routine sport + alimentation", priority: "high" },
+      };
+      const d = defaults[type] || defaults.business;
+      $('title').value = d.title;
+      $('description').value = d.description;
+      $('priority').value = d.priority;
+      $('coachMessage').textContent = "Parfait, complète la date puis clique sur Ajouter ✅";
+    }
+
+    // Bouton "Nouveau tourbillon"
+    $('addWhirlwindBtn').addEventListener('click', async () => {
+      const user = auth.currentUser; if (!user) return;
+      // Exemple minimal : ajoute un brouillon rapide
+      const deadline = new Date(); deadline.setMonth(deadline.getMonth() + 1);
+      await db.collection('users').doc(user.uid).collection('whirlwinds').add({
+        title: "Nouvelle action prioritaire",
+        category: "operations",
+        priority: "medium",
+        deadline: deadline.toISOString().split('T')[0],
+        notes: "Détaille l’action, les personnes impliquées et l’impact attendu.",
+        completed: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+  </script>
 </body>
 </html>
