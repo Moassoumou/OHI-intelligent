@@ -1,213 +1,759 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion - Tableau de Bord OHI</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coach Objectifs IA — OHI, Tourbillons & Rappels</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { primary: '#2563eb', secondary: '#7c3aed', accent: '#059669' }
-        }
-      }
-    }
+    tailwind.config = { theme:{ extend:{ colors:{ primary:'#3b82f6', secondary:'#8b5cf6', success:'#10b981', warning:'#f59e0b', danger:'#ef4444' } } } }
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .glass-effect { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.95); }
-    .floating-animation { animation: float 6s ease-in-out infinite; }
-    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
-    .pulse-dot { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .slide-in { animation: slideIn 0.8s ease-out; }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    input:focus, select:focus { outline: none !important; z-index: 1; }
-    input, select, button { position: relative; z-index: 2; }
+    body{font-family:'Inter',sans-serif}
+    .gradient-bg{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+    .card-hover{transition:.2s ease}
+    .card-hover:hover{transform:translateY(-2px);box-shadow:0 10px 25px -8px rgba(0,0,0,.12)}
+    .progress-ring{transform:rotate(-90deg)}
+    .chip{background:#eef2ff;color:#4338ca}
+    .chip.active{background:#dbeafe;color:#1d4ed8}
+    /* Toasts */
+    #toasts{position:fixed;right:1rem;top:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
   </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
 
-  <!-- Firebase compat (simple HTML setup) -->
+  <!-- HEADER -->
+  <header class="gradient-bg text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/20 rounded-xl grid place-items-center">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold">Coach Objectifs IA</h1>
+            <p class="text-white/80 text-sm">OHI + 🌪️ Tourbillons — Firestore + Rappels</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="notifyBtn" class="hidden sm:inline bg-white/20 hover:bg-white/30 transition-colors text-white px-3 py-2 rounded-lg">🔔 Activer les notifications</button>
+          <span id="userEmail" class="hidden sm:inline text-sm opacity-90"></span>
+          <button id="logoutBtn" class="bg-white/20 hover:bg-white/30 transition-colors text-white px-4 py-2 rounded-lg">Déconnexion</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOOLBAR -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+    <div class="bg-white rounded-2xl shadow-sm border p-4 md:p-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+        <div class="md:col-span-2">
+          <label class="text-xs text-gray-600">Rechercher</label>
+          <div class="relative">
+            <input id="searchInput" type="text" placeholder="Titre, description, commentaire…"
+                   class="w-full border rounded-xl pl-10 pr-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"/>
+            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Catégorie</label>
+          <select id="filterCategory" class="w-full border rounded-xl p-2">
+            <option value="">Toutes</option>
+            <option value="business">🚀 Business</option>
+            <option value="personal">🎯 Personnel</option>
+            <option value="learning">📚 Apprentissage</option>
+            <option value="health">💪 Santé</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Statut</label>
+          <select id="filterStatus" class="w-full border rounded-xl p-2">
+            <option value="">Tous</option>
+            <option value="open">En cours</option>
+            <option value="done">Terminés</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div class="md:col-span-2">
+          <label class="text-xs text-gray-600">Tag</label>
+          <div class="flex gap-2 flex-wrap" id="tagBar"></div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Trier par</label>
+          <select id="sortBy" class="w-full border rounded-xl p-2">
+            <option value="createdAt_desc">Création (récent → ancien)</option>
+            <option value="deadline_asc">Échéance (proche → loin)</option>
+            <option value="progress_desc">Progression (haut → bas)</option>
+            <option value="title_asc">Titre (A → Z)</option>
+          </select>
+        </div>
+        <div class="flex items-end gap-2">
+          <button id="exportCsvBtn" class="w-full border rounded-xl py-2 hover:bg-gray-50">Export CSV</button>
+          <button id="exportPdfBtn" class="w-full border rounded-xl py-2 hover:bg-gray-50">Export PDF</button>
+        </div>
+        <div class="flex items-end justify-end gap-2">
+          <button id="newObjectiveBtn" class="bg-primary text-white px-4 py-2 rounded-xl hover:bg-blue-600">+ OHI</button>
+          <button id="newWhirlwindBtn" class="bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700">+ Tourbillon</button>
+        </div>
+      </div>
+      <div class="mt-2 text-right text-sm text-gray-500"><span id="filterCount">0 élément</span></div>
+    </div>
+  </section>
+
+  <!-- MAIN -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- OHI -->
+      <section class="lg:col-span-2">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border">
+          <h3 class="text-xl font-semibold text-gray-900 mb-6">📌 Mes OHI</h3>
+          <div id="objectivesList" class="space-y-4"></div>
+          <div id="emptyObjectives" class="text-center text-gray-500 py-10 hidden">Aucun OHI pour ces filtres.</div>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <aside>
+        <div class="bg-white rounded-2xl p-6 shadow-sm border">
+          <h3 class="text-xl font-semibold text-gray-900 mb-6">Progression Globale</h3>
+          <div class="flex items-center justify-center mb-6">
+            <div class="relative w-32 h-32">
+              <svg class="w-32 h-32 progress-ring">
+                <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none" stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
+              </svg>
+              <div class="absolute inset-0 grid place-items-center">
+                <span id="globalProgress" class="text-2xl font-bold text-gray-900">0%</span>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between"><span class="text-gray-600">Objectifs complétés</span><span id="completedCount" class="font-medium">0/0</span></div>
+            <div class="flex justify-between"><span class="text-gray-600">Streak actuel</span><span id="currentStreak" class="font-medium text-green-600">0 jours</span></div>
+            <div class="flex justify-between"><span class="text-gray-600">Prochaine échéance</span><span id="nextDeadline" class="font-medium text-orange-600">-</span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Tourbillons -->
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-orange-200">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-orange-100 rounded-lg grid place-items-center">
+            <svg class="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">🌪️ Tourbillons</h3>
+            <p class="text-sm text-gray-600">Actions clés à court terme</p>
+          </div>
+        </div>
+        <button id="toggleManagerBtn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300">👔 Mode Responsable</button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <h4 class="font-medium text-gray-900 mb-3">En cours</h4>
+          <div id="activeWhirlwinds" class="space-y-3"></div>
+        </div>
+        <div>
+          <h4 class="font-medium text-gray-900 mb-3">Terminés</h4>
+          <div id="completedWhirlwinds" class="space-y-3"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODALS -->
+  <div id="objectiveModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+      <h3 class="text-xl font-semibold text-gray-900 mb-6">Créer un OHI</h3>
+      <form id="objectiveForm" class="space-y-4">
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Titre</label><input type="text" id="objectiveTitle" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary" required></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+          <select id="objectiveCategory" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary">
+            <option value="business">🚀 Business</option><option value="personal">🎯 Personnel</option><option value="learning">📚 Apprentissage</option><option value="health">💪 Santé</option>
+          </select></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label><input type="date" id="objectiveDeadline" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary"></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Tags (séparés par des virgules)</label><input type="text" id="objectiveTags" class="w-full border rounded-lg px-3 py-2" placeholder="ex: marketing, Q3"></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Description</label><textarea id="objectiveDescription" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary" placeholder="Décrivez votre objectif…"></textarea></div>
+        <div class="flex items-center gap-2">
+          <input id="objectiveReminders" type="checkbox" class="w-4 h-4 text-blue-600 rounded" checked>
+          <label for="objectiveReminders" class="text-sm text-gray-700">Activer les rappels (J-7 / J-3 / J-1 / jour-J)</label>
+        </div>
+        <div class="flex gap-3 pt-4"><button type="button" id="cancelObjective" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300">Annuler</button><button type="submit" class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-blue-600">Créer</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="whirlwindModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
+      <h3 class="text-xl font-semibold text-gray-900 mb-6">🌪️ Nouveau Tourbillon</h3>
+      <form id="whirlwindForm" class="space-y-4">
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Action</label><input type="text" id="whirlwindTitle" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500" required></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+            <select id="whirlwindCategory" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500">
+              <option value="management">👥 Management</option><option value="finance">💰 Finance</option><option value="operations">⚙️ Opérations</option><option value="strategy">🎯 Stratégie</option><option value="hr">👔 RH</option><option value="communication">📢 Communication</option>
+            </select></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+            <select id="whirlwindPriority" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500">
+              <option value="high">🔴 Haute</option><option value="medium">🟡 Moyenne</option><option value="low">🟢 Basse</option>
+            </select></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label><input type="date" id="whirlwindDeadline" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500"></div>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Notes</label><textarea id="whirlwindNotes" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500" placeholder="Détails, personnes impliquées, ressources nécessaires…"></textarea></div>
+        <div class="flex items-center gap-2">
+          <input id="whirlwindReminders" type="checkbox" class="w-4 h-4 text-orange-600 rounded" checked>
+          <label for="whirlwindReminders" class="text-sm text-gray-700">Activer les rappels (J-7 / J-3 / J-1 / jour-J)</label>
+        </div>
+        <div class="flex gap-3 pt-4"><button type="button" id="cancelWhirlwind" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300">Annuler</button><button type="submit" class="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700">Créer</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div id="toasts"></div>
+
+  <!-- Export PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.3/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-</head>
-<body class="min-h-screen gradient-bg flex items-center justify-center p-4">
-  <!-- Décor -->
-  <div class="absolute inset-0 overflow-hidden pointer-events-none">
-    <div class="absolute top-20 left-20 w-32 h-32 bg-white bg-opacity-10 rounded-full floating-animation"></div>
-    <div class="absolute top-40 right-32 w-24 h-24 bg-white bg-opacity-5 rounded-full floating-animation" style="animation-delay: -2s;"></div>
-    <div class="absolute bottom-32 left-1/4 w-40 h-40 bg-white bg-opacity-5 rounded-full floating-animation" style="animation-delay: -4s;"></div>
-  </div>
-
-  <!-- Container -->
-  <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-    <!-- Branding -->
-    <div class="text-white space-y-8 slide-in">
-      <div class="space-y-4">
-        <div class="flex items-center space-x-4">
-          <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-4xl font-bold">Tableau de Bord OHI</h1>
-            <p class="text-xl text-white text-opacity-80">Objectifs Hautement Importants</p>
-          </div>
-        </div>
-        <p class="text-lg text-white text-opacity-90 leading-relaxed">
-          Transformez vos objectifs stratégiques en résultats concrets avec l'aide de notre IA spécialisée en performance d'entreprise.
-        </p>
-      </div>
-
-      <div class="space-y-3">
-        <h3 class="text-xl font-semibold mb-2">Fonctionnalités IA avancées :</h3>
-        <div class="flex items-center space-x-3">
-          <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
-          <span class="text-white text-opacity-90">🎯 Analyse prédictive des objectifs</span>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-2 h-2 bg-blue-400 rounded-full pulse-dot" style="animation-delay: 0.5s;"></div>
-          <span class="text-white text-opacity-90">📊 Recommandations personnalisées</span>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-2 h-2 bg-purple-400 rounded-full pulse-dot" style="animation-delay: 1s;"></div>
-          <span class="text-white text-opacity-90">🤖 Coach IA disponible 24/7</span>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="w-2 h-2 bg-yellow-400 rounded-full pulse-dot" style="animation-delay: 1.5s;"></div>
-          <span class="text-white text-opacity-90">📈 Suivi en temps réel des performances</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Formulaire -->
-    <div class="slide-in" style="animation-delay: .2s">
-      <div class="bg-white rounded-3xl shadow-2xl p-8 glass-effect backdrop-blur-sm">
-        <div class="text-center mb-8">
-          <div class="w-20 h-20 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">Connexion Entreprise</h2>
-          <p class="text-gray-600">Accédez à votre tableau de bord OHI personnalisé</p>
-        </div>
-
-        <!-- Statut -->
-        <div id="statusBox" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 mb-6 text-sm text-red-700"></div>
-
-        <form id="loginForm" class="space-y-6">
-          <div>
-            <label for="companyType" class="block text-sm font-medium text-gray-700 mb-2">Type d'organisation</label>
-            <select id="companyType" name="companyType" required class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent bg-white">
-              <option value="">Sélectionnez votre secteur</option>
-              <option value="startup">🚀 Startup / Scale-up</option>
-              <option value="sme">🏢 PME (10-250 employés)</option>
-              <option value="corporate">🏛️ Grande entreprise (+250 employés)</option>
-              <option value="nonprofit">🤝 Organisation à but non lucratif</option>
-              <option value="consulting">💼 Cabinet de conseil</option>
-              <option value="agency">🎨 Agence créative</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email professionnel</label>
-            <div class="relative">
-              <input type="email" id="email" name="email" required autocomplete="email" class="w-full border border-gray-300 rounded-xl px-4 py-3 pl-12 focus:ring-2 focus:ring-primary focus:border-transparent bg-white" placeholder="votre.nom@entreprise.com">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
-            <div class="relative">
-              <input type="password" id="password" name="password" required autocomplete="current-password" class="w-full border border-gray-300 rounded-xl px-4 py-3 pl-12 pr-12 focus:ring-2 focus:ring-primary focus:border-transparent bg-white" placeholder="••••••••">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"/>
-                </svg>
-              </div>
-              <button type="button" id="togglePwd" class="absolute inset-y-0 right-0 pr-4 flex items-center z-10">
-                <svg id="eyeIcon" class="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                  <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <label class="flex items-center cursor-pointer">
-              <input type="checkbox" id="remember" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2">
-              <span class="ml-2 text-sm text-gray-600">Se souvenir de moi</span>
-            </label>
-            <button type="button" id="btnForgot" class="text-sm text-primary hover:text-blue-700 font-medium">Mot de passe oublié ?</button>
-          </div>
-
-          <button type="submit" class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 focus:ring-4 focus:ring-blue-200 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
-            <span class="flex items-center justify-center space-x-2">
-              <span>Se connecter au tableau de bord OHI</span>
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
-              </svg>
-            </span>
-          </button>
-
-          <div class="relative">
-            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
-            <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-white text-gray-500">Ou continuer avec</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <button type="button" id="btnMicrosoft" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-              <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path fill="#00BCF2" d="M0 0h11.377v11.372H0z"/>
-                <path fill="#00BCF2" d="M12.623 0H24v11.372H12.623z"/>
-                <path fill="#00BCF2" d="M0 12.623h11.377V24H0z"/>
-                <path fill="#00BCF2" d="M12.623 12.623H24V24H12.623z"/>
-              </svg>
-              <span class="text-sm font-medium">Microsoft</span>
-            </button>
-            <button type="button" id="btnGoogle" class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-              <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              <span class="text-sm font-medium">Google</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal de chargement -->
-  <div id="loadingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
-      <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-      </div>
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">Connexion en cours...</h3>
-      <p class="text-sm text-gray-600">Merci de patienter</p>
-    </div>
-  </div>
-
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="./firebase.js"></script>
-  <script src="./app.js"></script>
+
+  <!-- LOGIQUE -->
+  <script>
+    // ====== ÉTAT & HELPERS ======
+    let objectives = [];
+    let whirlwinds = [];
+    let managerMode = false;
+    let activeTag = '';
+    let db = null, auth = null, uid = null;
+    let unsubOhis = null, unsubWhirls = null;
+    const DEFAULT_OFFSETS = [7,3,1,0]; // jours avant échéance
+    const NOTIFY_HOUR = 9; // 09:00 locale
+
+    const $ = s => document.querySelector(s);
+    const esc = s => (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+    const catIcon = { business:'🚀', personal:'🎯', learning:'📚', health:'💪' };
+
+    const ui = {
+      q: $('#searchInput'), cat: $('#filterCategory'), sta: $('#filterStatus'),
+      sort: $('#sortBy'), count: $('#filterCount')
+    };
+
+    // ====== LOCAL FALLBACK ======
+    const localStore = {
+      load(){ objectives = JSON.parse(localStorage.getItem('objectives')||'[]'); whirlwinds = JSON.parse(localStorage.getItem('whirlwinds')||'[]'); },
+      save(){ localStorage.setItem('objectives', JSON.stringify(objectives)); localStorage.setItem('whirlwinds', JSON.stringify(whirlwinds)); renderTagBar(); }
+    };
+
+    // ====== FIRESTORE ======
+    function bindRealtime() {
+      if (!db || !uid) return;
+      unsubOhis?.();
+      unsubWhirls?.();
+      unsubOhis = db.collection('users').doc(uid).collection('ohis')
+        .orderBy('createdAt','desc').onSnapshot(snap=>{
+          objectives = snap.docs.map(d=>({ id: d.id, ...d.data() }));
+          renderTagBar(); renderObjectives(); updateStats();
+        });
+      unsubWhirls = db.collection('users').doc(uid).collection('whirlwinds')
+        .orderBy('createdAt','desc').onSnapshot(snap=>{
+          whirlwinds = snap.docs.map(d=>({ id: d.id, ...d.data() }));
+          renderWhirlwinds();
+        });
+    }
+    async function addOhiFS(obj){ const ref=await db.collection('users').doc(uid).collection('ohis').add(obj); return ref.id; }
+    async function updateOhiFS(id, patch){ await db.collection('users').doc(uid).collection('ohis').doc(String(id)).update(patch); }
+    async function deleteOhiFS(id){ await db.collection('users').doc(uid).collection('ohis').doc(String(id)).delete(); }
+    async function addWhirlFS(w){ const ref=await db.collection('users').doc(uid).collection('whirlwinds').add(w); return ref.id; }
+    async function updateWhirlFS(id, patch){ await db.collection('users').doc(uid).collection('whirlwinds').doc(String(id)).update(patch); }
+    async function deleteWhirlFS(id){ await db.collection('users').doc(uid).collection('whirlwinds').doc(String(id)).delete(); }
+
+    // ====== FILTRES & TAGS ======
+    function matchFilters(item){
+      const text = (item.title+' '+(item.description||'')+' '+(item.notes||'')+' '+(item.comments||[]).map(c=>c.text).join(' ')).toLowerCase();
+      const q = ui.q.value.trim().toLowerCase();
+      if (q && !text.includes(q)) return false;
+      if (ui.cat.value && item.category !== ui.cat.value) return false;
+      if (ui.sta.value) {
+        const done = !!item.completed;
+        if (ui.sta.value === 'open' && done) return false;
+        if (ui.sta.value === 'done' && !done) return false;
+      }
+      if (activeTag) {
+        const tags = (item.tags||[]);
+        if (!tags.map(t=>t.toLowerCase()).includes(activeTag.toLowerCase())) return false;
+      }
+      return true;
+    }
+    function sortList(list){
+      const [key,dir]=($('#sortBy').value||'createdAt_desc').split('_'); const mul = dir==='asc'?1:-1;
+      return list.slice().sort((a,b)=>{
+        if (key==='deadline'){
+          const da=a.deadline?new Date(a.deadline).getTime():Infinity, db=b.deadline?new Date(b.deadline).getTime():Infinity; return (da-db)*mul;
+        }
+        if (key==='progress') return ((a.progress||0)-(b.progress||0))*mul;
+        if (key==='title') return (a.title||'').localeCompare(b.title||'')*mul;
+        return ((new Date(a.createdAt||0))-(new Date(b.createdAt||0)))*mul;
+      });
+    }
+    function collectAllTags(){ const set=new Set(); objectives.forEach(o=>(o.tags||[]).forEach(t=>t&&set.add(t))); return Array.from(set).sort((a,b)=>a.localeCompare(b)); }
+    function renderTagBar(){
+      const bar = $('#tagBar'); const tags=collectAllTags(); bar.innerHTML='';
+      if(!tags.length){ bar.innerHTML='<span class="text-xs text-gray-400">Aucun tag pour l’instant</span>'; return; }
+      const mk=(lbl,active)=>`<button class="px-3 py-1 rounded-full text-xs border chip ${active?'active':''}" data-tag="${lbl}">${esc(lbl)}</button>`;
+      bar.insertAdjacentHTML('beforeend', mk('Tous', activeTag===''));
+      tags.forEach(t=>bar.insertAdjacentHTML('beforeend', mk(t, activeTag===t)));
+      bar.querySelectorAll('button').forEach(b=>{
+        b.onclick = ()=>{ const t=b.dataset.tag; activeTag = (t==='Tous'?'':t); renderObjectives(); renderWhirlwinds(); renderTagBar(); };
+      });
+    }
+
+    // ====== RENDU OHI ======
+    function renderObjectives(){
+      const wrap = $('#objectivesList'); wrap.innerHTML='';
+      const filtered = sortList(objectives.filter(o=>matchFilters(o)));
+      $('#emptyObjectives').classList.toggle('hidden', filtered.length!==0);
+      ui.count.textContent = filtered.length+' élément'+(filtered.length>1?'s':'');
+      wrap.innerHTML = filtered.map(o=>{
+        const totalSub=(o.subtasks||[]).length, doneSub=(o.subtasks||[]).filter(s=>s.done).length;
+        const progress = totalSub?Math.round(doneSub/totalSub*100):(o.progress||0);
+        const daysLeft = o.deadline ? Math.ceil((new Date(o.deadline)-new Date())/86400000) : null;
+        const overdue = daysLeft!==null && daysLeft<0;
+        const tags = (o.tags||[]).map(t=>`<span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border">${esc(t)}</span>`).join(' ');
+        const subtasksHtml = (o.subtasks||[]).map(s=>`
+          <label class="flex items-start gap-2 text-sm">
+            <input type="checkbox" ${s.done?'checked':''} onchange="toggleSubtask('${o.id}','${s.id}')" class="mt-1 w-4 h-4 text-green-600 rounded">
+            <span class="${s.done?'line-through text-gray-400':''}">${esc(s.title)}</span>
+          </label>`).join('') || `<div class="text-xs text-gray-400">Aucune sous-tâche</div>`;
+        const commentsHtml = (o.comments||[]).slice(-3).map(c=>`
+          <div class="text-xs text-gray-700"><span class="text-gray-400">${new Date(c.at).toLocaleString()}</span> — ${esc(c.text)}</div>`).join('') || `<div class="text-xs text-gray-400">Aucun commentaire</div>`;
+        const bellOn = o.reminders?.enabled;
+        return `
+          <div class="border rounded-xl p-4 card-hover">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl">${catIcon[o.category]||'🎯'}</span>
+                <div>
+                  <h4 class="font-semibold text-gray-900">${esc(o.title)}</h4>
+                  <p class="text-sm text-gray-600">${esc(o.description||'')}</p>
+                  <div class="mt-2 flex flex-wrap gap-2">${tags}</div>
+                </div>
+              </div>
+              <div class="text-right text-sm">
+                <div class="flex items-center gap-2 justify-end">
+                  <button class="text-xs px-2 py-1 rounded border ${bellOn?'bg-green-50 text-green-700 border-green-200':'bg-gray-50 text-gray-700'}" onclick="toggleRemindersOHI('${o.id}')">
+                    ${bellOn?'🔔 Rappels':'🔕 Rappels'}
+                  </button>
+                </div>
+                ${o.deadline?`<div class="text-gray-500 mt-2">${o.deadline}</div>`:''}
+                <div class="${overdue?'text-red-600':'text-gray-600'}">${o.deadline?(overdue?`${Math.abs(daysLeft)}j de retard`:`${daysLeft}j restants`):'-'}</div>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <div class="flex justify-between text-sm mb-1"><span class="text-gray-600">Progression</span><span class="font-medium">${progress}%</span></div>
+              <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-primary h-2 rounded-full transition-all" style="width:${progress}%"></div></div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-1"><h5 class="text-sm font-medium text-gray-900">Sous-tâches</h5><button class="text-xs text-primary" onclick="promptAddSubtask('${o.id}')">+ Ajouter</button></div>
+                <div class="space-y-2">${subtasksHtml}</div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1"><h5 class="text-sm font-medium text-gray-900">Commentaires</h5><button class="text-xs text-primary" onclick="promptAddComment('${o.id}')">+ Ajouter</button></div>
+                <div class="space-y-1">${commentsHtml}</div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700" onclick="completeObjective('${o.id}')">Terminé</button>
+              <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" onclick="nudgeProgress('${o.id}',10)">+10%</button>
+              <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" onclick="nudgeProgress('${o.id}',-10)">-10%</button>
+              <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" onclick="deleteObjective('${o.id}')">Supprimer</button>
+            </div>
+          </div>`;
+      }).join('');
+      updateStats();
+    }
+
+    // ====== RENDU TOURBILLONS ======
+    function renderWhirlwinds(){
+      const activeC = $('#activeWhirlwinds'); const doneC = $('#completedWhirlwinds');
+      const filt = x => matchFilters(x);
+      const pCol = {high:'border-red-500 bg-red-50',medium:'border-yellow-500 bg-yellow-50',low:'border-green-500 bg-green-50'};
+      const pLbl = {high:'🔴 Haute',medium:'🟡 Moyenne',low:'🟢 Basse'};
+      const cats = {management:'👥',finance:'💰',operations:'⚙️',strategy:'🎯',hr:'👔',communication:'📢'};
+
+      const active = sortList(whirlwinds.filter(w=>!w.completed).filter(filt));
+      const done = sortList(whirlwinds.filter(w=>w.completed).filter(filt));
+
+      activeC.innerHTML = active.length ? active.map(w=>{
+        const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline)-new Date())/86400000) : null;
+        const od = daysLeft!==null && daysLeft<0;
+        const bellOn = w.reminders?.enabled;
+        return `
+        <div class="border-l-4 ${pCol[w.priority||'low']} p-4 rounded-lg">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">${cats[w.category]||'📌'}</span>
+              <h4 class="font-medium text-gray-900">${esc(w.title)}</h4>
+              ${w.createdBy==='manager'?'<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">👔 Responsable</span>':''}
+            </div>
+            <div class="text-right">
+              <button class="text-xs px-2 py-1 rounded border ${bellOn?'bg-green-50 text-green-700 border-green-200':'bg-gray-50 text-gray-700'}" onclick="toggleRemindersWhirl('${w.id}')">
+                ${bellOn?'🔔':'🔕'}
+              </button>
+              <div class="text-xs ${od?'text-red-600':'text-gray-600'} mt-1">${w.deadline?(od?`${Math.abs(daysLeft)}j retard`:`${daysLeft}j restants`):'-'}</div>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 mb-3">${esc(w.notes||'')}</p>
+          <div class="flex items-center justify-between">
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">${pLbl[w.priority||'low']}</span>
+            <div class="space-x-2">
+              <button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700" onclick="completeWhirlwind('${w.id}')">✓ Terminé</button>
+              <button class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200" onclick="deleteWhirlwind('${w.id}')">Supprimer</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('') : `<div class="text-sm text-gray-500">Aucune action en cours</div>`;
+
+      doneC.innerHTML = done.length ? done.slice(-10).map(w=>`
+        <div class="border p-3 rounded-lg bg-gray-50 opacity-80">
+          <div class="flex items-center gap-2 mb-1"><span class="text-sm">✅</span><h4 class="text-sm font-medium text-gray-700 line-through">${esc(w.title)}</h4></div>
+          <p class="text-xs text-gray-500">${esc(w.notes||'')}</p>
+        </div>`).join('') : `<div class="text-sm text-gray-500">Aucune action terminée</div>`;
+    }
+
+    // ====== STATS ======
+    function updateStats(){
+      const total = objectives.length;
+      const completed = objectives.filter(o=>o.completed).length;
+      const avg = total ? Math.round(objectives.reduce((s,o)=>{
+        const t=(o.subtasks||[]).length, d=(o.subtasks||[]).filter(x=>x.done).length;
+        const p=t?Math.round(d/t*100):(o.progress||0); return s+p;
+      },0)/total) : 0;
+      $('#completedCount').textContent=`${completed}/${total}`;
+      $('#globalProgress').textContent=`${avg}%`;
+      const circ=2*Math.PI*56; $('#progressCircle').style.strokeDashoffset=(circ-(avg/100)*circ);
+      $('#currentStreak').textContent=`${Math.min(total*3,30)} jours`;
+      if (objectives.length){
+        const next = objectives.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
+        $('#nextDeadline').textContent = next?`${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours`:'-';
+      } else $('#nextDeadline').textContent='-';
+    }
+
+    // ====== ACTIONS OHI ======
+    async function nudgeProgress(id,delta){
+      const o = objectives.find(x=>String(x.id)===String(id)); if(!o) return;
+      if (o.subtasks && o.subtasks.length) return; // auto si sous-tâches
+      const newVal = Math.max(0, Math.min(100, (o.progress||0)+delta));
+      if (db && uid) await updateOhiFS(id, { progress:newVal, completed:newVal===100 });
+      else { o.progress=newVal; o.completed=newVal===100; localStore.save(); }
+      renderObjectives();
+    }
+    async function completeObjective(id){
+      const o = objectives.find(x=>String(x.id)===String(id)); if(!o) return;
+      if (db && uid) await updateOhiFS(id, { completed:true, progress:100, subtasks:(o.subtasks||[]).map(s=>({...s,done:true})) });
+      else { o.completed=true; o.progress=100; (o.subtasks||[]).forEach(s=>s.done=true); localStore.save(); }
+      renderObjectives();
+    }
+    async function deleteObjective(id){
+      if (db && uid) await deleteOhiFS(id);
+      else { objectives = objectives.filter(x=>String(x.id)!==String(id)); localStore.save(); renderObjectives(); updateStats(); }
+    }
+    async function toggleSubtask(oid, sid){
+      const o = objectives.find(x=>String(x.id)===String(oid)); if(!o) return;
+      const sub = (o.subtasks||[]).map(s=>String(s.id)===String(sid) ? {...s, done:!s.done} : s);
+      const total=sub.length, done=sub.filter(x=>x.done).length;
+      const patch = { subtasks: sub, progress: total?Math.round(done/total*100):(o.progress||0), completed: total?done===total:o.completed };
+      if (db && uid) await updateOhiFS(oid, patch);
+      else { Object.assign(o, patch); localStore.save(); renderObjectives(); }
+    }
+    async function promptAddSubtask(oid){
+      const title = prompt('Titre de la sous-tâche :'); if(!title) return;
+      const o = objectives.find(x=>String(x.id)===String(oid)); if(!o) return;
+      const sub = (o.subtasks||[]).concat([{ id: Date.now(), title: title.trim(), done:false }]);
+      const patch = { subtasks: sub };
+      if (db && uid) await updateOhiFS(oid, patch);
+      else { o.subtasks=sub; localStore.save(); renderObjectives(); }
+    }
+    async function promptAddComment(oid){
+      const text = prompt('Votre commentaire :'); if(!text) return;
+      const o = objectives.find(x=>String(x.id)===String(oid)); if(!o) return;
+      const comments = (o.comments||[]).concat([{ at:new Date().toISOString(), text:text.trim() }]);
+      const patch = { comments };
+      if (db && uid) await updateOhiFS(oid, patch);
+      else { o.comments=comments; localStore.save(); renderObjectives(); }
+    }
+
+    // ====== ACTIONS TOURBILLONS ======
+    async function completeWhirlwind(id){
+      if (db && uid) await updateWhirlFS(id, { completed:true });
+      else { const w=whirlwinds.find(x=>String(x.id)===String(id)); if(w){ w.completed=true; localStore.save(); } renderWhirlwinds(); }
+    }
+    async function deleteWhirlwind(id){
+      if (db && uid) await deleteWhirlFS(id);
+      else { whirlwinds = whirlwinds.filter(x=>String(x.id)!==String(id)); localStore.save(); renderWhirlwinds(); }
+    }
+
+    // ====== RAPPELS (Notifications & Toasts) ======
+    const toasts = $('#toasts');
+    function toast(msg, type='info'){
+      const bg = type==='warn'?'bg-yellow-50 border-yellow-300 text-yellow-800'
+               : type==='ok' ?'bg-green-50 border-green-300 text-green-800'
+               : 'bg-white border-gray-200 text-gray-800';
+      const el = document.createElement('div');
+      el.className = `border rounded-lg px-3 py-2 shadow-sm ${bg}`;
+      el.innerHTML = `<div class="text-sm">${esc(msg)}</div>`;
+      toasts.appendChild(el);
+      setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-4px)'; }, 3500);
+      setTimeout(()=>{ el.remove(); }, 4200);
+    }
+    function canNotify(){ return 'Notification' in window; }
+    function notify(msg){
+      if (canNotify() && Notification.permission==='granted') {
+        new Notification('🕒 Rappel', { body: msg });
+      } else {
+        toast(msg, 'warn');
+      }
+    }
+    function scheduleCheckLoop(){
+      // vérifie toutes les 60s les échéances
+      setInterval(runReminderScan, 60000);
+      // premier scan immédiat
+      runReminderScan();
+    }
+    function getNotifiedKeySpace(){ const key = 'notifiedKeys_'+(uid||'local'); if(!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({})); return key; }
+    function markNotified(itemId, offset, type){ const key=getNotifiedKeySpace(); const map=JSON.parse(localStorage.getItem(key)); map[`${type}:${itemId}:${offset}`]=true; localStorage.setItem(key, JSON.stringify(map)); }
+    function wasNotified(itemId, offset, type){ const key=getNotifiedKeySpace(); const map=JSON.parse(localStorage.getItem(key)); return !!map[`${type}:${itemId}:${offset}`]; }
+
+    function dateAtHour(dateStr, hour=9){
+      if (!dateStr) return null;
+      const d = new Date(dateStr+'T00:00:00');
+      d.setHours(hour,0,0,0);
+      return d;
+    }
+
+    function runReminderScan(){
+      const now = new Date();
+      const scan = (item, type) => {
+        if (!item.deadline) return;
+        const enabled = !!(item.reminders?.enabled);
+        const offsets = (item.reminders?.offsets?.length ? item.reminders.offsets : DEFAULT_OFFSETS);
+        if (!enabled) return;
+        const due = dateAtHour(item.deadline, NOTIFY_HOUR);
+        offsets.forEach(off=>{
+          const when = new Date(due.getTime() - off*86400000);
+          // fenêtre de 60s autour de now (au cas où l’onglet n’était pas actif)
+          const diff = Math.abs(now.getTime() - when.getTime());
+          if (diff <= 60000 && !wasNotified(item.id, off, type) && !item.completed){
+            const label = off===0?'aujourd’hui':`J-${off}`;
+            notify(`${type==='OHI'?'🎯 OHI':'🌪️ Tourbillon'} « ${item.title} » — échéance ${label}`);
+            markNotified(item.id, off, type);
+          }
+        });
+      };
+      objectives.forEach(o=>scan(o,'OHI'));
+      whirlwinds.forEach(w=>scan(w,'WHIRL'));
+    }
+
+    async function toggleRemindersOHI(id){
+      const o = objectives.find(x=>String(x.id)===String(id)); if(!o) return;
+      const current = !!(o.reminders?.enabled);
+      const newVal = !current;
+      const patch = { reminders: { enabled:newVal, offsets: (o.reminders?.offsets || DEFAULT_OFFSETS) } };
+      if (db && uid) await updateOhiFS(id, patch);
+      else { o.reminders = patch.reminders; localStore.save(); }
+      toast(newVal?'Rappels activés pour cet OHI.':'Rappels désactivés pour cet OHI.', newVal?'ok':'info');
+      renderObjectives();
+    }
+    async function toggleRemindersWhirl(id){
+      const w = whirlwinds.find(x=>String(x.id)===String(id)); if(!w) return;
+      const current = !!(w.reminders?.enabled);
+      const newVal = !current;
+      const patch = { reminders: { enabled:newVal, offsets: (w.reminders?.offsets || DEFAULT_OFFSETS) } };
+      if (db && uid) await updateWhirlFS(id, patch);
+      else { w.reminders = patch.reminders; localStore.save(); }
+      toast(newVal?'Rappels activés pour ce Tourbillon.':'Rappels désactivés pour ce Tourbillon.', newVal?'ok':'info');
+      renderWhirlwinds();
+    }
+
+    // ====== FORMULAIRES ======
+    const objectiveModal = $('#objectiveModal'), whirlwindModal = $('#whirlwindModal');
+    $('#newObjectiveBtn').addEventListener('click', ()=>{ $('#objectiveForm').reset(); $('#objectiveReminders').checked = true; objectiveModal.classList.remove('hidden'); objectiveModal.classList.add('flex'); });
+    $('#cancelObjective').addEventListener('click', ()=>{ objectiveModal.classList.add('hidden'); objectiveModal.classList.remove('flex'); });
+    $('#objectiveForm').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const tags = ($('#objectiveTags').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+      const obj = {
+        title: $('#objectiveTitle').value.trim(),
+        category: $('#objectiveCategory').value,
+        deadline: $('#objectiveDeadline').value || null,
+        description: $('#objectiveDescription').value.trim(),
+        tags, subtasks: [], comments: [],
+        reminders: { enabled: $('#objectiveReminders').checked, offsets: DEFAULT_OFFSETS },
+        progress: 0, completed: false,
+        createdAt: new Date().toISOString()
+      };
+      if (db && uid) await addOhiFS(obj);
+      else { obj.id=Date.now(); objectives.push(obj); localStore.save(); renderObjectives(); updateStats(); }
+      objectiveModal.classList.add('hidden'); objectiveModal.classList.remove('flex');
+      runReminderScan(); // recalcul immédiat
+    });
+
+    $('#newWhirlwindBtn').addEventListener('click', ()=>{
+      $('#whirlwindForm').reset(); $('#whirlwindReminders').checked = true;
+      const d=new Date(); d.setMonth(d.getMonth()+1);
+      $('#whirlwindDeadline').value=d.toISOString().split('T')[0];
+      whirlwindModal.classList.remove('hidden'); whirlwindModal.classList.add('flex');
+    });
+    $('#cancelWhirlwind').addEventListener('click', ()=>{ whirlwindModal.classList.add('hidden'); whirlwindModal.classList.remove('flex'); });
+    $('#whirlwindForm').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const w = {
+        title: $('#whirlwindTitle').value.trim(),
+        category: $('#whirlwindCategory').value,
+        priority: $('#whirlwindPriority').value,
+        deadline: $('#whirlwindDeadline').value || null,
+        notes: $('#whirlwindNotes').value.trim(),
+        reminders: { enabled: $('#whirlwindReminders').checked, offsets: DEFAULT_OFFSETS },
+        completed:false, createdAt:new Date().toISOString(), createdBy: managerMode ? 'manager':'user'
+      };
+      if (db && uid) await addWhirlFS(w);
+      else { w.id=Date.now(); whirlwinds.push(w); localStore.save(); renderWhirlwinds(); }
+      whirlwindModal.classList.add('hidden'); whirlwindModal.classList.remove('flex');
+      runReminderScan();
+    });
+
+    // ====== MANAGER MODE ======
+    $('#toggleManagerBtn').addEventListener('click', ()=>{
+      managerMode = !managerMode;
+      const btn=$('#toggleManagerBtn');
+      if (managerMode){ btn.textContent='👤 Mode Utilisateur'; btn.classList.remove('bg-gray-200','text-gray-700'); btn.classList.add('bg-orange-600','text-white'); }
+      else { btn.textContent='👔 Mode Responsable'; btn.classList.add('bg-gray-200','text-gray-700'); btn.classList.remove('bg-orange-600','text-white'); }
+    });
+
+    // ====== RECHERCHE/FILTRES ======
+    function refreshAll(){ renderObjectives(); renderWhirlwinds(); updateStats(); }
+    $('#searchInput').addEventListener('input', debounce(refreshAll, 180));
+    [ui.cat, ui.sta, ui.sort].forEach(el=>el.addEventListener('change', refreshAll));
+    function debounce(fn, d){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), d); }; }
+
+    // ====== EXPORT ======
+    $('#exportCsvBtn').addEventListener('click', ()=>{
+      const header = ['Type','Titre','Catégorie','Échéance','Progression','Statut','Tags','Créé le'];
+      const oRows = objectives.filter(matchFilters).map(o=>['OHI', o.title, o.category||'', o.deadline||'', (o.progress||0)+'%', o.completed?'Terminé':'En cours', (o.tags||[]).join('|'), o.createdAt||'']);
+      const wRows = whirlwinds.filter(matchFilters).map(w=>['Tourbillon', w.title, w.category||'', w.deadline||'', '', w.completed?'Terminé':'En cours', '', w.createdAt||'']);
+      const data = [header].concat(oRows,wRows);
+      const csv = data.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='dashboard_export.csv'; a.click(); URL.revokeObjectURL(a.href);
+    });
+    $('#exportPdfBtn').addEventListener('click', ()=>{
+      const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:'pt', format:'a4' });
+      doc.setFontSize(16); doc.text('Export OHI & Tourbillons', 40, 40);
+      const o = objectives.filter(matchFilters).map(x=>[x.title, x.category||'', x.deadline||'', (x.progress||0)+'%', (x.tags||[]).join(', ')]);
+      doc.autoTable({ startY:60, head:[['OHI','Catégorie','Échéance','Progression','Tags']], body: o.length?o:[['(aucun)','-','-','-','-']] });
+      const y = doc.lastAutoTable.finalY + 20;
+      const w = whirlwinds.filter(matchFilters).map(x=>[x.title, x.category||'', x.priority||'', x.deadline||'', x.completed?'Terminé':'En cours']);
+      doc.autoTable({ startY:y, head:[['Tourbillon','Catégorie','Priorité','Échéance','Statut']], body: w.length?w:[['(aucun)','-','-','-','-']] });
+      doc.save('dashboard_export.pdf');
+    });
+
+    // ====== AUTH / LOGOUT / NOTIFICATIONS BTN ======
+    const userEmail = $('#userEmail'), logoutBtn = $('#logoutBtn'), notifyBtn = $('#notifyBtn');
+    function setEmail(u){ userEmail.textContent = u?.isAnonymous ? '(anonyme)' : (u?.email||''); }
+    function updateNotifyBtn(){
+      if (!canNotify()) { notifyBtn.style.display='none'; return; }
+      notifyBtn.style.display='inline-block';
+      const perm = Notification.permission;
+      notifyBtn.textContent = perm==='granted' ? '🔔 Notifications activées' : (perm==='denied' ? '🔕 Notifications bloquées' : '🔔 Activer les notifications');
+      notifyBtn.disabled = perm==='denied';
+      notifyBtn.classList.toggle('opacity-60', perm==='denied');
+    }
+    notifyBtn.addEventListener('click', async ()=>{
+      if (!canNotify()) return;
+      const perm = await Notification.requestPermission();
+      updateNotifyBtn();
+      if (perm==='granted') toast('Notifications activées ✔', 'ok');
+      else if (perm==='denied') toast('Notifications bloquées par le navigateur.');
+    });
+    logoutBtn.addEventListener('click', async ()=>{
+      try { if (auth) await auth.signOut(); } catch(e){}
+      location.reload();
+    });
+
+    // ====== INIT ======
+    (async function init(){
+      try { db = firebase.firestore(); auth = firebase.auth(); } catch(e){ db=null; auth=null; }
+      updateNotifyBtn();
+      if (auth) {
+        auth.onAuthStateChanged(async (user)=>{
+          if (!user) {
+            try { await auth.signInAnonymously(); } catch(e){ db=null; }
+            return;
+          }
+          uid = user.uid; setEmail(user);
+          if (db) { bindRealtime(); }
+          else { localStore.load(); seed(); renderTagBar(); renderObjectives(); renderWhirlwinds(); updateStats(); }
+          scheduleCheckLoop();
+        });
+      } else {
+        localStore.load(); seed(); renderTagBar(); renderObjectives(); renderWhirlwinds(); updateStats();
+        scheduleCheckLoop();
+      }
+    })();
+
+    // Données de démo si vide (local uniquement)
+    function seed(){
+      if (!objectives.length && !whirlwinds.length) {
+        const now = new Date();
+        objectives = [{
+          id: Date.now(),
+          title:'Développer mon activité', category:'business',
+          deadline:new Date(now.getFullYear(), now.getMonth()+1, now.getDate()).toISOString().split('T')[0],
+          description:'Augmenter le CA de 20%', tags:['marketing','Q3'],
+          subtasks:[{id:Date.now()+1,title:'Créer l’offre',done:true},{id:Date.now()+2,title:'Landing page',done:false},{id:Date.now()+3,title:'Campagne emailing',done:false}],
+          comments:[{at:now.toISOString(),text:'Kickoff effectué ✅'}],
+          reminders:{enabled:true, offsets:DEFAULT_OFFSETS},
+          progress:0, completed:false, createdAt:now.toISOString()
+        }];
+        whirlwinds = [{
+          id: Date.now()+10, title:'Lancer Facebook Ads', category:'operations', priority:'high',
+          deadline:new Date(now.getFullYear(), now.getMonth(), now.getDate()+7).toISOString().split('T')[0],
+          notes:'Budget test 200€',
+          reminders:{enabled:true, offsets:DEFAULT_OFFSETS},
+          completed:false, createdAt:now.toISOString(), createdBy:'user'
+        }];
+        localStore.save();
+      }
+    }
+
+    // Expose pour inline HTML handlers
+    window.nudgeProgress = nudgeProgress;
+    window.completeObjective = completeObjective;
+    window.deleteObjective = deleteObjective;
+    window.promptAddSubtask = promptAddSubtask;
+    window.toggleSubtask = toggleSubtask;
+    window.promptAddComment = promptAddComment;
+    window.completeWhirlwind = completeWhirlwind;
+    window.deleteWhirlwind = deleteWhirlwind;
+    window.toggleRemindersOHI = toggleRemindersOHI;
+    window.toggleRemindersWhirl = toggleRemindersWhirl;
+  </script>
 </body>
 </html>
