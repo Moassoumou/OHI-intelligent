@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>OHI – Coach & Dashboard</title>
 
@@ -9,27 +9,24 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#3b82f6',
-            secondary: '#8b5cf6',
-            success: '#10b981',
-            warning: '#f59e0b',
-            danger:  '#ef4444',
-          }
+      theme: { extend: {
+        colors: {
+          primary:'#3b82f6', secondary:'#8b5cf6',
+          success:'#10b981', warning:'#f59e0b', danger:'#ef4444'
         }
-      }
+      }}
     }
   </script>
 
-  <!-- Police -->
+  <!-- Fonts & styles -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-    html,body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
-    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .card-hover { transition: all .25s ease; }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,.1); }
+    html,body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .gradient-bg{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+    .card-hover{transition:all .25s ease}
+    .card-hover:hover{transform:translateY(-2px);box-shadow:0 10px 25px -5px rgba(0,0,0,.1)}
+    .toast{animation:slide .25s ease-out}
+    @keyframes slide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 
@@ -97,8 +94,8 @@
       </form>
 
       <p id="authError" class="text-sm text-red-600 mt-4 hidden"></p>
-      <p id="authHint" class="text-xs text-gray-500 mt-3">
-        Astuce: si la fenêtre pop-up est bloquée ou si votre domaine n’est pas autorisé, on repassera automatiquement en mode redirection.
+      <p class="text-xs text-gray-500 mt-3">
+        Astuce: si la pop-up est bloquée ou si le domaine n’est pas autorisé, on bascule en redirection.
       </p>
     </div>
   </main>
@@ -133,12 +130,12 @@
     <div class="bg-white rounded-2xl p-6 shadow-sm mb-8 card-hover">
       <h2 class="text-xl font-semibold mb-4">➕ Ajouter un OHI</h2>
       <form id="addOhiForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input id="title" type="text" placeholder="Titre" required class="border rounded-xl p-3"/>
-        <input id="deadline" type="date" required class="border rounded-xl p-3"/>
-        <textarea id="description" placeholder="Description" class="border rounded-xl p-3 md:col-span-2"></textarea>
-        <select id="priority" class="border rounded-xl p-3">
+        <input id="ohiTitle" type="text" placeholder="Titre" required class="border rounded-xl p-3"/>
+        <input id="ohiDeadline" type="date" required class="border rounded-xl p-3"/>
+        <textarea id="ohiDescription" placeholder="Description" class="border rounded-xl p-3 md:col-span-2"></textarea>
+        <select id="ohiPriority" class="border rounded-xl p-3">
           <option value="high">Haute</option>
-          <option value="medium">Moyenne</option>
+          <option value="medium" selected>Moyenne</option>
           <option value="low">Basse</option>
         </select>
         <button type="submit" class="bg-primary hover:bg-blue-700 text-white rounded-xl py-3">Ajouter</button>
@@ -178,6 +175,9 @@
     </div>
   </section>
 
+  <!-- Toast container -->
+  <div id="toastStack" class="fixed bottom-4 right-4 space-y-2 z-[9999]"></div>
+
   <!-- Firebase Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -187,315 +187,279 @@
   <script src="./firebase.js"></script>
 
   <script>
-    // === Utils UI
-    const $ = (id) => document.getElementById(id);
-    const show = (el) => el.classList.remove('hidden');
-    const hide = (el) => el.classList.add('hidden');
+    // ---------- Helpers UI ----------
+    const $ = id => document.getElementById(id);
+    const show = el => el.classList.remove('hidden');
+    const hide = el => el.classList.add('hidden');
+    function toast(msg, type='info'){
+      const stack = $('toastStack');
+      const bg = type==='error'?'bg-red-600':type==='success'?'bg-green-600':'bg-gray-800';
+      const el = document.createElement('div');
+      el.className = `toast text-white ${bg} px-4 py-2 rounded-lg shadow`;
+      el.textContent = msg;
+      stack.appendChild(el);
+      setTimeout(()=>{ el.style.opacity=.0; el.style.transform='translateY(6px)'; }, 3200);
+      setTimeout(()=> el.remove(), 3800);
+    }
 
-    // === Firebase handles
+    // ---------- Tabs auth ----------
+    const tabLogin = $('tabLogin'), tabSignup = $('tabSignup');
+    const loginForm = $('loginForm'), signupForm = $('signupForm'), authError = $('authError');
+    tabLogin.onclick = () => { tabLogin.classList.add('bg-white'); tabSignup.classList.remove('bg-white'); loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); authError.classList.add('hidden'); }
+    tabSignup.onclick = () => { tabSignup.classList.add('bg-white'); tabLogin.classList.remove('bg-white'); signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); authError.classList.add('hidden'); }
+
+    // ---------- Firebase ----------
     if (!window.firebase?.apps?.length) {
       console.warn('⚠️ firebase.initializeApp() doit être appelé dans firebase.js');
     }
     const auth = firebase.auth();
-    const db   = firebase.firestore();
+    const db = firebase.firestore();
     auth.useDeviceLanguage();
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-    // === AUTH UI
-    const authView = $('authView');
-    const appView  = $('appView');
-    const headerUserEmail = $('headerUserEmail');
-    const logoutBtn = $('logoutBtn');
+    const authView = $('authView'), appView = $('appView');
+    const headerUserEmail = $('headerUserEmail'), logoutBtn = $('logoutBtn');
 
-    const authError = $('authError');
-    const loginForm = $('loginForm');
-    const signupForm = $('signupForm');
-    const tabLogin  = $('tabLogin');
-    const tabSignup = $('tabSignup');
-
-    tabLogin.onclick = () => {
-      tabLogin.classList.add('bg-white'); tabLogin.classList.remove('text-gray-600');
-      tabSignup.classList.remove('bg-white'); tabSignup.classList.add('text-gray-600');
-      signupForm.classList.add('hidden'); loginForm.classList.remove('hidden');
-      authError.classList.add('hidden');
-    };
-    tabSignup.onclick = () => {
-      tabSignup.classList.add('bg-white'); tabSignup.classList.remove('text-gray-600');
-      tabLogin.classList.remove('bg-white'); tabLogin.classList.add('text-gray-600');
-      loginForm.classList.add('hidden'); signupForm.classList.remove('hidden');
-      authError.classList.add('hidden');
-    };
-
-    function humanizeAuthError(code) {
-      const map = {
-        'auth/invalid-email': "Adresse e-mail invalide.",
+    function friendly(code){
+      const m = {
+        'auth/invalid-email': "Email invalide.",
         'auth/missing-password': "Mot de passe requis.",
-        'auth/weak-password': "Mot de passe trop faible (6+ caractères).",
-        'auth/email-already-in-use': "Un compte existe déjà avec cet e-mail.",
-        'auth/user-not-found': "Aucun compte avec cet e-mail.",
+        'auth/weak-password': "Mot de passe trop faible.",
+        'auth/email-already-in-use': "Email déjà utilisé.",
+        'auth/user-not-found': "Utilisateur introuvable.",
         'auth/wrong-password': "Mot de passe incorrect.",
-        'auth/invalid-credential': "Identifiants invalides/mal formés ou expirés.",
-        'auth/unauthorized-domain': "Domaine non autorisé : ajoute-le dans Firebase > Authentication > Authorized domains.",
-        'auth/popup-blocked': "Pop-up bloqué par le navigateur.",
-        'auth/operation-not-allowed': "Provider non activé dans Firebase.",
+        'auth/invalid-credential': "Identifiants invalides/expirés.",
+        'auth/unauthorized-domain': "Domaine non autorisé (Firebase > Authentication > Authorized domains).",
+        'auth/popup-blocked': "Pop-up bloquée par le navigateur.",
+        'auth/operation-not-allowed': "Provider non activé dans Firebase."
       };
-      return map[code] || "Une erreur s'est produite. Réessaie.";
+      return m[code] || "Une erreur est survenue.";
     }
 
-    // Email: login
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      authError.classList.add('hidden');
+    // Email login
+    loginForm.addEventListener('submit', async (e)=>{
+      e.preventDefault(); authError.classList.add('hidden');
       try {
         await auth.signInWithEmailAndPassword($('loginEmail').value.trim(), $('loginPassword').value);
-      } catch (err) {
-        console.error('login error', err);
-        authError.textContent = "Erreur: " + humanizeAuthError(err.code);
-        authError.classList.remove('hidden');
-      }
+        toast('Connecté ✅','success');
+      } catch(err){ authError.textContent="Erreur: "+friendly(err.code); authError.classList.remove('hidden'); toast(friendly(err.code),'error'); console.error(err); }
     });
 
-    // Email: signup
-    signupForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      authError.classList.add('hidden');
-      const email = $('signupEmail').value.trim();
-      const pass  = $('signupPassword').value;
+    // Email signup
+    signupForm.addEventListener('submit', async (e)=>{
+      e.preventDefault(); authError.classList.add('hidden');
       try {
-        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        const cred = await auth.createUserWithEmailAndPassword($('signupEmail').value.trim(), $('signupPassword').value);
         await db.collection('users').doc(cred.user.uid).set({
-          email,
-          provider: 'password',
+          email: cred.user.email, provider:'password',
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-      } catch (err) {
-        console.error('signup error', err);
-        authError.textContent = "Erreur: " + humanizeAuthError(err.code);
-        authError.classList.remove('hidden');
-      }
+        },{merge:true});
+        toast('Compte créé ✅','success');
+      } catch(err){ authError.textContent="Erreur: "+friendly(err.code); authError.classList.remove('hidden'); toast(friendly(err.code),'error'); console.error(err); }
     });
 
-    // Google with popup -> fallback redirect
-    $('googleBtn').onclick = async () => {
+    // Google
+    $('googleBtn').onclick = async ()=>{
       const provider = new firebase.auth.GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      try {
-        await auth.signInWithPopup(provider);
-      } catch (err) {
-        console.warn('Google popup failed, fallback to redirect', err);
+      provider.setCustomParameters({prompt:'select_account'});
+      try { await auth.signInWithPopup(provider); }
+      catch(err){
         if (['auth/popup-blocked','auth/unauthorized-domain','auth/operation-not-allowed'].includes(err.code)) {
           await auth.signInWithRedirect(provider);
-        } else {
-          authError.textContent = "Erreur: " + humanizeAuthError(err.code);
-          authError.classList.remove('hidden');
-        }
+        } else { toast(friendly(err.code),'error'); console.error(err); }
       }
     };
 
-    // Microsoft with popup -> fallback redirect
-    $('microsoftBtn').onclick = async () => {
+    // Microsoft
+    $('microsoftBtn').onclick = async ()=>{
       const provider = new firebase.auth.OAuthProvider('microsoft.com');
-      provider.setCustomParameters({ prompt: 'select_account' });
-      try {
-        await auth.signInWithPopup(provider);
-      } catch (err) {
-        console.warn('Microsoft popup failed, fallback to redirect', err);
+      provider.setCustomParameters({prompt:'select_account'});
+      try { await auth.signInWithPopup(provider); }
+      catch(err){
         if (['auth/popup-blocked','auth/unauthorized-domain','auth/operation-not-allowed'].includes(err.code)) {
           await auth.signInWithRedirect(provider);
-        } else {
-          authError.textContent = "Erreur: " + humanizeAuthError(err.code);
-          authError.classList.remove('hidden');
-        }
+        } else { toast(friendly(err.code),'error'); console.error(err); }
       }
     };
 
-    // Handle redirect result (after fallback)
-    auth.getRedirectResult().then(async (result) => {
-      if (result?.user) {
-        await db.collection('users').doc(result.user.uid).set({
-          email: result.user.email || null,
-          displayName: result.user.displayName || null,
-          photoURL: result.user.photoURL || null,
-          provider: (result.providerId || 'redirect'),
+    // Redirect result
+    auth.getRedirectResult().then(async (res)=>{
+      if(res?.user){
+        await db.collection('users').doc(res.user.uid).set({
+          email: res.user.email || null,
+          displayName: res.user.displayName || null,
+          photoURL: res.user.photoURL || null,
+          provider: res.providerId || 'redirect',
           lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        },{merge:true});
       }
-    }).catch((err) => {
-      console.error('redirect result error', err);
-      authError.textContent = "Erreur: " + humanizeAuthError(err.code);
-      authError.classList.remove('hidden');
-    });
+    }).catch(err=>{ toast(friendly(err.code),'error'); console.error(err); });
 
-    // State change
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        // UI header
+    // State
+    let unsubOHIs=null, unsubWhirlwinds=null;
+    auth.onAuthStateChanged(async (user)=>{
+      if(user){
         headerUserEmail.textContent = user.email || '';
-        show(headerUserEmail);
-        show(logoutBtn);
-
-        // show app
-        hide(authView);
-        show(appView);
-
-        // profile upsert
+        show(headerUserEmail); show(logoutBtn);
+        hide(authView); show(appView);
         await db.collection('users').doc(user.uid).set({
-          email: user.email || null,
-          displayName: user.displayName || null,
-          photoURL: user.photoURL || null,
+          email:user.email||null, displayName:user.displayName||null, photoURL:user.photoURL||null,
           lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-
-        attachDataBindings(user.uid);
+        },{merge:true});
+        bindRealtime(user.uid);
+        toast('Bienvenue 👋','success');
       } else {
-        show(authView);
-        hide(appView);
-        hide(headerUserEmail);
-        hide(logoutBtn);
+        show(authView); hide(appView); hide(headerUserEmail); hide(logoutBtn);
+        unsubOHIs && unsubOHIs(); unsubWhirlwinds && unsubWhirlwinds();
       }
     });
 
-    // Logout
-    logoutBtn.onclick = () => auth.signOut();
+    logoutBtn.onclick = ()=> auth.signOut();
 
-    // ===== DATA (OHI + Tourbillons) =====
-    let unsubOHIs = null, unsubWhirlwinds = null;
-
-    function pill(priority) {
-      if (priority === 'high')   return 'bg-red-100 text-red-700';
-      if (priority === 'medium') return 'bg-yellow-100 text-yellow-700';
+    // ---------- Realtime bindings ----------
+    function pill(priority){
+      if(priority==='high') return 'bg-red-100 text-red-700';
+      if(priority==='medium') return 'bg-yellow-100 text-yellow-700';
       return 'bg-green-100 text-green-700';
     }
-    function labelFor(p) {
-      return p === 'high' ? '🔴 Haute' : p === 'medium' ? '🟡 Moyenne' : '🟢 Basse';
-    }
-    function iconFor(cat) {
-      const map = { management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢' };
-      return map[cat] || '🗂️';
-    }
+    function labelFor(p){ return p==='high'?'🔴 Haute':p==='medium'?'🟡 Moyenne':'🟢 Basse'; }
+    function iconFor(cat){ const m={management:'👥',finance:'💰',operations:'⚙️',strategy:'🎯',hr:'👔',communication:'📢'}; return m[cat]||'🗂️'; }
 
-    function attachDataBindings(uid) {
+    function bindRealtime(uid){
       // OHI
       unsubOHIs && unsubOHIs();
       unsubOHIs = db.collection('users').doc(uid).collection('ohis')
         .orderBy('createdAt','desc')
-        .onSnapshot((snap) => {
-          const list = $('ohiList'); list.innerHTML = '';
-          if (snap.empty) {
-            list.innerHTML = '<div class="p-4 text-gray-500 border rounded-xl">Aucun OHI pour l’instant.</div>';
-            return;
-          }
-          snap.forEach(doc => {
-            const o = doc.data();
-            const el = document.createElement('div');
-            el.className = 'border rounded-xl p-4 bg-white';
+        .onSnapshot((snap)=>{
+          const list = $('ohiList'); list.innerHTML='';
+          if(snap.empty){ list.innerHTML='<div class="p-4 text-gray-500 border rounded-xl">Aucun OHI pour l’instant.</div>'; return; }
+          snap.forEach(doc=>{
+            const o=doc.data();
+            const el=document.createElement('div');
+            el.className='border rounded-xl p-4 bg-white';
             el.innerHTML = `
               <div class="flex justify-between items-start">
                 <div>
-                  <h4 class="font-semibold">${o.title || ''}</h4>
-                  <p class="text-sm text-gray-600">${o.description || ''}</p>
-                  <p class="text-xs text-gray-500 mt-1">Échéance: ${o.deadline || '-'}</p>
+                  <h4 class="font-semibold">${o.title||''}</h4>
+                  <p class="text-sm text-gray-600">${o.description||''}</p>
+                  <p class="text-xs text-gray-500 mt-1">Échéance: ${o.deadline||'-'}</p>
                 </div>
                 <span class="px-2 py-1 text-xs rounded-full ${pill(o.priority)}">
-                  ${o.priority === 'high' ? 'Haute' : o.priority === 'medium' ? 'Moyenne' : 'Basse'}
+                  ${o.priority==='high'?'Haute':o.priority==='medium'?'Moyenne':'Basse'}
                 </span>
               </div>`;
             list.appendChild(el);
           });
-        });
+        }, (err)=>{ console.error(err); toast('Lecture OHI refusée (règles?)','error'); });
 
       // Tourbillons
       unsubWhirlwinds && unsubWhirlwinds();
       unsubWhirlwinds = db.collection('users').doc(uid).collection('whirlwinds')
         .orderBy('createdAt','desc')
-        .onSnapshot((snap) => {
-          const active = $('activeWhirlwinds'); active.innerHTML = '';
-          const done   = $('completedWhirlwinds'); done.innerHTML = '';
-          if (snap.empty) {
-            active.innerHTML = '<div class="p-3 text-gray-500 border rounded-xl">Rien en cours.</div>';
-            done.innerHTML   = '<div class="p-3 text-gray-500 border rounded-xl">Rien de terminé.</div>';
+        .onSnapshot((snap)=>{
+          const active=$('activeWhirlwinds'); const done=$('completedWhirlwinds');
+          active.innerHTML=''; done.innerHTML='';
+          if(snap.empty){
+            active.innerHTML='<div class="p-3 text-gray-500 border rounded-xl">Rien en cours.</div>';
+            done.innerHTML  ='<div class="p-3 text-gray-500 border rounded-xl">Rien de terminé.</div>';
             return;
           }
-          snap.forEach(doc => {
-            const w = doc.data();
-            const overdue = w.deadline ? (new Date(w.deadline) - new Date() < 0) : false;
-            const card = document.createElement('div');
-            card.className = `border-l-4 p-4 rounded-lg ${w.completed ? 'bg-gray-50 border-gray-300 opacity-80' :
-              w.priority==='high'?'bg-red-50 border-red-500': w.priority==='medium'?'bg-yellow-50 border-yellow-500':'bg-green-50 border-green-500'}`;
-            card.innerHTML = `
+          snap.forEach(doc=>{
+            const w=doc.data();
+            const overdue = w.deadline ? (new Date(w.deadline) < new Date()) : false;
+            const card=document.createElement('div');
+            card.className=`border-l-4 p-4 rounded-lg ${w.completed?'bg-gray-50 border-gray-300 opacity-80': w.priority==='high'?'bg-red-50 border-red-500': w.priority==='medium'?'bg-yellow-50 border-yellow-500':'bg-green-50 border-green-500'}`;
+            card.innerHTML=`
               <div class="flex items-start justify-between mb-2">
                 <div class="flex items-center gap-2">
                   <span>${iconFor(w.category)}</span>
-                  <h4 class="font-medium text-gray-900">${w.title || ''}</h4>
+                  <h4 class="font-medium text-gray-900">${w.title||''}</h4>
                 </div>
-                <span class="text-xs ${overdue ? 'text-red-600' : 'text-gray-600'}">
+                <span class="text-xs ${overdue?'text-red-600':'text-gray-600'}">
                   ${w.deadline ? (overdue ? 'En retard' : w.deadline) : ''}
                 </span>
               </div>
-              <p class="text-sm text-gray-600 mb-3">${w.notes || ''}</p>
+              <p class="text-sm text-gray-600 mb-3">${w.notes||''}</p>
               <div class="flex items-center justify-between">
                 <span class="text-xs px-2 py-1 rounded-full bg-white/70 border">${labelFor(w.priority)}</span>
-                ${w.completed ? '' : `<button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">✓ Terminé</button>`}
+                ${w.completed?'':`<button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">✓ Terminé</button>`}
               </div>`;
-            if (!w.completed) {
-              card.querySelector('button')?.addEventListener('click', async () => {
-                await db.collection('users').doc(uid).collection('whirlwinds').doc(doc.id).set({
-                  completed: true,
-                  completedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                }, { merge: true });
+            if(!w.completed){
+              card.querySelector('button')?.addEventListener('click', async ()=>{
+                try{
+                  await db.collection('users').doc(uid).collection('whirlwinds').doc(doc.id).set({
+                    completed:true, completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  },{merge:true});
+                  toast('Tourbillon terminé ✅','success');
+                }catch(err){ console.error(err); toast('Impossible de terminer (règles?)','error'); }
               });
               active.appendChild(card);
-            } else {
+            }else{
               done.appendChild(card);
             }
           });
-        });
+        }, (err)=>{ console.error(err); toast('Lecture tourbillons refusée (règles?)','error'); });
     }
 
-    // Ajout OHI
-    $('addOhiForm').addEventListener('submit', async (e) => {
+    // ---------- Ajout OHI (avec erreurs visibles) ----------
+    $('addOhiForm').addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const user = auth.currentUser; if (!user) return;
+      const user = auth.currentUser;
+      if(!user){ toast('Connecte-toi d’abord','error'); return; }
       const data = {
-        title: $('title').value.trim(),
-        description: $('description').value.trim(),
-        deadline: $('deadline').value || null,
-        priority: $('priority').value || 'medium',
+        title: $('ohiTitle').value.trim(),
+        description: $('ohiDescription').value.trim(),
+        deadline: $('ohiDeadline').value || null,
+        priority: $('ohiPriority').value || 'medium',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-      await db.collection('users').doc(user.uid).collection('ohis').add(data);
-      e.target.reset();
+      try{
+        await db.collection('users').doc(user.uid).collection('ohis').add(data);
+        e.target.reset();
+        toast('OHI ajouté ✅','success');
+      }catch(err){
+        console.error('Add OHI error', err);
+        toast('Ajout OHI refusé: règles Firestore ?','error');
+      }
     });
 
-    // Coach – préremplit le formulaire
-    function quickObjective(type) {
+    // ---------- Coach (préremplir) ----------
+    function quickObjective(type){
       const d = {
-        business: { title: "Développer mon activité", description: "Augmenter le CA et la clientèle", priority: "high" },
-        personal: { title: "Équilibre vie-travail",    description: "Mieux répartir mes priorités",   priority: "medium" },
-        learning: { title: "Nouvelle compétence",      description: "Apprendre une techno/langue",   priority: "medium" },
-        health:   { title: "Forme & énergie",          description: "Routine sport + alimentation",  priority: "high" },
-      }[type] || { title:"Nouvel objectif", description:"", priority:"medium" };
-      $('title').value = d.title;
-      $('description').value = d.description;
-      $('priority').value = d.priority;
+        business:{title:"Développer mon activité",description:"Augmenter le CA et la clientèle",priority:"high"},
+        personal:{title:"Équilibre vie-travail", description:"Mieux répartir mes priorités",    priority:"medium"},
+        learning:{title:"Nouvelle compétence",    description:"Apprendre une techno/langue",   priority:"medium"},
+        health:  {title:"Forme & énergie",        description:"Routine sport + alimentation",  priority:"high"},
+      }[type] || {title:"Nouvel objectif",description:"",priority:"medium"};
+      $('ohiTitle').value = d.title;
+      $('ohiDescription').value = d.description;
+      $('ohiPriority').value = d.priority;
       $('coachMessage').textContent = "Parfait, choisis une date puis clique sur Ajouter ✅";
     }
+    window.quickObjective = quickObjective; // accessible depuis onclick
 
-    // Ajout Tourbillon minimal (bouton)
-    $('addWhirlwindBtn').addEventListener('click', async () => {
-      const user = auth.currentUser; if (!user) return;
+    // ---------- Ajout Tourbillon ----------
+    $('addWhirlwindBtn').addEventListener('click', async ()=>{
+      const user = auth.currentUser;
+      if(!user){ toast('Connecte-toi d’abord','error'); return; }
       const deadline = new Date(); deadline.setMonth(deadline.getMonth()+1);
-      await db.collection('users').doc(user.uid).collection('whirlwinds').add({
-        title: "Nouvelle action prioritaire",
-        category: "operations",
-        priority: "medium",
-        deadline: deadline.toISOString().split('T')[0],
-        notes: "Détaille l’action, les personnes impliquées et l’impact attendu.",
-        completed: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
+      try{
+        await db.collection('users').doc(user.uid).collection('whirlwinds').add({
+          title:"Nouvelle action prioritaire",
+          category:"operations",
+          priority:"medium",
+          deadline: deadline.toISOString().split('T')[0],
+          notes:"Détaille l’action, les personnes impliquées et l’impact attendu.",
+          completed:false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        toast('Tourbillon ajouté ✅','success');
+      }catch(err){
+        console.error('Add Whirlwind error', err);
+        toast('Ajout tourbillon refusé: règles Firestore ?','error');
+      }
     });
   </script>
 </body>
