@@ -27,6 +27,13 @@
     .progress-ring { transform: rotate(-90deg); }
     .pulse-dot { animation: pulse 2s infinite; } @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
   </style>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- (Optionnel) Analytics compat -->
+  <!-- <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script> -->
 </head>
 <body class="bg-gray-50 min-h-screen">
 
@@ -226,16 +233,19 @@
     </div>
   </div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
   <script>
-    // ---------- CONFIG ----------
+    // ---------- CONFIG (compat) ----------
     const firebaseConfig = {
-      // ⬇️⬇️⬇️ COLLE TA CONFIG ICI (apiKey, authDomain, projectId, etc.) ⬇️⬇️⬇️
+      apiKey: "AIzaSyD4JaJelN4LbkbLfGVJVbCAY6gK9sPAN3I",
+      authDomain: "tableau-de-bord-intelligent.firebaseapp.com",
+      projectId: "tableau-de-bord-intelligent",
+      storageBucket: "tableau-de-bord-intelligent.appspot.com", // corrigé
+      messagingSenderId: "226539421183",
+      appId: "1:226539421183:web:7386e6a4274f1c9fde3bca",
+      measurementId: "G-7K0EN05CJ7"
     };
+
+    // Initialise Firebase (compat)
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db   = firebase.firestore();
