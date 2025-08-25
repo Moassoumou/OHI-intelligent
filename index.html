@@ -5,41 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Coach Objectifs IA – OHI & Tourbillons</title>
 
-  <!-- Tailwind CDN -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            primary: '#3b82f6',
-            secondary: '#8b5cf6',
-            success: '#10b981',
-            warning: '#f59e0b',
-            danger:   '#ef4444',
-          }
+          colors: { primary:'#3b82f6', secondary:'#8b5cf6', success:'#10b981', warning:'#f59e0b', danger:'#ef4444' }
         }
       }
     }
   </script>
 
-  <!-- Inter font -->
+  <!-- Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
     .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .card-hover { transition: all 0.3s ease; }
+    .card-hover { transition: all .25s ease; }
     .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,.1); }
     .progress-ring { transform: rotate(-90deg); }
-    .chat-bubble { animation: slideIn .3s ease-out; }
-    @keyframes slideIn { from { opacity:0; transform: translateY(10px);} to { opacity:1; transform: translateY(0);} }
-    .pulse-dot { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.5;} }
+    .pulse-dot { animation: pulse 2s infinite; } @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-  <!-- ======= ECRAN AUTH ======= -->
+  <!-- ===== AUTH ===== -->
   <section id="authScreen" class="min-h-screen flex items-center justify-center p-6">
     <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
       <h1 class="text-2xl font-bold text-gray-900 mb-2">Bienvenue 👋</h1>
@@ -47,8 +38,11 @@
 
       <form id="emailForm" class="space-y-3">
         <input id="authEmail" type="email" placeholder="Email" class="w-full border rounded-xl px-4 py-3" required>
-        <input id="authPass"  type="password" placeholder="Mot de passe" class="w-full border rounded-xl px-4 py-3" required>
-        <button type="submit" class="w-full bg-primary text-white rounded-xl py-3 hover:bg-blue-600">Se connecter</button>
+        <input id="authPass" type="password" placeholder="Mot de passe" class="w-full border rounded-xl px-4 py-3" required>
+        <button id="emailLoginBtn" type="submit" class="w-full bg-primary text-white rounded-xl py-3 hover:bg-blue-600 flex items-center justify-center gap-2">
+          <span>Se connecter</span>
+          <span id="emailSpinner" class="hidden w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
+        </button>
       </form>
 
       <div class="my-4 flex items-center gap-3">
@@ -57,24 +51,23 @@
         <div class="h-px bg-gray-200 flex-1"></div>
       </div>
 
-      <button id="googleBtn" class="w-full border rounded-xl py-3 hover:bg-gray-50">Se connecter avec Google</button>
+      <button id="googleBtn" class="w-full border rounded-xl py-3 hover:bg-gray-50 flex items-center justify-center gap-2">
+        <span>Continuer avec Google</span>
+        <span id="googleSpinner" class="hidden w-4 h-4 border-2 border-gray-400 border-t-gray-700 rounded-full animate-spin"></span>
+      </button>
 
-      <p class="text-xs text-gray-500 mt-6">
-        Besoin d’un compte ? Entrez email + mot de passe puis cliquez sur “Créer un compte” :
-      </p>
+      <p class="text-xs text-gray-500 mt-6">Pas de compte ? Saisissez votre email et mot de passe ci-dessus puis :</p>
       <button id="signupBtn" class="mt-2 w-full border rounded-xl py-2 text-sm hover:bg-gray-50">Créer un compte</button>
     </div>
   </section>
 
-  <!-- ======= HEADER ======= -->
+  <!-- ===== HEADER ===== -->
   <header id="appHeader" class="gradient-bg text-white shadow-lg hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center py-6">
-        <div class="flex items-center space-x-4">
-          <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/20 rounded-xl grid place-items-center">
+            <svg class="w-8 h-8 text-white" viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
           <div>
             <h1 class="text-2xl font-bold">Coach Objectifs IA</h1>
@@ -82,57 +75,31 @@
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <div class="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-4 py-2">
+          <div class="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2">
             <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
             <span id="userEmail" class="text-sm">—</span>
           </div>
-          <button id="logoutBtn" class="bg-white bg-opacity-20 rounded-lg px-4 py-2 hover:bg-opacity-30 transition">Déconnexion</button>
+          <button id="logoutBtn" class="bg-white/20 rounded-lg px-4 py-2 hover:bg-white/30 transition">Déconnexion</button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- ======= APP ======= -->
+  <!-- ===== APP ===== -->
   <main id="appScreen" class="hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <!-- Coach IA Chat -->
-      <div id="coachPanel" class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-primary">
-        <div class="flex items-start space-x-4">
-          <div class="w-12 h-12 bg-primary bg-opacity-10 rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"/>
-            </svg>
-          </div>
-          <div class="flex-1">
-            <div class="flex items-center space-x-2 mb-2">
-              <h3 class="font-semibold text-gray-900">Coach IA</h3>
-              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">En ligne</span>
-            </div>
-            <div id="coachMessage" class="text-gray-700 mb-4">
-              Bonjour ! 👋 Je suis votre coach personnel. Commençons par définir votre premier objectif. Que souhaitez-vous accomplir ?
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button onclick="quickObjective('business')" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm hover:bg-blue-200 transition-colors">🚀 Objectif Business</button>
-              <button onclick="quickObjective('personal')" class="px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm hover:bg-green-200 transition-colors">🎯 Objectif Personnel</button>
-              <button onclick="quickObjective('learning')" class="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg text-sm hover:bg-purple-200 transition-colors">📚 Apprentissage</button>
-              <button onclick="quickObjective('health')" class="px-4 py-2 bg-orange-100 text-orange-800 rounded-lg text-sm hover:bg-orange-200 transition-colors">💪 Santé & Bien-être</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Objectifs + Progression -->
+      <!-- OHI + Progress -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <!-- Mes Objectifs (OHI) -->
+        <!-- OHI -->
         <div class="lg:col-span-2">
           <div class="bg-white rounded-2xl p-6 shadow-sm">
             <div class="flex items-center justify-between mb-6">
               <h3 class="text-xl font-semibold text-gray-900">Mes OHI</h3>
-              <button id="openOhiFormBtn" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors">+ Ajouter un OHI</button>
+              <button id="openOhiFormBtn" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">+ Ajouter un OHI</button>
             </div>
 
-            <!-- Form OHI -->
+            <!-- Form -->
             <form id="addOhiForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
               <input id="title" type="text" placeholder="Titre" required class="border rounded-xl p-3"/>
               <input id="deadline" type="date" required class="border rounded-xl p-3"/>
@@ -143,8 +110,11 @@
                 <option value="low">Basse</option>
               </select>
               <div class="flex gap-3 md:col-span-2">
-                <button type="button" id="cancelOhiBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Annuler</button>
-                <button type="submit" class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">Ajouter</button>
+                <button type="button" id="cancelOhiBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">Annuler</button>
+                <button type="submit" class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
+                  <span>Ajouter</span>
+                  <span id="ohiSpinner" class="hidden w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
+                </button>
               </div>
             </form>
 
@@ -160,26 +130,17 @@
               <svg class="w-32 h-32 progress-ring">
                 <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
                 <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none"
-                  stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
+                        stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
               </svg>
-              <div class="absolute inset-0 flex items-center justify-center">
+              <div class="absolute inset-0 grid place-items-center">
                 <span id="globalProgress" class="text-2xl font-bold text-gray-900">0%</span>
               </div>
             </div>
           </div>
           <div class="space-y-3">
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">OHI total</span>
-              <span id="totalObjectives" class="font-medium">0</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">OHI complétés</span>
-              <span id="completedObjectives" class="font-medium">0</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">Prochaine échéance</span>
-              <span id="nextDeadline" class="font-medium text-orange-600">-</span>
-            </div>
+            <div class="flex justify-between text-sm"><span class="text-gray-600">OHI total</span><span id="totalObjectives" class="font-medium">0</span></div>
+            <div class="flex justify-between text-sm"><span class="text-gray-600">OHI complétés</span><span id="completedObjectives" class="font-medium">0</span></div>
+            <div class="flex justify-between text-sm"><span class="text-gray-600">Prochaine échéance</span><span id="nextDeadline" class="font-medium text-orange-600">-</span></div>
           </div>
         </div>
       </div>
@@ -187,20 +148,16 @@
       <!-- Tourbillons -->
       <div class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-orange-500">
         <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
-              </svg>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-100 rounded-lg grid place-items-center">
+              <svg class="w-6 h-6 text-orange-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
             </div>
             <div>
               <h3 class="text-xl font-semibold text-gray-900">🌪️ Tourbillons du Mois</h3>
               <p class="text-sm text-gray-600">Actions importantes pour ne pas se disperser</p>
             </div>
           </div>
-          <button id="openWhirlwindModalBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700 transition-colors">
-            + Nouveau Tourbillon
-          </button>
+          <button id="openWhirlwindModalBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700">+ Nouveau Tourbillon</button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -259,317 +216,296 @@
           <textarea id="whirlwindNotes" rows="3" class="w-full border rounded-lg px-3 py-2" placeholder="Détails, personnes impliquées, ressources nécessaires..."></textarea>
         </div>
         <div class="flex gap-3 pt-2">
-          <button type="button" id="cancelWhirlwindBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Annuler</button>
-          <button type="submit" class="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors">Créer</button>
+          <button type="button" id="cancelWhirlwindBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">Annuler</button>
+          <button type="submit" class="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2">
+            <span>Créer</span>
+            <span id="whirlwindSpinner" class="hidden w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
+          </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ===== Firebase ===== -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // ---------- CONFIG FIREBASE ----------
+    // ---------- CONFIG ----------
     const firebaseConfig = {
-      // TODO: colle ici ta config Firebase (apiKey, authDomain, projectId, etc.)
+      // ⬇️⬇️⬇️ COLLE TA CONFIG ICI (apiKey, authDomain, projectId, etc.) ⬇️⬇️⬇️
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db   = firebase.firestore();
+    auth.useDeviceLanguage();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-    // ---------- UI helpers ----------
-    const $ = (sel) => document.querySelector(sel);
-    function show(el){ el.classList.remove('hidden'); }
-    function hide(el){ el.classList.add('hidden'); }
-    function toast(msg, isErr=false){
-      const el = $('#toast');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      el.classList.toggle('bg-red-600', isErr);
-      el.classList.toggle('bg-gray-900', !isErr);
-      setTimeout(()=>el.classList.add('hidden'), 2200);
+    // ---------- helpers ----------
+    const $ = (s) => document.querySelector(s);
+    const show = (el) => el.classList.remove('hidden');
+    const hide = (el) => el.classList.add('hidden');
+    const spin = (el, on) => el && el.classList.toggle('hidden', !on);
+    function toast(msg, err=false){
+      const t = $('#toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      t.classList.toggle('bg-red-600', err);
+      t.classList.toggle('bg-gray-900', !err);
+      setTimeout(()=>t.classList.add('hidden'), 2200);
     }
 
-    // ---------- Auth: state listener ----------
+    // ---------- auth state ----------
     auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // UI
         hide($('#authScreen'));
-        show($('#appHeader'));
-        show($('#appScreen'));
+        show($('#appHeader')); show($('#appScreen'));
         $('#userEmail').textContent = user.email || 'Connecté';
-
-        // Data
+        // Précharge
         await Promise.all([loadOhis(), loadWhirlwinds()]);
       } else {
-        // UI
         show($('#authScreen'));
-        hide($('#appHeader'));
-        hide($('#appScreen'));
+        hide($('#appHeader')); hide($('#appScreen'));
       }
     });
 
-    // ---------- Auth: email/password sign-in ----------
-    $('#emailForm').addEventListener('submit', async (e) => {
+    // ---------- email login ----------
+    $('#emailForm').addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const email = $('#authEmail').value.trim();
-      const pass  = $('#authPass').value.trim();
+      spin($('#emailSpinner'), true);
       try {
-        await auth.signInWithEmailAndPassword(email, pass);
+        await auth.signInWithEmailAndPassword($('#authEmail').value.trim(), $('#authPass').value.trim());
         toast('Connecté ✅');
       } catch (err) {
         toast(err.message || 'Erreur de connexion', true);
-      }
+      } finally { spin($('#emailSpinner'), false); }
     });
 
-    // ---------- Auth: email/password sign-up ----------
-    $('#signupBtn').addEventListener('click', async () => {
+    // ---------- signup ----------
+    $('#signupBtn').addEventListener('click', async ()=>{
       const email = $('#authEmail').value.trim();
       const pass  = $('#authPass').value.trim();
-      if (!email || !pass) return toast('Renseigne email et mot de passe.');
+      if(!email || !pass) return toast('Renseigne email et mot de passe.');
       try {
         await auth.createUserWithEmailAndPassword(email, pass);
         toast('Compte créé 🎉');
-      } catch (err) {
-        toast(err.message || 'Erreur création compte', true);
-      }
+      } catch (err) { toast(err.message || 'Erreur création compte', true); }
     });
 
-    // ---------- Auth: Google ----------
-    $('#googleBtn').addEventListener('click', async () => {
+    // ---------- Google ----------
+    $('#googleBtn').addEventListener('click', async ()=>{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      spin($('#googleSpinner'), true);
       try {
-        const provider = new firebase.auth.GoogleAuthProvider();
         await auth.signInWithPopup(provider);
       } catch (err) {
-        toast(err.message || 'Erreur Google', true);
-      }
+        // Fallback redirect si popup bloqué
+        if (err && /popup/.test(String(err.message||''))) {
+          await auth.signInWithRedirect(provider);
+        } else {
+          toast(err.message || 'Erreur Google', true);
+        }
+      } finally { spin($('#googleSpinner'), false); }
     });
 
-    // ---------- Déconnexion ----------
-    $('#logoutBtn').addEventListener('click', async () => {
-      try {
-        await auth.signOut();
-        toast('Déconnecté');
-      } catch (err) {
-        toast('Erreur déconnexion', true);
-      }
+    // ---------- logout ----------
+    $('#logoutBtn').addEventListener('click', async ()=>{
+      try { await auth.signOut(); toast('Déconnecté'); } catch { toast('Erreur déconnexion', true); }
     });
 
-    // ---------- OHI CRUD ----------
-    let ohis = []; // cache mémoire local pour rendu
+    // ---------- OHI ----------
+    let ohis = [];
     async function loadOhis(){
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const snap = await db.collection('users').doc(user.uid).collection('ohis')
-        .orderBy('deadline', 'asc')
-        .get();
-
-      ohis = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderOhis();
-      updateStatsFromOhis();
+      const u = auth.currentUser; if(!u) return;
+      const snap = await db.collection('users').doc(u.uid).collection('ohis').orderBy('createdAt','desc').get();
+      ohis = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderOhis(); updateStatsFromOhis();
     }
 
     function renderOhis(){
       const list = $('#ohiList');
-      if (!ohis.length){
+      if(!ohis.length){
         list.innerHTML = `
-          <div class="text-center text-gray-500 py-8">
-            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <p>Aucun OHI</p>
-            <p class="text-sm">Ajoutez votre premier OHI pour commencer</p>
-          </div>`;
+        <div class="text-center text-gray-500 py-8">
+          <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p>Aucun OHI</p><p class="text-sm">Ajoutez votre premier OHI</p>
+        </div>`;
         return;
       }
-
-      list.innerHTML = ohis.map(o => {
-        const daysLeft = o.deadline ? Math.ceil((new Date(o.deadline) - new Date())/(1000*60*60*24)) : null;
-        const isOverdue = daysLeft !== null && daysLeft < 0;
-        const badge = isOverdue
-          ? `<span class="text-xs text-red-600">${Math.abs(daysLeft)} jours de retard</span>`
-          : (daysLeft !== null ? `<span class="text-xs text-gray-600">${daysLeft} jours restants</span>` : '');
-
+      list.innerHTML = ohis.map(o=>{
         const pr = (o.priority||'').toLowerCase();
         const prColor = pr==='high'?'text-red-600': pr==='medium'?'text-yellow-600':'text-green-600';
-
+        const progress = Number(o.progress||0);
+        const daysLeft = o.deadline ? Math.ceil((new Date(o.deadline) - new Date())/86400000) : null;
+        const badge = o.deadline
+          ? (daysLeft<0 ? `<span class="text-xs text-red-600">${Math.abs(daysLeft)} jours de retard</span>`
+                        : `<span class="text-xs text-gray-600">${daysLeft} jours restants</span>`)
+          : '';
         return `
-          <div class="border border-gray-200 rounded-xl p-4 card-hover carte-ohi">
-            <div class="flex items-start justify-between mb-2">
-              <div class="flex flex-col">
-                <h4 class="font-semibold text-gray-900">${o.title || '(Sans titre)'}</h4>
-                <p class="text-sm text-gray-600">${o.description || ''}</p>
-                <div class="mt-1 text-xs ${prColor}">Priorité: ${o.priority || '-'}</div>
+          <div class="border border-gray-200 rounded-xl p-4 card-hover">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-semibold text-gray-900">${o.title||'(Sans titre)'}</h4>
+                <p class="text-sm text-gray-600">${o.description||''}</p>
+                <div class="mt-1 text-xs ${prColor}">Priorité: ${o.priority||'-'}</div>
               </div>
               <div class="text-right">${badge}</div>
             </div>
-            <div class="flex items-center gap-3">
-              <button class="text-danger hover:text-red-800 text-sm" data-action="delete-ohi" data-id="${o.id}">Supprimer</button>
+
+            <!-- Progress -->
+            <div class="mb-3">
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600">Progression</span>
+                <span class="font-medium">${progress}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-primary h-2 rounded-full" style="width:${progress}%"></div>
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" data-action="ohiprog" data-delta="-10" data-id="${o.id}">-10%</button>
+              <button class="px-3 py-1 bg-primary text-white hover:bg-blue-600 rounded text-sm" data-action="ohiprog" data-delta="10" data-id="${o.id}">+10%</button>
+              <button class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm" data-action="ohidone" data-id="${o.id}">Terminé</button>
+              <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" data-action="ohidel" data-id="${o.id}">Supprimer</button>
             </div>
           </div>`;
       }).join('');
     }
 
-    // Delegation: suppression OHI
-    $('#ohiList').addEventListener('click', async (e) => {
-      const btn = e.target.closest('[data-action="delete-ohi"]');
-      if (!btn) return;
-      if (!confirm('Supprimer cet OHI ?')) return;
+    // Delegation: progress / done / delete
+    $('#ohiList').addEventListener('click', async (e)=>{
+      const btn = e.target.closest('[data-action]');
+      if(!btn) return;
+      const id = btn.dataset.id;
+      const u = auth.currentUser; if(!u) return toast('Non connecté', true);
+      const ref = db.collection('users').doc(u.uid).collection('ohis').doc(id);
+
       try {
-        const user = auth.currentUser;
-        await db.collection('users').doc(user.uid).collection('ohis').doc(btn.dataset.id).delete();
-        toast('OHI supprimé.');
+        if (btn.dataset.action==='ohiprog') {
+          const delta = parseInt(btn.dataset.delta, 10);
+          const curr = ohis.find(x=>x.id===id)?.progress||0;
+          const next = Math.max(0, Math.min(100, curr + delta));
+          await ref.update({ progress: next, completed: next===100 });
+          toast('Progression mise à jour');
+        } else if (btn.dataset.action==='ohidone') {
+          await ref.update({ progress: 100, completed: true });
+          toast('OHI terminé 🎯');
+        } else if (btn.dataset.action==='ohidel') {
+          if(!confirm('Supprimer cet OHI ?')) return;
+          await ref.delete();
+          toast('OHI supprimé');
+        }
         loadOhis();
-      } catch (err) {
-        toast('Erreur suppression OHI', true);
-      }
+      } catch (err) { toast('Action impossible', true); }
     });
 
-    // Ouvrir/fermer formulaire OHI
-    $('#openOhiFormBtn').addEventListener('click', () => { $('#addOhiForm').classList.remove('hidden'); });
-    $('#cancelOhiBtn').addEventListener('click', () =>  { $('#addOhiForm').classList.add('hidden');  $('#addOhiForm').reset(); });
+    // OHI: ouvrir/fermer form
+    $('#openOhiFormBtn').addEventListener('click', ()=>{
+      $('#addOhiForm').classList.remove('hidden');
+      const d=new Date(); d.setMonth(d.getMonth()+1); $('#deadline').value = d.toISOString().split('T')[0];
+    });
+    $('#cancelOhiBtn').addEventListener('click', ()=>{ $('#addOhiForm').classList.add('hidden'); $('#addOhiForm').reset(); });
 
-    // Submit OHI
-    $('#addOhiForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const user = auth.currentUser;
-      if (!user) return toast('Non connecté', true);
-
+    // OHI: submit
+    $('#addOhiForm').addEventListener('submit', async (e)=>{
+      e.preventDefault(); const u = auth.currentUser; if(!u) return;
+      spin($('#ohiSpinner'), true);
       const data = {
         title: $('#title').value.trim(),
         description: $('#description').value.trim(),
         priority: $('#priority').value,
         deadline: $('#deadline').value || null,
+        progress: 0,
         completed: false,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
       try {
-        await db.collection('users').doc(user.uid).collection('ohis').add(data);
-        toast('OHI ajouté.');
-        $('#addOhiForm').reset();
-        $('#addOhiForm').classList.add('hidden');
-        loadOhis();
-      } catch (err) {
-        toast('Erreur ajout OHI', true);
-      }
+        await db.collection('users').doc(u.uid).collection('ohis').add(data);
+        toast('OHI ajouté.'); $('#addOhiForm').reset(); $('#addOhiForm').classList.add('hidden'); loadOhis();
+      } catch (err) { toast('Erreur ajout OHI', true); }
+      finally { spin($('#ohiSpinner'), false); }
     });
 
     function updateStatsFromOhis(){
       const total = ohis.length;
-      const completed = ohis.filter(o => o.completed).length;
+      const completed = ohis.filter(o=>o.completed).length;
       $('#totalObjectives').textContent = total;
       $('#completedObjectives').textContent = completed;
-
-      // prochaine échéance
-      const next = ohis
-        .filter(o => !o.completed && o.deadline)
-        .sort((a,b) => new Date(a.deadline) - new Date(b.deadline))[0];
-      if (next) {
-        const days = Math.ceil((new Date(next.deadline) - new Date())/(1000*60*60*24));
-        $('#nextDeadline').textContent = `${days} jours`;
-      } else {
-        $('#nextDeadline').textContent = '-';
-      }
-
-      const avg = (completed/Math.max(1,total))*100|0;
+      const next = ohis.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
+      $('#nextDeadline').textContent = next ? `${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours` : '-';
+      const avg = Math.round((ohis.reduce((s,o)=>s+(o.progress||0),0)/Math.max(1,total)));
       $('#globalProgress').textContent = `${avg}%`;
-      const circle = $('#progressCircle');
-      const circumference = 2 * Math.PI * 56;
-      const offset = circumference - (avg/100)*circumference;
-      circle.style.strokeDashoffset = offset;
+      const c = $('#progressCircle'), C = 2*Math.PI*56, off = C-(avg/100)*C; c.style.strokeDashoffset = off;
     }
 
     // ---------- Tourbillons ----------
     let whirlwinds = [];
     async function loadWhirlwinds(){
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const snap = await db.collection('users').doc(user.uid).collection('whirlwinds')
-        .orderBy('createdAt','desc').get();
-
-      whirlwinds = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      const u = auth.currentUser; if(!u) return;
+      const snap = await db.collection('users').doc(u.uid).collection('whirlwinds').orderBy('createdAt','desc').get();
+      whirlwinds = snap.docs.map(d=>({id:d.id, ...d.data()}));
       renderWhirlwinds();
     }
 
     function renderWhirlwinds(){
-      const activeC = $('#activeWhirlwinds');
-      const doneC   = $('#completedWhirlwinds');
+      const activeC = $('#activeWhirlwinds'), doneC = $('#completedWhirlwinds');
+      const active = whirlwinds.filter(w=>!w.completed), done = whirlwinds.filter(w=>w.completed);
 
-      const active = whirlwinds.filter(w => !w.completed);
-      const done   = whirlwinds.filter(w =>  w.completed);
-
-      // Active
-      activeC.innerHTML = active.length ? active.map(w => {
-        const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline) - new Date())/(1000*60*60*24)) : null;
-        const isOverdue = daysLeft !== null && daysLeft < 0;
-
-        const priColor = w.priority==='high' ? 'border-red-500 bg-red-50' :
-                         w.priority==='medium' ? 'border-yellow-500 bg-yellow-50' :
-                         'border-green-500 bg-green-50';
-        const priLabel = w.priority==='high' ? '🔴 Haute' : w.priority==='medium' ? '🟡 Moyenne' : '🟢 Basse';
-
+      activeC.innerHTML = active.length ? active.map(w=>{
+        const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline)-new Date())/86400000) : null;
+        const isOverdue = daysLeft!==null && daysLeft<0;
+        const priColor = w.priority==='high'?'border-red-500 bg-red-50': w.priority==='medium'?'border-yellow-500 bg-yellow-50':'border-green-500 bg-green-50';
+        const priLabel = w.priority==='high'?'🔴 Haute': w.priority==='medium'?'🟡 Moyenne':'🟢 Basse';
+        const icon = {management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category] || '🌪️';
         return `
           <div class="border-l-4 ${priColor} p-4 rounded-lg">
             <div class="flex items-start justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <span>${
-                  {management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category] || '🌪️'
-                }</span>
-                <h4 class="font-medium text-gray-900">${w.title}</h4>
-              </div>
+              <div class="flex items-center gap-2"><span>${icon}</span><h4 class="font-medium text-gray-900">${w.title}</h4></div>
               <span class="text-xs ${isOverdue ? 'text-red-600' : 'text-gray-600'}">
                 ${w.deadline ? (isOverdue ? `${Math.abs(daysLeft)}j retard` : `${daysLeft}j restants`) : ''}
               </span>
             </div>
-            <p class="text-sm text-gray-600 mb-3">${w.notes || ''}</p>
+            <p class="text-sm text-gray-600 mb-3">${w.notes||''}</p>
             <div class="flex items-center justify-between">
               <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">${priLabel}</span>
               <div class="space-x-2">
-                <button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700" data-action="done-whirlwind" data-id="${w.id}">✓ Terminé</button>
-                <button class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200" data-action="delete-whirlwind" data-id="${w.id}">Supprimer</button>
+                <button class="text-xs bg-green-600 text-white px-3 py-1 rounded" data-action="done-whirlwind" data-id="${w.id}">✓ Terminé</button>
+                <button class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded" data-action="delete-whirlwind" data-id="${w.id}">Supprimer</button>
               </div>
             </div>
           </div>`;
       }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action en cours</div>`;
 
-      // Done (3 derniers)
-      doneC.innerHTML = done.length ? done.slice(0,3).map(w => `
-        <div class="border border-gray-200 p-3 rounded-lg bg-gray-50 opacity-75">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-sm">${
-              {management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category] || '🌪️'
-            }</span>
-            <h4 class="text-sm font-medium text-gray-700 line-through">${w.title}</h4>
-            <span class="text-xs text-green-600">✓</span>
-          </div>
-          <p class="text-xs text-gray-500">${w.notes || ''}</p>
-        </div>
-      `).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action terminée</div>`;
+      doneC.innerHTML = done.length ? done.slice(0,3).map(w=>{
+        const icon = {management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category] || '🌪️';
+        return `
+          <div class="border border-gray-200 p-3 rounded-lg bg-gray-50 opacity-75">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm">${icon}</span>
+              <h4 class="text-sm font-medium text-gray-700 line-through">${w.title}</h4>
+              <span class="text-xs text-green-600">✓</span>
+            </div>
+            <p class="text-xs text-gray-500">${w.notes||''}</p>
+          </div>`;
+      }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action terminée</div>`;
     }
 
-    // Open/Close modal
-    $('#openWhirlwindModalBtn').addEventListener('click', () => {
-      const d = new Date(); d.setMonth(d.getMonth()+1);
+    // Modal Tourbillon
+    $('#openWhirlwindModalBtn').addEventListener('click', ()=>{
+      const d=new Date(); d.setMonth(d.getMonth()+1);
       $('#whirlwindDeadline').value = d.toISOString().split('T')[0];
       show($('#whirlwindModal'));
-      $('#whirlwindTitle').focus();
     });
-    $('#cancelWhirlwindBtn').addEventListener('click', () => {
-      hide($('#whirlwindModal'));
-      $('#whirlwindForm').reset();
+    $('#cancelWhirlwindBtn').addEventListener('click', ()=>{
+      hide($('#whirlwindModal')); $('#whirlwindForm').reset();
     });
 
-    // Submit whirlwind
-    $('#whirlwindForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const user = auth.currentUser;
-      if (!user) return toast('Non connecté', true);
-
+    // Submit Tourbillon
+    $('#whirlwindForm').addEventListener('submit', async (e)=>{
+      e.preventDefault(); const u = auth.currentUser; if(!u) return;
+      spin($('#whirlwindSpinner'), true);
       const data = {
         title: $('#whirlwindTitle').value.trim(),
         category: $('#whirlwindCategory').value,
@@ -580,61 +516,40 @@
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
       try {
-        await db.collection('users').doc(user.uid).collection('whirlwinds').add(data);
-        hide($('#whirlwindModal'));
-        $('#whirlwindForm').reset();
-        toast('Tourbillon ajouté.');
-        loadWhirlwinds();
-      } catch (err) {
-        toast('Erreur ajout tourbillon', true);
-      }
+        await db.collection('users').doc(u.uid).collection('whirlwinds').add(data);
+        hide($('#whirlwindModal')); $('#whirlwindForm').reset(); toast('Tourbillon ajouté.'); loadWhirlwinds();
+      } catch (err) { toast('Erreur ajout tourbillon', true); }
+      finally { spin($('#whirlwindSpinner'), false); }
     });
 
-    // Delegation: done/delete whirlwind
-    $('#activeWhirlwinds').addEventListener('click', async (e) => {
+    // Actions Tourbillons
+    $('#activeWhirlwinds').addEventListener('click', async (e)=>{
       const doneBtn = e.target.closest('[data-action="done-whirlwind"]');
       const delBtn  = e.target.closest('[data-action="delete-whirlwind"]');
-      if (!doneBtn && !delBtn) return;
-
-      const user = auth.currentUser;
-      if (!user) return;
+      if(!doneBtn && !delBtn) return;
+      const u = auth.currentUser; if(!u) return;
 
       const id = (doneBtn||delBtn).dataset.id;
-      const ref = db.collection('users').doc(user.uid).collection('whirlwinds').doc(id);
-
+      const ref = db.collection('users').doc(u.uid).collection('whirlwinds').doc(id);
       try {
-        if (doneBtn) {
-          await ref.update({ completed: true });
-          toast('Marqué terminé.');
-        } else if (delBtn) {
-          if (!confirm('Supprimer ce tourbillon ?')) return;
-          await ref.delete();
-          toast('Tourbillon supprimé.');
-        }
+        if (doneBtn) { await ref.update({ completed:true }); toast('Marqué terminé.'); }
+        if (delBtn)  { if(!confirm('Supprimer ce tourbillon ?')) return; await ref.delete(); toast('Tourbillon supprimé.'); }
         loadWhirlwinds();
-      } catch (err) {
-        toast('Action impossible', true);
-      }
+      } catch { toast('Action impossible', true); }
     });
 
-    // ---------- Coach quick templates (remplit le formulaire OHI) ----------
-    function quickObjective(type){
+    // Quick templates (optionnel)
+    window.quickObjective = function(type){
       const map = {
-        business: { title:"Développer mon activité", description:"Augmenter le CA et la clientèle", priority:"high", months:3 },
-        personal: { title:"Équilibre vie-travail", description:"Plus de temps famille/loisirs", priority:"medium", months:2 },
-        learning: { title:"Apprendre une nouvelle compétence", description:"Maîtriser une techno/langue", priority:"medium", months:1 },
-        health:   { title:"Améliorer ma condition physique", description:"Routine d'exercice régulière", priority:"high", months:2 },
+        business:{ title:"Développer mon activité", description:"Augmenter le CA et la clientèle", priority:"high", months:3 },
+        personal:{ title:"Équilibre vie-travail", description:"Plus de temps famille/loisirs", priority:"medium", months:2 },
+        learning:{ title:"Apprendre une nouvelle compétence", description:"Maîtriser une techno/langue", priority:"medium", months:1 },
+        health:{   title:"Améliorer ma condition physique", description:"Routine d'exercice régulière", priority:"high", months:2 },
       };
-      const t = map[type] || map.business;
-      const d = new Date(); d.setMonth(d.getMonth() + t.months);
-      $('#title').value = t.title;
-      $('#description').value = t.description;
-      $('#priority').value = t.priority;
-      $('#deadline').value = d.toISOString().split('T')[0];
+      const t = map[type]||map.business; const d=new Date(); d.setMonth(d.getMonth()+t.months);
+      $('#title').value=t.title; $('#description').value=t.description; $('#priority').value=t.priority; $('#deadline').value=d.toISOString().split('T')[0];
       $('#addOhiForm').classList.remove('hidden');
-      window.scrollTo({ top: $('#addOhiForm').getBoundingClientRect().top + window.scrollY - 100, behavior:'smooth' });
-    }
-    window.quickObjective = quickObjective; // pour les boutons
+    };
   </script>
 </body>
 </html>
