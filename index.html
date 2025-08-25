@@ -3,18 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coach Objectifs IA – OHI & Tourbillons</title>
+  <title>Coach Objectifs IA – OHI & Workflows</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { primary:'#3b82f6', secondary:'#8b5cf6', success:'#10b981', warning:'#f59e0b', danger:'#ef4444' }
-        }
-      }
-    }
+    tailwind.config = { theme: { extend: { colors: { primary:'#3b82f6', secondary:'#8b5cf6', success:'#10b981', warning:'#f59e0b', danger:'#ef4444' } } } };
   </script>
 
   <!-- Inter -->
@@ -81,7 +75,12 @@
             <p class="text-white/80 text-sm">Votre compagnon intelligent pour atteindre vos objectifs</p>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-6">
+          <nav class="hidden md:flex gap-2">
+            <button id="navDashboard" class="px-3 py-2 rounded-lg hover:bg-white/20 text-sm">Tableau de bord</button>
+            <button id="navWorkflows" class="px-3 py-2 rounded-lg hover:bg-white/20 text-sm">Workflows</button>
+            <button id="navExecution" class="px-3 py-2 rounded-lg hover:bg-white/20 text-sm">Exécution</button>
+          </nav>
           <div class="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2">
             <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
             <span id="userEmail" class="text-sm">—</span>
@@ -92,7 +91,7 @@
     </div>
   </header>
 
-  <!-- ===== APP ===== -->
+  <!-- ===== DASHBOARD (OHI + TOURBILLONS) ===== -->
   <main id="appScreen" class="hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -136,8 +135,7 @@
             <div class="relative w-32 h-32">
               <svg class="w-32 h-32 progress-ring">
                 <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
-                <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none"
-                        stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
+                <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none" stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
               </svg>
               <div class="absolute inset-0 grid place-items-center">
                 <span id="globalProgress" class="text-2xl font-bold text-gray-900">0%</span>
@@ -184,7 +182,68 @@
     </div>
   </main>
 
-  <!-- ===== MODAL TOURBILLON ===== -->
+  <!-- ===== WORKFLOWS PAGE ===== -->
+  <section id="workflowsScreen" class="hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Workflows disponibles</h2>
+        <span class="text-sm text-gray-500">Depuis Firestore → collection <code>workflows</code></span>
+      </div>
+      <div id="wfList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+      <div id="wfEmpty" class="hidden text-center text-gray-500 py-16">
+        <p class="mb-2">Aucun workflow trouvé.</p>
+        <p class="text-sm">Ajoute un document dans <code>workflows</code> (ex. <em>SEO → Article → Newsletter</em>).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== EXECUTION PAGE ===== -->
+  <section id="executionScreen" class="hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Exécution d'un job</h2>
+      </div>
+
+      <!-- Select / Input JobId -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+        <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+          <div class="flex-1">
+            <label class="block text-sm text-gray-700 mb-1">Job ID</label>
+            <input id="jobIdInput" type="text" class="w-full border rounded-lg px-3 py-2" placeholder="Colle ici un jobId (ou lance un workflow)">
+          </div>
+          <button id="loadJobBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600">Charger</button>
+        </div>
+      </div>
+
+      <!-- Job meta & status -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="lg:col-span-1 bg-white rounded-2xl p-6 shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Statut du job</h3>
+          <div id="jobMeta" class="space-y-2 text-sm text-gray-700">
+            <div><span class="text-gray-500">Workflow:</span> <span id="jobWorkflow">—</span></div>
+            <div><span class="text-gray-500">Statut:</span> <span id="jobStatus" class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">—</span></div>
+            <div><span class="text-gray-500">Créé le:</span> <span id="jobCreated">—</span></div>
+          </div>
+          <div class="mt-6 flex gap-3">
+            <button id="approveBtn" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg opacity-50 cursor-not-allowed" disabled>Approuver</button>
+            <button id="rejectBtn" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg opacity-50 cursor-not-allowed" disabled>Rejeter</button>
+          </div>
+        </div>
+
+        <!-- Runs list -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Étapes (runs)</h3>
+          </div>
+          <div id="runsList" class="space-y-3"></div>
+          <div id="runsEmpty" class="hidden text-center text-gray-500 py-10 text-sm">Aucun run pour l'instant.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MODALS ===== -->
+  <!-- Whirlwind modal (existant) -->
   <div id="whirlwindModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
       <h3 class="text-xl font-semibold text-gray-900 mb-6">🌪️ Nouveau Tourbillon</h3>
@@ -233,19 +292,60 @@
     </div>
   </div>
 
+  <!-- Launch workflow modal -->
+  <div id="launchModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
+      <h3 class="text-xl font-semibold text-gray-900 mb-4">🚀 Lancer le workflow</h3>
+      <p id="launchWfName" class="text-sm text-gray-600 mb-4">—</p>
+      <form id="launchForm" class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Sujet</label>
+          <input id="inSubject" type="text" class="w-full border rounded-lg px-3 py-2" placeholder="Ex: Chaussures de running" required>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Audience</label>
+          <input id="inAudience" type="text" class="w-full border rounded-lg px-3 py-2" placeholder="Ex: Débutants, sportifs...">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-gray-700 mb-1">Ton</label>
+            <select id="inTone" class="w-full border rounded-lg px-3 py-2">
+              <option value="expert">Expert</option>
+              <option value="convivial">Convivial</option>
+              <option value="persuasif">Persuasif</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-700 mb-1">Langue</label>
+            <select id="inLang" class="w-full border rounded-lg px-3 py-2">
+              <option value="fr">Français</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" id="cancelLaunchBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">Annuler</button>
+          <button type="submit" class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
+            <span>Lancer</span>
+            <span id="launchSpinner" class="hidden w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // ---------- CONFIG (compat) ----------
     const firebaseConfig = {
       apiKey: "AIzaSyD4JaJelN4LbkbLfGVJVbCAY6gK9sPAN3I",
       authDomain: "tableau-de-bord-intelligent.firebaseapp.com",
       projectId: "tableau-de-bord-intelligent",
-      storageBucket: "tableau-de-bord-intelligent.appspot.com", // corrigé
+      storageBucket: "tableau-de-bord-intelligent.appspot.com",
       messagingSenderId: "226539421183",
       appId: "1:226539421183:web:7386e6a4274f1c9fde3bca",
       measurementId: "G-7K0EN05CJ7"
     };
 
-    // Initialise Firebase (compat)
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db   = firebase.firestore();
@@ -257,14 +357,18 @@
     const show = (el) => el.classList.remove('hidden');
     const hide = (el) => el.classList.add('hidden');
     const spin = (el, on) => el && el.classList.toggle('hidden', !on);
-    function toast(msg, err=false){
-      const t = $('#toast');
-      t.textContent = msg;
-      t.classList.remove('hidden');
-      t.classList.toggle('bg-red-600', err);
-      t.classList.toggle('bg-gray-900', !err);
-      setTimeout(()=>t.classList.add('hidden'), 2200);
+    function toast(msg, err=false){ const t=$('#toast'); if(!t) return; t.textContent=msg; t.classList.remove('hidden'); t.classList.toggle('bg-red-600',err); t.classList.toggle('bg-gray-900',!err); setTimeout(()=>t.classList.add('hidden'),2200); }
+    const fmtDate = (ts) => { if(!ts) return '—'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); };
+
+    // ---------- Nav ----------
+    function showScreen(screen){
+      const map = { dashboard: '#appScreen', workflows: '#workflowsScreen', execution: '#executionScreen' };
+      ['#appScreen','#workflowsScreen','#executionScreen'].forEach(id=>hide($(id)));
+      show($(map[screen]));
     }
+    $('#navDashboard')?.addEventListener('click', ()=>showScreen('dashboard'));
+    $('#navWorkflows')?.addEventListener('click', ()=>{ showScreen('workflows'); loadWorkflows(); });
+    $('#navExecution')?.addEventListener('click', ()=>showScreen('execution'));
 
     // ---------- auth state ----------
     auth.onAuthStateChanged(async (user) => {
@@ -272,86 +376,54 @@
         hide($('#authScreen'));
         show($('#appHeader')); show($('#appScreen'));
         $('#userEmail').textContent = user.email || 'Connecté';
-        // Précharge
         await Promise.all([loadOhis(), loadWhirlwinds()]);
       } else {
         show($('#authScreen'));
-        hide($('#appHeader')); hide($('#appScreen'));
+        hide($('#appHeader')); hide($('#appScreen')); hide($('#workflowsScreen')); hide($('#executionScreen'));
       }
     });
 
     // ---------- email login ----------
     $('#emailForm').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      spin($('#emailSpinner'), true);
-      try {
-        await auth.signInWithEmailAndPassword($('#authEmail').value.trim(), $('#authPass').value.trim());
-        toast('Connecté ✅');
-      } catch (err) {
-        toast(err.message || 'Erreur de connexion', true);
-      } finally { spin($('#emailSpinner'), false); }
+      e.preventDefault(); spin($('#emailSpinner'), true);
+      try { await auth.signInWithEmailAndPassword($('#authEmail').value.trim(), $('#authPass').value.trim()); toast('Connecté ✅'); }
+      catch(err){ toast(err.message || 'Erreur de connexion', true); }
+      finally { spin($('#emailSpinner'), false); }
     });
 
     // ---------- signup ----------
     $('#signupBtn').addEventListener('click', async ()=>{
-      const email = $('#authEmail').value.trim();
-      const pass  = $('#authPass').value.trim();
-      if(!email || !pass) return toast('Renseigne email et mot de passe.');
-      try {
-        await auth.createUserWithEmailAndPassword(email, pass);
-        toast('Compte créé 🎉');
-      } catch (err) { toast(err.message || 'Erreur création compte', true); }
+      const email=$('#authEmail').value.trim(); const pass=$('#authPass').value.trim(); if(!email||!pass) return toast('Renseigne email et mot de passe.');
+      try { await auth.createUserWithEmailAndPassword(email, pass); toast('Compte créé 🎉'); }
+      catch(err){ toast(err.message || 'Erreur création compte', true); }
     });
 
     // ---------- Google ----------
     $('#googleBtn').addEventListener('click', async ()=>{
-      const provider = new firebase.auth.GoogleAuthProvider();
-      spin($('#googleSpinner'), true);
-      try {
-        await auth.signInWithPopup(provider);
-      } catch (err) {
-        // Fallback redirect si popup bloqué
-        if (err && /popup/.test(String(err.message||''))) {
-          await auth.signInWithRedirect(provider);
-        } else {
-          toast(err.message || 'Erreur Google', true);
-        }
-      } finally { spin($('#googleSpinner'), false); }
+      const provider = new firebase.auth.GoogleAuthProvider(); spin($('#googleSpinner'), true);
+      try { await auth.signInWithPopup(provider); }
+      catch(err){ if(err && /popup/.test(String(err.message||''))) { await auth.signInWithRedirect(provider); } else { toast(err.message||'Erreur Google', true); } }
+      finally { spin($('#googleSpinner'), false); }
     });
 
     // ---------- logout ----------
-    $('#logoutBtn').addEventListener('click', async ()=>{
-      try { await auth.signOut(); toast('Déconnecté'); } catch { toast('Erreur déconnexion', true); }
-    });
+    $('#logoutBtn').addEventListener('click', async ()=>{ try { await auth.signOut(); toast('Déconnecté'); } catch { toast('Erreur déconnexion', true); } });
 
-    // ---------- OHI ----------
+    // ================= DASHBOARD (OHI) =================
     let ohis = [];
-    async function loadOhis(){
-      const u = auth.currentUser; if(!u) return;
-      const snap = await db.collection('users').doc(u.uid).collection('ohis').orderBy('createdAt','desc').get();
-      ohis = snap.docs.map(d=>({id:d.id, ...d.data()}));
-      renderOhis(); updateStatsFromOhis();
-    }
+    async function loadOhis(){ const u=auth.currentUser; if(!u) return; const snap=await db.collection('users').doc(u.uid).collection('ohis').orderBy('createdAt','desc').get(); ohis=snap.docs.map(d=>({id:d.id,...d.data()})); renderOhis(); updateStatsFromOhis(); }
 
     function renderOhis(){
-      const list = $('#ohiList');
-      if(!ohis.length){
-        list.innerHTML = `
+      const list = $('#ohiList'); if(!list) return;
+      if(!ohis.length){ list.innerHTML = `
         <div class="text-center text-gray-500 py-8">
           <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <p>Aucun OHI</p><p class="text-sm">Ajoutez votre premier OHI</p>
-        </div>`;
-        return;
-      }
+        </div>`; return; }
       list.innerHTML = ohis.map(o=>{
-        const pr = (o.priority||'').toLowerCase();
-        const prColor = pr==='high'?'text-red-600': pr==='medium'?'text-yellow-600':'text-green-600';
-        const progress = Number(o.progress||0);
-        const daysLeft = o.deadline ? Math.ceil((new Date(o.deadline) - new Date())/86400000) : null;
-        const badge = o.deadline
-          ? (daysLeft<0 ? `<span class="text-xs text-red-600">${Math.abs(daysLeft)} jours de retard</span>`
-                        : `<span class="text-xs text-gray-600">${daysLeft} jours restants</span>`)
-          : '';
+        const pr=(o.priority||'').toLowerCase(); const prColor = pr==='high'?'text-red-600': pr==='medium'?'text-yellow-600':'text-green-600';
+        const progress=Number(o.progress||0); const daysLeft=o.deadline?Math.ceil((new Date(o.deadline)-new Date())/86400000):null;
+        const badge=o.deadline ? (daysLeft<0?`<span class="text-xs text-red-600">${Math.abs(daysLeft)} jours de retard</span>`:`<span class="text-xs text-gray-600">${daysLeft} jours restants</span>`) : '';
         return `
           <div class="border border-gray-200 rounded-xl p-4 card-hover">
             <div class="flex items-start justify-between mb-3">
@@ -362,120 +434,145 @@
               </div>
               <div class="text-right">${badge}</div>
             </div>
-
-            <!-- Progress -->
             <div class="mb-3">
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-gray-600">Progression</span>
-                <span class="font-medium">${progress}%</span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-primary h-2 rounded-full" style="width:${progress}%"></div>
-              </div>
+              <div class="flex justify-between text-sm mb-1"><span class="text-gray-600">Progression</span><span class="font-medium">${progress}%</span></div>
+              <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-primary h-2 rounded-full" style="width:${progress}%"></div></div>
             </div>
-
             <div class="flex gap-2">
               <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" data-action="ohiprog" data-delta="-10" data-id="${o.id}">-10%</button>
               <button class="px-3 py-1 bg-primary text-white hover:bg-blue-600 rounded text-sm" data-action="ohiprog" data-delta="10" data-id="${o.id}">+10%</button>
               <button class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm" data-action="ohidone" data-id="${o.id}">Terminé</button>
               <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" data-action="ohidel" data-id="${o.id}">Supprimer</button>
             </div>
-          </div>`;
-      }).join('');
+          </div>`; }).join('');
     }
 
-    // Delegation: progress / done / delete
-    $('#ohiList').addEventListener('click', async (e)=>{
-      const btn = e.target.closest('[data-action]');
-      if(!btn) return;
-      const id = btn.dataset.id;
-      const u = auth.currentUser; if(!u) return toast('Non connecté', true);
-      const ref = db.collection('users').doc(u.uid).collection('ohis').doc(id);
-
-      try {
-        if (btn.dataset.action==='ohiprog') {
-          const delta = parseInt(btn.dataset.delta, 10);
-          const curr = ohis.find(x=>x.id===id)?.progress||0;
-          const next = Math.max(0, Math.min(100, curr + delta));
-          await ref.update({ progress: next, completed: next===100 });
-          toast('Progression mise à jour');
-        } else if (btn.dataset.action==='ohidone') {
-          await ref.update({ progress: 100, completed: true });
-          toast('OHI terminé 🎯');
-        } else if (btn.dataset.action==='ohidel') {
-          if(!confirm('Supprimer cet OHI ?')) return;
-          await ref.delete();
-          toast('OHI supprimé');
-        }
-        loadOhis();
-      } catch (err) { toast('Action impossible', true); }
+    $('#ohiList')?.addEventListener('click', async (e)=>{
+      const btn=e.target.closest('[data-action]'); if(!btn) return; const id=btn.dataset.id; const u=auth.currentUser; if(!u) return toast('Non connecté', true);
+      const ref=db.collection('users').doc(u.uid).collection('ohis').doc(id);
+      try{ if(btn.dataset.action==='ohiprog'){ const delta=parseInt(btn.dataset.delta,10); const curr=ohis.find(x=>x.id===id)?.progress||0; const next=Math.max(0,Math.min(100,curr+delta)); await ref.update({progress:next,completed:next===100}); toast('Progression mise à jour'); }
+           else if(btn.dataset.action==='ohidone'){ await ref.update({progress:100,completed:true}); toast('OHI terminé 🎯'); }
+           else if(btn.dataset.action==='ohidel'){ if(!confirm('Supprimer cet OHI ?')) return; await ref.delete(); toast('OHI supprimé'); }
+           loadOhis(); }
+      catch(err){ toast('Action impossible', true); }
     });
 
-    // OHI: ouvrir/fermer form
-    $('#openOhiFormBtn').addEventListener('click', ()=>{
-      $('#addOhiForm').classList.remove('hidden');
-      const d=new Date(); d.setMonth(d.getMonth()+1); $('#deadline').value = d.toISOString().split('T')[0];
-    });
-    $('#cancelOhiBtn').addEventListener('click', ()=>{ $('#addOhiForm').classList.add('hidden'); $('#addOhiForm').reset(); });
+    $('#openOhiFormBtn')?.addEventListener('click', ()=>{ $('#addOhiForm').classList.remove('hidden'); const d=new Date(); d.setMonth(d.getMonth()+1); $('#deadline').value=d.toISOString().split('T')[0]; });
+    $('#cancelOhiBtn')?.addEventListener('click', ()=>{ $('#addOhiForm').classList.add('hidden'); $('#addOhiForm').reset(); });
 
-    // OHI: submit
-    $('#addOhiForm').addEventListener('submit', async (e)=>{
-      e.preventDefault(); const u = auth.currentUser; if(!u) return;
-      spin($('#ohiSpinner'), true);
-      const data = {
-        title: $('#title').value.trim(),
-        description: $('#description').value.trim(),
-        priority: $('#priority').value,
-        deadline: $('#deadline').value || null,
-        progress: 0,
-        completed: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-      try {
-        await db.collection('users').doc(u.uid).collection('ohis').add(data);
-        toast('OHI ajouté.'); $('#addOhiForm').reset(); $('#addOhiForm').classList.add('hidden'); loadOhis();
-      } catch (err) { toast('Erreur ajout OHI', true); }
-      finally { spin($('#ohiSpinner'), false); }
+    $('#addOhiForm')?.addEventListener('submit', async (e)=>{
+      e.preventDefault(); const u=auth.currentUser; if(!u) return; spin($('#ohiSpinner'), true);
+      const data={ title:$('#title').value.trim(), description:$('#description').value.trim(), priority:$('#priority').value, deadline:$('#deadline').value||null, progress:0, completed:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+      try{ await db.collection('users').doc(u.uid).collection('ohis').add(data); toast('OHI ajouté.'); $('#addOhiForm').reset(); $('#addOhiForm').classList.add('hidden'); loadOhis(); }
+      catch(err){ console.error('OHI error:',err); toast(err.message||'Erreur ajout OHI', true); }
+      finally{ spin($('#ohiSpinner'), false); }
     });
 
-    function updateStatsFromOhis(){
-      const total = ohis.length;
-      const completed = ohis.filter(o=>o.completed).length;
-      $('#totalObjectives').textContent = total;
-      $('#completedObjectives').textContent = completed;
-      const next = ohis.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
-      $('#nextDeadline').textContent = next ? `${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours` : '-';
-      const avg = Math.round((ohis.reduce((s,o)=>s+(o.progress||0),0)/Math.max(1,total)));
-      $('#globalProgress').textContent = `${avg}%`;
-      const c = $('#progressCircle'), C = 2*Math.PI*56, off = C-(avg/100)*C; c.style.strokeDashoffset = off;
+    function updateStatsFromOhis(){ const total=ohis.length; const completed=ohis.filter(o=>o.completed).length; $('#totalObjectives').textContent=total; $('#completedObjectives').textContent=completed; const next=ohis.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0]; $('#nextDeadline').textContent= next?`${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours`:'-'; const avg=Math.round((ohis.reduce((s,o)=>s+(o.progress||0),0)/Math.max(1,total))); $('#globalProgress').textContent=`${avg}%`; const c=$('#progressCircle'), C=2*Math.PI*56, off=C-(avg/100)*C; c.style.strokeDashoffset=off; }
+
+    // ================= WORKFLOWS =================
+    let workflows = [];
+    async function loadWorkflows(){
+      const snap = await db.collection('workflows').get();
+      workflows = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      renderWorkflows();
     }
-
-    // ---------- Tourbillons ----------
-    let whirlwinds = [];
-    async function loadWhirlwinds(){
-      const u = auth.currentUser; if(!u) return;
-      const snap = await db.collection('users').doc(u.uid).collection('whirlwinds').orderBy('createdAt','desc').get();
-      whirlwinds = snap.docs.map(d=>({id:d.id, ...d.data()}));
-      renderWhirlwinds();
-    }
-
-    function renderWhirlwinds(){
-      const activeC = $('#activeWhirlwinds'), doneC = $('#completedWhirlwinds');
-      const active = whirlwinds.filter(w=>!w.completed), done = whirlwinds.filter(w=>w.completed);
-
-      activeC.innerHTML = active.length ? active.map(w=>{
-        const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline)-new Date())/86400000) : null;
-        const isOverdue = daysLeft!==null && daysLeft<0;
-        const priColor = w.priority==='high'?'border-red-500 bg-red-50': w.priority==='medium'?'border-yellow-500 bg-yellow-50':'border-green-500 bg-green-50';
-        const priLabel = w.priority==='high'?'🔴 Haute': w.priority==='medium'?'🟡 Moyenne':'🟢 Basse';
-        const icon = {management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category] || '🌪️';
+    function renderWorkflows(){
+      const list=$('#wfList'); const empty=$('#wfEmpty'); if(!list) return;
+      if(!workflows.length){ list.innerHTML=''; show(empty); return; }
+      hide(empty);
+      list.innerHTML = workflows.map(w=>{
+        const steps = Array.isArray(w.steps)? w.steps.length : 0;
         return `
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover border border-gray-100">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900">${w.name || '(Sans nom)'}</h4>
+                <p class="text-sm text-gray-600 mt-1">${w.description || ''}</p>
+                <div class="mt-3 text-xs text-gray-500">${steps} étape(s)</div>
+              </div>
+              <button class="shrink-0 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600" data-action="launch" data-id="${w.id}">Lancer</button>
+            </div>
+          </div>`; }).join('');
+    }
+
+    $('#wfList')?.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-action="launch"]'); if(!btn) return; const wf = workflows.find(x=>x.id===btn.dataset.id); if(!wf) return;
+      $('#launchWfName').textContent = wf.name || wf.id; $('#launchForm').dataset.wfid = wf.id; show($('#launchModal'));
+    });
+    $('#cancelLaunchBtn')?.addEventListener('click', ()=>{ hide($('#launchModal')); $('#launchForm').reset(); });
+
+    $('#launchForm')?.addEventListener('submit', async (e)=>{
+      e.preventDefault(); const u=auth.currentUser; if(!u) return toast('Non connecté', true);
+      const wfId = e.currentTarget.dataset.wfid; if(!wfId) return toast('Workflow introuvable', true);
+      const inputs = { subject: $('#inSubject').value.trim(), audience: $('#inAudience').value.trim(), tone: $('#inTone').value, language: $('#inLang').value };
+      spin($('#launchSpinner'), true);
+      try {
+        const job = { workflowType: wfId, inputs, status: 'queued', createdBy: u.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+        const ref = await db.collection('jobs').add(job);
+        toast('Job créé 🚀'); hide($('#launchModal')); $('#launchForm').reset();
+        // Redirige vers Exécution et commence le suivi
+        $('#jobIdInput').value = ref.id; showScreen('execution'); startWatchingJob(ref.id);
+      } catch(err){ console.error('Launch error:', err); toast(err.message||'Erreur création job', true); }
+      finally{ spin($('#launchSpinner'), false); }
+    });
+
+    // ================= EXECUTION =================
+    let unsubJob = null, unsubRuns = null;
+    function clearWatchers(){ if(unsubJob){unsubJob();unsubJob=null;} if(unsubRuns){unsubRuns();unsubRuns=null;} }
+    function badge(text, kind){
+      const cls = { queued:'bg-gray-100 text-gray-700', pending:'bg-gray-100 text-gray-700', running:'bg-blue-100 text-blue-700', completed:'bg-green-100 text-green-700', finished:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' }[kind] || 'bg-gray-100 text-gray-700';
+      return `<span class="px-2 py-0.5 rounded-full text-xs ${cls}">${text}</span>`;
+    }
+
+    function startWatchingJob(jobId){
+      if(!jobId) return; clearWatchers();
+      // Job meta
+      unsubJob = db.collection('jobs').doc(jobId).onSnapshot(doc=>{
+        if(!doc.exists){ toast('Job introuvable', true); return; }
+        const j = { id: doc.id, ...doc.data() };
+        $('#jobWorkflow').textContent = j.workflowType || '—';
+        $('#jobStatus').outerHTML = badge(j.status||'—', (j.status||'queued'));
+        $('#jobCreated').textContent = fmtDate(j.createdAt);
+      }, err=>{ console.error(err); toast('Erreur lecture job', true); });
+      // Runs list
+      unsubRuns = db.collection('runs').where('jobId','==',jobId).orderBy('startedAt','asc').onSnapshot(snap=>{
+        const items = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        renderRuns(items);
+      }, err=>{ console.error(err); toast('Erreur lecture runs', true); });
+    }
+
+    function renderRuns(items){
+      const list = $('#runsList'), empty=$('#runsEmpty'); if(!list) return; if(!items.length){ list.innerHTML=''; show(empty); return; } hide(empty);
+      list.innerHTML = items.map(r=>{
+        const started = fmtDate(r.startedAt), ended = fmtDate(r.endedAt);
+        const st = r.status || 'running';
+        return `
+          <div class="border border-gray-200 rounded-xl p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-medium text-gray-900">${r.step || '(Étape)'} ${badge(st, st)}</div>
+                <div class="text-xs text-gray-500 mt-1">Début: ${started} · Fin: ${ended}</div>
+              </div>
+              <div class="text-right text-sm text-gray-700">
+                ${r.output && r.output.summary ? `<span class='text-gray-500'>Résumé:</span> ${r.output.summary}` : ''}
+              </div>
+            </div>
+          </div>`; }).join('');
+    }
+
+    $('#loadJobBtn')?.addEventListener('click', ()=>{ const id=$('#jobIdInput').value.trim(); if(!id) return toast('Entre un jobId.'); startWatchingJob(id); });
+
+    // ================= TOURBILLONS (existant) =================
+    let whirlwinds = [];
+    async function loadWhirlwinds(){ const u=auth.currentUser; if(!u) return; const snap=await db.collection('users').doc(u.uid).collection('whirlwinds').orderBy('createdAt','desc').get(); whirlwinds=snap.docs.map(d=>({id:d.id,...d.data()})); renderWhirlwinds(); }
+
+    function renderWhirlwinds(){ const activeC=$('#activeWhirlwinds'), doneC=$('#completedWhirlwinds'); if(!activeC||!doneC) return; const active=whirlwinds.filter(w=>!w.completed), done=whirlwinds.filter(w=>w.completed);
+      activeC.innerHTML = active.length ? active.map(w=>{ const daysLeft=w.deadline?Math.ceil((new Date(w.deadline)-new Date())/86400000):null; const isOverdue=daysLeft!==null && daysLeft<0; const priColor=w.priority==='high'?'border-red-500 bg-red-50': w.priority==='medium'?'border-yellow-500 bg-yellow-50':'border-green-500 bg-green-50'; const priLabel=w.priority==='high'?'🔴 Haute': w.priority==='medium'?'🟡 Moyenne':'🟢 Basse'; const icon={management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category]||'🌪️'; return `
           <div class="border-l-4 ${priColor} p-4 rounded-lg">
             <div class="flex items-start justify-between mb-2">
               <div class="flex items-center gap-2"><span>${icon}</span><h4 class="font-medium text-gray-900">${w.title}</h4></div>
-              <span class="text-xs ${isOverdue ? 'text-red-600' : 'text-gray-600'}">
-                ${w.deadline ? (isOverdue ? `${Math.abs(daysLeft)}j retard` : `${daysLeft}j restants`) : ''}
-              </span>
+              <span class="text-xs ${isOverdue ? 'text-red-600' : 'text-gray-600'}">${w.deadline ? (isOverdue ? `${Math.abs(daysLeft)}j retard` : `${daysLeft}j restants`) : ''}</span>
             </div>
             <p class="text-sm text-gray-600 mb-3">${w.notes||''}</p>
             <div class="flex items-center justify-between">
@@ -485,81 +582,27 @@
                 <button class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded" data-action="delete-whirlwind" data-id="${w.id}">Supprimer</button>
               </div>
             </div>
-          </div>`;
-      }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action en cours</div>`;
-
-      doneC.innerHTML = done.length ? done.slice(0,3).map(w=>{
-        const icon = {management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category] || '🌪️';
-        return `
+          </div>`; }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action en cours</div>`;
+      doneC.innerHTML = done.length ? done.slice(0,3).map(w=>{ const icon={management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category]||'🌪️'; return `
           <div class="border border-gray-200 p-3 rounded-lg bg-gray-50 opacity-75">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-sm">${icon}</span>
-              <h4 class="text-sm font-medium text-gray-700 line-through">${w.title}</h4>
-              <span class="text-xs text-green-600">✓</span>
-            </div>
+            <div class="flex items-center gap-2 mb-1"><span class="text-sm">${icon}</span><h4 class="text-sm font-medium text-gray-700 line-through">${w.title}</h4><span class="text-xs text-green-600">✓</span></div>
             <p class="text-xs text-gray-500">${w.notes||''}</p>
-          </div>`;
-      }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action terminée</div>`;
-    }
+          </div>`; }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action terminée</div>`; }
 
-    // Modal Tourbillon
-    $('#openWhirlwindModalBtn').addEventListener('click', ()=>{
-      const d=new Date(); d.setMonth(d.getMonth()+1);
-      $('#whirlwindDeadline').value = d.toISOString().split('T')[0];
-      show($('#whirlwindModal'));
-    });
-    $('#cancelWhirlwindBtn').addEventListener('click', ()=>{
-      hide($('#whirlwindModal')); $('#whirlwindForm').reset();
+    $('#openWhirlwindModalBtn')?.addEventListener('click', ()=>{ const d=new Date(); d.setMonth(d.getMonth()+1); $('#whirlwindDeadline').value=d.toISOString().split('T')[0]; show($('#whirlwindModal')); });
+    $('#cancelWhirlwindBtn')?.addEventListener('click', ()=>{ hide($('#whirlwindModal')); $('#whirlwindForm').reset(); });
+
+    $('#whirlwindForm')?.addEventListener('submit', async (e)=>{ e.preventDefault(); const u=auth.currentUser; if(!u) return; spin($('#whirlwindSpinner'), true);
+      const data={ title:$('#whirlwindTitle').value.trim(), category:$('#whirlwindCategory').value, priority:$('#whirlwindPriority').value, deadline:$('#whirlwindDeadline').value||null, notes:$('#whirlwindNotes').value.trim(), completed:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+      try{ await db.collection('users').doc(u.uid).collection('whirlwinds').add(data); hide($('#whirlwindModal')); $('#whirlwindForm').reset(); toast('Tourbillon ajouté.'); loadWhirlwinds(); }
+      catch(err){ toast('Erreur ajout tourbillon', true); }
+      finally{ spin($('#whirlwindSpinner'), false); }
     });
 
-    // Submit Tourbillon
-    $('#whirlwindForm').addEventListener('submit', async (e)=>{
-      e.preventDefault(); const u = auth.currentUser; if(!u) return;
-      spin($('#whirlwindSpinner'), true);
-      const data = {
-        title: $('#whirlwindTitle').value.trim(),
-        category: $('#whirlwindCategory').value,
-        priority: $('#whirlwindPriority').value,
-        deadline: $('#whirlwindDeadline').value || null,
-        notes: $('#whirlwindNotes').value.trim(),
-        completed: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-      try {
-        await db.collection('users').doc(u.uid).collection('whirlwinds').add(data);
-        hide($('#whirlwindModal')); $('#whirlwindForm').reset(); toast('Tourbillon ajouté.'); loadWhirlwinds();
-      } catch (err) { toast('Erreur ajout tourbillon', true); }
-      finally { spin($('#whirlwindSpinner'), false); }
-    });
+    $('#activeWhirlwinds')?.addEventListener('click', async (e)=>{ const doneBtn=e.target.closest('[data-action="done-whirlwind"]'); const delBtn=e.target.closest('[data-action="delete-whirlwind"]'); if(!doneBtn && !delBtn) return; const u=auth.currentUser; if(!u) return; const id=(doneBtn||delBtn).dataset.id; const ref=db.collection('users').doc(u.uid).collection('whirlwinds').doc(id); try{ if(doneBtn){ await ref.update({completed:true}); toast('Marqué terminé.'); } if(delBtn){ if(!confirm('Supprimer ce tourbillon ?')) return; await ref.delete(); toast('Tourbillon supprimé.'); } loadWhirlwinds(); } catch { toast('Action impossible', true); } });
 
-    // Actions Tourbillons
-    $('#activeWhirlwinds').addEventListener('click', async (e)=>{
-      const doneBtn = e.target.closest('[data-action="done-whirlwind"]');
-      const delBtn  = e.target.closest('[data-action="delete-whirlwind"]');
-      if(!doneBtn && !delBtn) return;
-      const u = auth.currentUser; if(!u) return;
-
-      const id = (doneBtn||delBtn).dataset.id;
-      const ref = db.collection('users').doc(u.uid).collection('whirlwinds').doc(id);
-      try {
-        if (doneBtn) { await ref.update({ completed:true }); toast('Marqué terminé.'); }
-        if (delBtn)  { if(!confirm('Supprimer ce tourbillon ?')) return; await ref.delete(); toast('Tourbillon supprimé.'); }
-        loadWhirlwinds();
-      } catch { toast('Action impossible', true); }
-    });
-
-    // Quick templates (optionnel)
-    window.quickObjective = function(type){
-      const map = {
-        business:{ title:"Développer mon activité", description:"Augmenter le CA et la clientèle", priority:"high", months:3 },
-        personal:{ title:"Équilibre vie-travail", description:"Plus de temps famille/loisirs", priority:"medium", months:2 },
-        learning:{ title:"Apprendre une nouvelle compétence", description:"Maîtriser une techno/langue", priority:"medium", months:1 },
-        health:{   title:"Améliorer ma condition physique", description:"Routine d'exercice régulière", priority:"high", months:2 },
-      };
-      const t = map[type]||map.business; const d=new Date(); d.setMonth(d.getMonth()+t.months);
-      $('#title').value=t.title; $('#description').value=t.description; $('#priority').value=t.priority; $('#deadline').value=d.toISOString().split('T')[0];
-      $('#addOhiForm').classList.remove('hidden');
-    };
+    // Default screen
+    showScreen('dashboard');
   </script>
 </body>
 </html>
