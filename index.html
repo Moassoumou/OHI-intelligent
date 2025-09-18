@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Coach Objectifs IA – OHI & Workflows</title>
 
-  <!-- Tailwind -->
+  <!-- SheetJS pour Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { theme: { extend: { colors: { primary:'#3b82f6', secondary:'#8b5cf6', success:'#10b981', warning:'#f59e0b', danger:'#ef4444' } } } };
@@ -23,12 +25,10 @@
     .pulse-dot { animation: pulse 2s infinite; } @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
   </style>
 
-  <!-- Firebase (compat) -->
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <!-- (Optionnel) Analytics compat -->
-  <!-- <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script> -->
 </head>
 <body class="bg-gray-50 min-h-screen">
 
@@ -92,18 +92,23 @@
     </div>
   </header>
 
-  <!-- ===== DASHBOARD (OHI + TOURBILLONS) ===== -->
+  <!-- ===== DASHBOARD ===== -->
   <main id="appScreen" class="hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <!-- OHI + Progress -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <!-- OHI -->
+        <!-- OHI (col 2) -->
         <div class="lg:col-span-2">
           <div class="bg-white rounded-2xl p-6 shadow-sm">
             <div class="flex items-center justify-between mb-6">
               <h3 class="text-xl font-semibold text-gray-900">Mes OHI</h3>
-              <button id="openOhiFormBtn" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">+ Ajouter un OHI</button>
+              <div class="flex flex-wrap gap-2">
+                <button id="openOhiFormBtn" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">+ Ajouter un OHI</button>
+                <input id="importFile" type="file" accept=".xlsx,.xls,.csv" class="hidden">
+                <button id="importBtn" class="border px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Importer</button>
+                <button id="exportBtn" class="border px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Exporter</button>
+                <button id="templateBtn" class="border px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Télécharger Modèle</button>
+              </div>
             </div>
 
             <!-- Form -->
@@ -129,14 +134,15 @@
           </div>
         </div>
 
-        <!-- Progression Globale -->
+        <!-- Progression Globale (col 1) -->
         <div class="bg-white rounded-2xl p-6 shadow-sm">
           <h3 class="text-xl font-semibold text-gray-900 mb-6">Progression Globale</h3>
           <div class="flex items-center justify-center mb-6">
             <div class="relative w-32 h-32">
               <svg class="w-32 h-32 progress-ring">
                 <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
-                <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none" stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
+                <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none"
+                        stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
               </svg>
               <div class="absolute inset-0 grid place-items-center">
                 <span id="globalProgress" class="text-2xl font-bold text-gray-900">0%</span>
@@ -205,7 +211,6 @@
         <h2 class="text-2xl font-bold text-gray-900">Exécution d'un job</h2>
       </div>
 
-      <!-- Select / Input JobId -->
       <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
         <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
           <div class="flex-1">
@@ -216,7 +221,6 @@
         </div>
       </div>
 
-      <!-- Job meta & status -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div class="lg:col-span-1 bg-white rounded-2xl p-6 shadow-sm">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Statut du job</h3>
@@ -231,7 +235,6 @@
           </div>
         </div>
 
-        <!-- Runs list -->
         <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-gray-900">Étapes (runs)</h3>
@@ -244,7 +247,6 @@
   </section>
 
   <!-- ===== MODALS ===== -->
-  <!-- Whirlwind modal (existant) -->
   <div id="whirlwindModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
       <h3 class="text-xl font-semibold text-gray-900 mb-6">🌪️ Nouveau Tourbillon</h3>
@@ -335,8 +337,9 @@
     </div>
   </div>
 
+  <!-- ================= SCRIPTS APP ================= -->
   <script>
-    // ---------- CONFIG (compat) ----------
+    // ---------- CONFIG ----------
     const firebaseConfig = {
       apiKey: "AIzaSyD4JaJelN4LbkbLfGVJVbCAY6gK9sPAN3I",
       authDomain: "tableau-de-bord-intelligent.firebaseapp.com",
@@ -361,7 +364,7 @@
     function toast(msg, err=false){ const t=$('#toast'); if(!t) return; t.textContent=msg; t.classList.remove('hidden'); t.classList.toggle('bg-red-600',err); t.classList.toggle('bg-gray-900',!err); setTimeout(()=>t.classList.add('hidden'),2200); }
     const fmtDate = (ts) => { if(!ts) return '—'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); };
 
-    // ---------- Nav ----------
+    // ---------- Navigation ----------
     function showScreen(screen){
       const map = { dashboard: '#appScreen', workflows: '#workflowsScreen', execution: '#executionScreen' };
       ['#appScreen','#workflowsScreen','#executionScreen'].forEach(id=>hide($(id)));
@@ -412,15 +415,22 @@
 
     // ================= DASHBOARD (OHI) =================
     let ohis = [];
-    async function loadOhis(){ const u=auth.currentUser; if(!u) return; const snap=await db.collection('users').doc(u.uid).collection('ohis').orderBy('createdAt','desc').get(); ohis=snap.docs.map(d=>({id:d.id,...d.data()})); renderOhis(); updateStatsFromOhis(); }
+    async function loadOhis(){
+      const u=auth.currentUser; if(!u) return;
+      const snap=await db.collection('users').doc(u.uid).collection('ohis').orderBy('createdAt','desc').get();
+      ohis=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderOhis(); updateStatsFromOhis();
+    }
 
     function renderOhis(){
       const list = $('#ohiList'); if(!list) return;
-      if(!ohis.length){ list.innerHTML = `
+      if(!ohis.length){
+        list.innerHTML = `
         <div class="text-center text-gray-500 py-8">
           <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <p>Aucun OHI</p><p class="text-sm">Ajoutez votre premier OHI</p>
-        </div>`; return; }
+        </div>`; return;
+      }
       list.innerHTML = ohis.map(o=>{
         const pr=(o.priority||'').toLowerCase(); const prColor = pr==='high'?'text-red-600': pr==='medium'?'text-yellow-600':'text-green-600';
         const progress=Number(o.progress||0); const daysLeft=o.deadline?Math.ceil((new Date(o.deadline)-new Date())/86400000):null;
@@ -445,20 +455,33 @@
               <button class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm" data-action="ohidone" data-id="${o.id}">Terminé</button>
               <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" data-action="ohidel" data-id="${o.id}">Supprimer</button>
             </div>
-          </div>`; }).join('');
+          </div>`;
+      }).join('');
     }
 
     $('#ohiList')?.addEventListener('click', async (e)=>{
       const btn=e.target.closest('[data-action]'); if(!btn) return; const id=btn.dataset.id; const u=auth.currentUser; if(!u) return toast('Non connecté', true);
       const ref=db.collection('users').doc(u.uid).collection('ohis').doc(id);
-      try{ if(btn.dataset.action==='ohiprog'){ const delta=parseInt(btn.dataset.delta,10); const curr=ohis.find(x=>x.id===id)?.progress||0; const next=Math.max(0,Math.min(100,curr+delta)); await ref.update({progress:next,completed:next===100}); toast('Progression mise à jour'); }
-           else if(btn.dataset.action==='ohidone'){ await ref.update({progress:100,completed:true}); toast('OHI terminé 🎯'); }
-           else if(btn.dataset.action==='ohidel'){ if(!confirm('Supprimer cet OHI ?')) return; await ref.delete(); toast('OHI supprimé'); }
-           loadOhis(); }
-      catch(err){ toast('Action impossible', true); }
+      try{
+        if(btn.dataset.action==='ohiprog'){
+          const delta=parseInt(btn.dataset.delta,10);
+          const curr=ohis.find(x=>x.id===id)?.progress||0;
+          const next=Math.max(0,Math.min(100,curr+delta));
+          await ref.update({progress:next,completed:next===100});
+          toast('Progression mise à jour');
+        } else if(btn.dataset.action==='ohidone'){
+          await ref.update({progress:100,completed:true}); toast('OHI terminé 🎯');
+        } else if(btn.dataset.action==='ohidel'){
+          if(!confirm('Supprimer cet OHI ?')) return; await ref.delete(); toast('OHI supprimé');
+        }
+        loadOhis();
+      } catch(err){ toast('Action impossible', true); }
     });
 
-    $('#openOhiFormBtn')?.addEventListener('click', ()=>{ $('#addOhiForm').classList.remove('hidden'); const d=new Date(); d.setMonth(d.getMonth()+1); $('#deadline').value=d.toISOString().split('T')[0]; });
+    $('#openOhiFormBtn')?.addEventListener('click', ()=>{
+      $('#addOhiForm').classList.remove('hidden');
+      const d=new Date(); d.setMonth(d.getMonth()+1); $('#deadline').value=d.toISOString().split('T')[0];
+    });
     $('#cancelOhiBtn')?.addEventListener('click', ()=>{ $('#addOhiForm').classList.add('hidden'); $('#addOhiForm').reset(); });
 
     $('#addOhiForm')?.addEventListener('submit', async (e)=>{
@@ -469,7 +492,134 @@
       finally{ spin($('#ohiSpinner'), false); }
     });
 
-    function updateStatsFromOhis(){ const total=ohis.length; const completed=ohis.filter(o=>o.completed).length; $('#totalObjectives').textContent=total; $('#completedObjectives').textContent=completed; const next=ohis.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0]; $('#nextDeadline').textContent= next?`${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours`:'-'; const avg=Math.round((ohis.reduce((s,o)=>s+(o.progress||0),0)/Math.max(1,total))); $('#globalProgress').textContent=`${avg}%`; const c=$('#progressCircle'), C=2*Math.PI*56, off=C-(avg/100)*C; c.style.strokeDashoffset=off; }
+    function updateStatsFromOhis(){
+      const total=ohis.length;
+      const completed=ohis.filter(o=>o.completed).length;
+      $('#totalObjectives').textContent=total;
+      $('#completedObjectives').textContent=completed;
+      const next=ohis.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
+      $('#nextDeadline').textContent= next?`${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours`:'-';
+      const avg=Math.round((ohis.reduce((s,o)=>s+(o.progress||0),0)/Math.max(1,total)));
+      $('#globalProgress').textContent=`${avg}%`;
+      const c=$('#progressCircle'), C=2*Math.PI*56, off=C-(avg/100)*C; c.style.strokeDashoffset=off;
+    }
+
+    // ====== IMPORT / EXPORT OHI ======
+    const HEADER_MAP = {
+      titre: ['titre','title'],
+      description: ['description','desc'],
+      priorite: ['priorité (high|medium|low)','priorite','priorité','priority'],
+      echeance: ['échéance (yyyy-mm-dd)','echeance','échéance','deadline','date'],
+      progression: ['progression (0-100)','progression','progress','avancement']
+    };
+    function normalizeHeader(h) {
+      if (!h) return null;
+      const x = String(h).trim().toLowerCase();
+      for (const [canon, aliases] of Object.entries(HEADER_MAP)) {
+        if (aliases.some(a => x === a)) return canon;
+      }
+      return null;
+    }
+    function parseDateCell(val) {
+      if (val == null || val === '') return null;
+      if (typeof val === 'number') {
+        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+        const ms = val * 86400000;
+        const d = new Date(excelEpoch.getTime() + ms);
+        return d.toISOString().slice(0,10);
+      }
+      const s = String(val).trim();
+      const t = s.replace(/\//g, '-');
+      const d = new Date(t);
+      if (!isNaN(d)) return d.toISOString().slice(0,10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      return null;
+    }
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    document.getElementById('templateBtn').addEventListener('click', () => {
+      const wb = XLSX.utils.book_new();
+      const data = [
+        ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"],
+        ["Lancer le site","Mettre en ligne la v1","high","2025-12-31","0"]
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, "OHIs");
+      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), "Modele_OHI.xlsx");
+    });
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      if (!Array.isArray(ohis)) return toast("Aucun OHI à exporter", true);
+      const rows = [
+        ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"]
+      ];
+      ohis.forEach(o => {
+        rows.push([ o.title||"", o.description||"", (o.priority||"medium"), o.deadline||"", String(o.progress||0) ]);
+      });
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, "OHIs");
+      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`);
+      toast("Export créé ✅");
+    });
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('importFile').value = "";
+      document.getElementById('importFile').click();
+    });
+    document.getElementById('importFile').addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        if (!json.length) return toast("Fichier vide", true);
+
+        const rawHeaders = Object.keys(json[0]);
+        const headerMap = {};
+        rawHeaders.forEach(h => { const canon = normalizeHeader(h); if (canon) headerMap[canon] = h; });
+        if (!headerMap.titre) return toast("Modèle invalide : la colonne 'Titre' est requise. Clique d'abord sur 'Télécharger Modèle'.", true);
+
+        const u = auth.currentUser; if (!u) return toast("Connecte-toi d'abord", true);
+
+        const toCreate = [];
+        for (const row of json) {
+          const title = String(row[headerMap.titre] || "").trim();
+          if (!title) continue;
+          const description = headerMap.description ? String(row[headerMap.description] || "").trim() : "";
+          let priority = headerMap.priorite ? String(row[headerMap.priorite] || "").trim().toLowerCase() : "medium";
+          if (!['high','medium','low'].includes(priority)) priority = "medium";
+          const deadline = headerMap.echeance ? parseDateCell(row[headerMap.echeance]) : null;
+          let progress = 0;
+          if (headerMap.progression) {
+            const p = Number(row[headerMap.progression]);
+            progress = isNaN(p) ? 0 : Math.max(0, Math.min(100, Math.round(p)));
+          }
+          toCreate.push({
+            title, description, priority, deadline, progress,
+            completed: progress === 100,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+        if (!toCreate.length) return toast("Aucune ligne valide trouvée (colonne 'Titre').", true);
+
+        for (const doc of toCreate) {
+          await db.collection('users').doc(u.uid).collection('ohis').add(doc);
+        }
+        toast(`Import terminé : ${toCreate.length} OHI${toCreate.length>1?'s':''} créés ✅`);
+        await loadOhis();
+      } catch (err) {
+        console.error(err);
+        toast("Échec de l'import. Assure-toi d'utiliser le modèle.", true);
+      }
+    });
 
     // ================= WORKFLOWS =================
     let workflows = [];
@@ -494,9 +644,9 @@
               </div>
               <button class="shrink-0 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600" data-action="launch" data-id="${w.id}">Lancer</button>
             </div>
-          </div>`; }).join('');
+          </div>`;
+      }).join('');
     }
-
     $('#wfList')?.addEventListener('click', (e)=>{
       const btn = e.target.closest('[data-action="launch"]'); if(!btn) return; const wf = workflows.find(x=>x.id===btn.dataset.id); if(!wf) return;
       $('#launchWfName').textContent = wf.name || wf.id; $('#launchForm').dataset.wfid = wf.id; show($('#launchModal'));
@@ -512,7 +662,6 @@
         const job = { workflowType: wfId, inputs, status: 'queued', createdBy: u.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
         const ref = await db.collection('jobs').add(job);
         toast('Job créé 🚀'); hide($('#launchModal')); $('#launchForm').reset();
-        // Redirige vers Exécution et commence le suivi
         $('#jobIdInput').value = ref.id; showScreen('execution'); startWatchingJob(ref.id);
       } catch(err){ console.error('Launch error:', err); toast(err.message||'Erreur création job', true); }
       finally{ spin($('#launchSpinner'), false); }
@@ -525,10 +674,8 @@
       const cls = { queued:'bg-gray-100 text-gray-700', pending:'bg-gray-100 text-gray-700', running:'bg-blue-100 text-blue-700', completed:'bg-green-100 text-green-700', finished:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' }[kind] || 'bg-gray-100 text-gray-700';
       return `<span class="px-2 py-0.5 rounded-full text-xs ${cls}">${text}</span>`;
     }
-
     function startWatchingJob(jobId){
       if(!jobId) return; clearWatchers();
-      // Job meta
       unsubJob = db.collection('jobs').doc(jobId).onSnapshot(doc=>{
         if(!doc.exists){ toast('Job introuvable', true); return; }
         const j = { id: doc.id, ...doc.data() };
@@ -536,13 +683,11 @@
         $('#jobStatus').outerHTML = badge(j.status||'—', (j.status||'queued'));
         $('#jobCreated').textContent = fmtDate(j.createdAt);
       }, err=>{ console.error(err); toast('Erreur lecture job', true); });
-      // Runs list
       unsubRuns = db.collection('runs').where('jobId','==',jobId).orderBy('startedAt','asc').onSnapshot(snap=>{
         const items = snap.docs.map(d=>({ id:d.id, ...d.data() }));
         renderRuns(items);
       }, err=>{ console.error(err); toast('Erreur lecture runs', true); });
     }
-
     function renderRuns(items){
       const list = $('#runsList'), empty=$('#runsEmpty'); if(!list) return; if(!items.length){ list.innerHTML=''; show(empty); return; } hide(empty);
       list.innerHTML = items.map(r=>{
@@ -559,16 +704,16 @@
                 ${r.output && r.output.summary ? `<span class='text-gray-500'>Résumé:</span> ${r.output.summary}` : ''}
               </div>
             </div>
-          </div>`; }).join('');
+          </div>`;
+      }).join('');
     }
-
     $('#loadJobBtn')?.addEventListener('click', ()=>{ const id=$('#jobIdInput').value.trim(); if(!id) return toast('Entre un jobId.'); startWatchingJob(id); });
 
-    // ================= TOURBILLONS (existant) =================
+    // ================= TOURBILLONS =================
     let whirlwinds = [];
     async function loadWhirlwinds(){ const u=auth.currentUser; if(!u) return; const snap=await db.collection('users').doc(u.uid).collection('whirlwinds').orderBy('createdAt','desc').get(); whirlwinds=snap.docs.map(d=>({id:d.id,...d.data()})); renderWhirlwinds(); }
-
-    function renderWhirlwinds(){ const activeC=$('#activeWhirlwinds'), doneC=$('#completedWhirlwinds'); if(!activeC||!doneC) return; const active=whirlwinds.filter(w=>!w.completed), done=whirlwinds.filter(w=>w.completed);
+    function renderWhirlwinds(){
+      const activeC=$('#activeWhirlwinds'), doneC=$('#completedWhirlwinds'); if(!activeC||!doneC) return; const active=whirlwinds.filter(w=>!w.completed), done=whirlwinds.filter(w=>w.completed);
       activeC.innerHTML = active.length ? active.map(w=>{ const daysLeft=w.deadline?Math.ceil((new Date(w.deadline)-new Date())/86400000):null; const isOverdue=daysLeft!==null && daysLeft<0; const priColor=w.priority==='high'?'border-red-500 bg-red-50': w.priority==='medium'?'border-yellow-500 bg-yellow-50':'border-green-500 bg-green-50'; const priLabel=w.priority==='high'?'🔴 Haute': w.priority==='medium'?'🟡 Moyenne':'🟢 Basse'; const icon={management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category]||'🌪️'; return `
           <div class="border-l-4 ${priColor} p-4 rounded-lg">
             <div class="flex items-start justify-between mb-2">
@@ -588,21 +733,19 @@
           <div class="border border-gray-200 p-3 rounded-lg bg-gray-50 opacity-75">
             <div class="flex items-center gap-2 mb-1"><span class="text-sm">${icon}</span><h4 class="text-sm font-medium text-gray-700 line-through">${w.title}</h4><span class="text-xs text-green-600">✓</span></div>
             <p class="text-xs text-gray-500">${w.notes||''}</p>
-          </div>`; }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action terminée</div>`; }
-
+          </div>`; }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action terminée</div>`;
+    }
     $('#openWhirlwindModalBtn')?.addEventListener('click', ()=>{ const d=new Date(); d.setMonth(d.getMonth()+1); $('#whirlwindDeadline').value=d.toISOString().split('T')[0]; show($('#whirlwindModal')); });
     $('#cancelWhirlwindBtn')?.addEventListener('click', ()=>{ hide($('#whirlwindModal')); $('#whirlwindForm').reset(); });
-
     $('#whirlwindForm')?.addEventListener('submit', async (e)=>{ e.preventDefault(); const u=auth.currentUser; if(!u) return; spin($('#whirlwindSpinner'), true);
       const data={ title:$('#whirlwindTitle').value.trim(), category:$('#whirlwindCategory').value, priority:$('#whirlwindPriority').value, deadline:$('#whirlwindDeadline').value||null, notes:$('#whirlwindNotes').value.trim(), completed:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
       try{ await db.collection('users').doc(u.uid).collection('whirlwinds').add(data); hide($('#whirlwindModal')); $('#whirlwindForm').reset(); toast('Tourbillon ajouté.'); loadWhirlwinds(); }
       catch(err){ toast('Erreur ajout tourbillon', true); }
       finally{ spin($('#whirlwindSpinner'), false); }
     });
-
     $('#activeWhirlwinds')?.addEventListener('click', async (e)=>{ const doneBtn=e.target.closest('[data-action="done-whirlwind"]'); const delBtn=e.target.closest('[data-action="delete-whirlwind"]'); if(!doneBtn && !delBtn) return; const u=auth.currentUser; if(!u) return; const id=(doneBtn||delBtn).dataset.id; const ref=db.collection('users').doc(u.uid).collection('whirlwinds').doc(id); try{ if(doneBtn){ await ref.update({completed:true}); toast('Marqué terminé.'); } if(delBtn){ if(!confirm('Supprimer ce tourbillon ?')) return; await ref.delete(); toast('Tourbillon supprimé.'); } loadWhirlwinds(); } catch { toast('Action impossible', true); } });
 
-    // Default screen
+    // Écran par défaut
     showScreen('dashboard');
   </script>
 </body>
