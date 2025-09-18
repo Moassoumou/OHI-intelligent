@@ -582,43 +582,116 @@ function downloadBlob(blob, filename) {
 }
 
 // 1) Télécharger le MODÈLE (exactement formaté comme attendu)
+    
 document.getElementById('templateBtn').addEventListener('click', () => {
-  const wb = XLSX.utils.book_new();
-  // En-têtes EXACTES (ligne 1) + une ligne d’exemple
-  const data = [
-    ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"],
-    ["Lancer le site","Mettre en ligne la v1","high","2025-12-31","0"]
+  // En-têtes EXACTS du modèle
+  const HEADERS = [
+    "Titre",
+    "Description",
+    "Priorité (high|medium|low)",
+    "Échéance (YYYY-MM-DD)",
+    "Progression (0-100)"
   ];
+
+  // 1 ligne d’exemple (facultatif). Tu peux la supprimer si tu veux un modèle vide.
+  const SAMPLE = ["Lancer le site","Mettre en ligne la v1","high","2025-12-31","0"];
+
+  const wb = XLSX.utils.book_new();
+  const data = [HEADERS, SAMPLE];
   const ws = XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, "OHIs"); // nom d’onglet standard
-  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-  downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), "Modele_OHI.xlsx");
+
+  // Nom EXACT de la feuille (tu peux mettre ce que tu veux ici)
+  const SHEET_NAME = "OHIs";
+  XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
+
+  // Largeurs de colonnes (ajuste si besoin)
+  ws["!cols"] = [
+    { wch: 28 }, // Titre
+    { wch: 40 }, // Description
+    { wch: 22 }, // Priorité
+    { wch: 18 }, // Échéance
+    { wch: 20 }  // Progression
+  ];
+
+  // AutoFilter sur la ligne d’en-tête
+  ws["!autofilter"] = { ref: "A1:E2" }; // couvre au moins l’en-tête + 1 ligne (ok pour un modèle)
+
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob  = new Blob([wbout], { type: "application/octet-stream" });
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = "Modele_OHI.xlsx";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 
 // 2) Exporter les OHI (mêmes en-têtes/ordre que le modèle)
+    
 document.getElementById('exportBtn').addEventListener('click', () => {
-  if (!Array.isArray(ohis)) return toast("Aucun OHI à exporter", true);
-  const rows = [
-    ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"]
+  if (!Array.isArray(ohis) || !ohis.length) {
+    toast("Aucun OHI à exporter", true);
+    return;
+  }
+
+  const HEADERS = [
+    "Titre",
+    "Description",
+    "Priorité (high|medium|low)",
+    "Échéance (YYYY-MM-DD)",
+    "Progression (0-100)"
   ];
+
+  // Construit les lignes dans le même ordre et mêmes formats
+  const rows = [HEADERS];
   ohis.forEach(o => {
-    // On force l’ordre/format
+    const deadline = o.deadline
+      ? String(o.deadline).slice(0,10) // force texte YYYY-MM-DD
+      : "";
+    const progress = (typeof o.progress === 'number')
+      ? String(Math.max(0, Math.min(100, Math.round(o.progress))))
+      : "0";
+
     rows.push([
       o.title || "",
       o.description || "",
       (o.priority || "medium"),
-      (o.deadline || ""),
-      String(o.progress ?? 0)
+      deadline,
+      progress
     ]);
   });
+
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, "OHIs");
-  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-  downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+  const SHEET_NAME = "OHIs";
+  XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
+
+  // Largeurs identiques au modèle
+  ws["!cols"] = [
+    { wch: 28 },
+    { wch: 40 },
+    { wch: 22 },
+    { wch: 18 },
+    { wch: 20 }
+  ];
+
+  // AutoFilter sur toute la zone
+  const lastRow = rows.length; // nombre de lignes
+  ws["!autofilter"] = { ref: `A1:E${lastRow}` };
+
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob  = new Blob([wbout], { type: "application/octet-stream" });
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+
   toast("Export créé ✅");
 });
-
+    
 // 3) Importer (tolérant sur les en-têtes, CSV/XLS/XLSX)
 document.getElementById('importBtn').addEventListener('click', () => {
   document.getElementById('importFile').value = "";
