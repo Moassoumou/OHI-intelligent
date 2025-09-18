@@ -505,121 +505,205 @@
     }
 
     // ====== IMPORT / EXPORT OHI ======
-    const HEADER_MAP = {
-      titre: ['titre','title'],
-      description: ['description','desc'],
-      priorite: ['priorité (high|medium|low)','priorite','priorité','priority'],
-      echeance: ['échéance (yyyy-mm-dd)','echeance','échéance','deadline','date'],
-      progression: ['progression (0-100)','progression','progress','avancement']
-    };
-    function normalizeHeader(h) {
-      if (!h) return null;
-      const x = String(h).trim().toLowerCase();
-      for (const [canon, aliases] of Object.entries(HEADER_MAP)) {
-        if (aliases.some(a => x === a)) return canon;
+    <script>
+// ====== IMPORT / EXPORT OHI (version compatible modèle & tolérante) ======
+
+// -- helpers texte
+function slugifyHeader(s) {
+  if (!s) return "";
+  return String(s)
+    .normalize('NFD')                       // sépare accents
+    .replace(/\p{Diacritic}/gu, '')        // retire accents
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')            // retire le contenu entre parenthèses
+    .replace(/[^a-z0-9% ]+/g, ' ')         // garde alphanum / %
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Liste élargie d’alias (après slugify)
+const HEADER_ALIASES = {
+  titre: [
+    'titre','intitule','intitulé','objectif','nom','libelle','libellé','title'
+  ],
+  description: [
+    'description','details','detail','desc','commentaire','notes','note'
+  ],
+  priorite: [
+    'priorite','priorité','priority','prio','niveau priorite','niveau de priorite','niveau de priorité'
+  ],
+  echeance: [
+    'echeance','échéance','deadline','date','date limite','date echeance','date d echeance','due','due date','scadence'
+  ],
+  progression: [
+    'progression','avancement','progress','%','pourcentage','taux progression','taux avancement'
+  ],
+};
+
+// Essaie de mapper chaque colonne source -> clé canonique {titre, description, priorite, echeance, progression}
+function buildHeaderMap(rawHeaders) {
+  const map = {};
+  rawHeaders.forEach((h) => {
+    const slug = slugifyHeader(h);
+    for (const [canon, aliases] of Object.entries(HEADER_ALIASES)) {
+      if (aliases.includes(slug) || aliases.some(a => slug.includes(a))) {
+        // on affecte seulement si pas déjà mappé (priorité au 1er match)
+        if (!map[canon]) map[canon] = h;
       }
-      return null;
     }
-    function parseDateCell(val) {
-      if (val == null || val === '') return null;
-      if (typeof val === 'number') {
-        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-        const ms = val * 86400000;
-        const d = new Date(excelEpoch.getTime() + ms);
-        return d.toISOString().slice(0,10);
+  });
+  return map;
+}
+
+// Convertit une cellule date potentielle (string "2025-12-31", "31/12/2025" ou numéro Excel)
+function parseDateCell(val) {
+  if (val == null || val === '') return null;
+  if (typeof val === 'number') {
+    // numéro de série Excel -> date JS
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const ms = val * 86400000;
+    const d = new Date(excelEpoch.getTime() + ms);
+    return d.toISOString().slice(0,10);
+  }
+  const s = String(val).trim();
+  // déjà ISO
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // remplace slash -> tiret et tente un parse
+  const t = s.replace(/\//g, '-');
+  const d = new Date(t);
+  if (!isNaN(d)) return d.toISOString().slice(0,10);
+  return null;
+}
+
+// Télécharge un Blob
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// 1) Télécharger le MODÈLE (exactement formaté comme attendu)
+document.getElementById('templateBtn').addEventListener('click', () => {
+  const wb = XLSX.utils.book_new();
+  // En-têtes EXACTES (ligne 1) + une ligne d’exemple
+  const data = [
+    ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"],
+    ["Lancer le site","Mettre en ligne la v1","high","2025-12-31","0"]
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "OHIs"); // nom d’onglet standard
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), "Modele_OHI.xlsx");
+});
+
+// 2) Exporter les OHI (mêmes en-têtes/ordre que le modèle)
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if (!Array.isArray(ohis)) return toast("Aucun OHI à exporter", true);
+  const rows = [
+    ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"]
+  ];
+  ohis.forEach(o => {
+    // On force l’ordre/format
+    rows.push([
+      o.title || "",
+      o.description || "",
+      (o.priority || "medium"),
+      (o.deadline || ""),
+      String(o.progress ?? 0)
+    ]);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, "OHIs");
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast("Export créé ✅");
+});
+
+// 3) Importer (tolérant sur les en-têtes, CSV/XLS/XLSX)
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').value = "";
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+
+    // IMPORTANT : header:1 -> on lit d’abord les en-têtes bruts
+    const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:"" });
+    if (!rows.length) return toast("Fichier vide", true);
+
+    const headers = rows[0];                  // 1ère ligne
+    const dataRows = rows.slice(1);           // lignes suivantes
+    const headerMap = buildHeaderMap(headers);
+
+    if (!headerMap.titre) {
+      return toast("Modèle non reconnu : la colonne 'Titre' (ou équivalent) est requise. Télécharge d’abord le Modèle.", true);
+    }
+
+    const u = auth.currentUser;
+    if (!u) return toast("Connecte-toi d'abord", true);
+
+    // Index des colonnes
+    const idx = {};
+    headers.forEach((h, i) => {
+      const slug = slugifyHeader(h);
+      for (const [canon, aliases] of Object.entries(HEADER_ALIASES)) {
+        if (aliases.includes(slug) || aliases.some(a => slug.includes(a))) {
+          if (idx[canon] == null) idx[canon] = i;
+        }
       }
-      const s = String(val).trim();
-      const t = s.replace(/\//g, '-');
-      const d = new Date(t);
-      if (!isNaN(d)) return d.toISOString().slice(0,10);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-      return null;
-    }
-    function downloadBlob(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = filename; a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-    document.getElementById('templateBtn').addEventListener('click', () => {
-      const wb = XLSX.utils.book_new();
-      const data = [
-        ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"],
-        ["Lancer le site","Mettre en ligne la v1","high","2025-12-31","0"]
-      ];
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      XLSX.utils.book_append_sheet(wb, ws, "OHIs");
-      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-      downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), "Modele_OHI.xlsx");
     });
-    document.getElementById('exportBtn').addEventListener('click', () => {
-      if (!Array.isArray(ohis)) return toast("Aucun OHI à exporter", true);
-      const rows = [
-        ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"]
-      ];
-      ohis.forEach(o => {
-        rows.push([ o.title||"", o.description||"", (o.priority||"medium"), o.deadline||"", String(o.progress||0) ]);
+
+    const toCreate = [];
+    for (const row of dataRows) {
+      if (!Array.isArray(row)) continue;
+      const title = String(row[idx.titre ?? -1] || "").trim();
+      if (!title) continue; // ignore lignes sans titre
+
+      const description = idx.description != null ? String(row[idx.description] || "").trim() : "";
+      let priority = idx.priorite != null ? String(row[idx.priorite] || "").trim().toLowerCase() : "medium";
+      if (!['high','medium','low'].includes(priority)) priority = "medium";
+
+      const rawDeadline = idx.echeance != null ? row[idx.echeance] : null;
+      const deadline = parseDateCell(rawDeadline);
+      let progress = 0;
+      if (idx.progression != null) {
+        const p = Number(String(row[idx.progression]).replace(',', '.'));
+        progress = isNaN(p) ? 0 : Math.max(0, Math.min(100, Math.round(p)));
+      }
+
+      toCreate.push({
+        title, description, priority,
+        deadline,
+        progress,
+        completed: progress === 100,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet(rows);
-      XLSX.utils.book_append_sheet(wb, ws, "OHIs");
-      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-      downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`);
-      toast("Export créé ✅");
-    });
-    document.getElementById('importBtn').addEventListener('click', () => {
-      document.getElementById('importFile').value = "";
-      document.getElementById('importFile').click();
-    });
-    document.getElementById('importFile').addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        if (!json.length) return toast("Fichier vide", true);
+    }
 
-        const rawHeaders = Object.keys(json[0]);
-        const headerMap = {};
-        rawHeaders.forEach(h => { const canon = normalizeHeader(h); if (canon) headerMap[canon] = h; });
-        if (!headerMap.titre) return toast("Modèle invalide : la colonne 'Titre' est requise. Clique d'abord sur 'Télécharger Modèle'.", true);
+    if (!toCreate.length) return toast("Aucune ligne valide trouvée (colonne 'Titre').", true);
 
-        const u = auth.currentUser; if (!u) return toast("Connecte-toi d'abord", true);
+    // Écritures Firestore
+    for (const doc of toCreate) {
+      await db.collection('users').doc(u.uid).collection('ohis').add(doc);
+    }
 
-        const toCreate = [];
-        for (const row of json) {
-          const title = String(row[headerMap.titre] || "").trim();
-          if (!title) continue;
-          const description = headerMap.description ? String(row[headerMap.description] || "").trim() : "";
-          let priority = headerMap.priorite ? String(row[headerMap.priorite] || "").trim().toLowerCase() : "medium";
-          if (!['high','medium','low'].includes(priority)) priority = "medium";
-          const deadline = headerMap.echeance ? parseDateCell(row[headerMap.echeance]) : null;
-          let progress = 0;
-          if (headerMap.progression) {
-            const p = Number(row[headerMap.progression]);
-            progress = isNaN(p) ? 0 : Math.max(0, Math.min(100, Math.round(p)));
-          }
-          toCreate.push({
-            title, description, priority, deadline, progress,
-            completed: progress === 100,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-        }
-        if (!toCreate.length) return toast("Aucune ligne valide trouvée (colonne 'Titre').", true);
-
-        for (const doc of toCreate) {
-          await db.collection('users').doc(u.uid).collection('ohis').add(doc);
-        }
-        toast(`Import terminé : ${toCreate.length} OHI${toCreate.length>1?'s':''} créés ✅`);
-        await loadOhis();
-      } catch (err) {
-        console.error(err);
-        toast("Échec de l'import. Assure-toi d'utiliser le modèle.", true);
-      }
-    });
+    toast(`Import terminé : ${toCreate.length} OHI${toCreate.length>1?'s':''} créés ✅`);
+    await loadOhis();
+  } catch (err) {
+    console.error(err);
+    toast("Échec de l'import. Essaye avec le Modèle ou vérifie les en-têtes.", true);
+  }
+});
+</script>
 
     // ================= WORKFLOWS =================
     let workflows = [];
