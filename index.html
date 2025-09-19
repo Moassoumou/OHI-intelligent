@@ -585,30 +585,83 @@ function parseDateCell(val) {
 }
 
 // ---- Téléchargement du modèle (avec styles identiques à l’export) ----
-document.getElementById('templateBtn').addEventListener('click', () => {
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([HEADERS]);
+document.addEventListener('DOMContentLoaded', () => {
+  const templateBtn = document.getElementById('templateBtn');
 
-  ws["!cols"] = [
-    { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 20 }, { wch: 22 }
-  ];
-  for (let c = 0; c < HEADERS.length; c++) {
-    const addr = XLSX.utils.encode_cell({ r: 0, c });
-    if (ws[addr]) ws[addr].s = HEADER_STYLE;
+  if (!templateBtn) {
+    console.warn('[OHI] Bouton #templateBtn introuvable dans le DOM.');
+    return;
   }
-  ws["!autofilter"] = { ref: "A1:E1" };
-  ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
 
-  XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  const blob  = new Blob([wbout], { type: "application/octet-stream" });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = "Modele_OHI.xlsx";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-});
+  templateBtn.addEventListener('click', () => {
+    try {
+      if (typeof XLSX === 'undefined') {
+        toast?.("Erreur: librairie Excel non chargée (xlsx-js-style).", true);
+        console.error('XLSX est undefined. Vérifie la balise <script> du CDN.');
+        return;
+      }
 
+      const HEADERS = [
+        "Titre",
+        "Description",
+        "Priorité (high|medium|low)",
+        "Échéance (YYYY-MM-DD)",
+        "Progression (0-100)"
+      ];
+      const SHEET_NAME = "OHIs";
+
+      // Styles (identiques à ceux déjà définis)
+      const HEADER_STYLE = {
+        font: { bold: true, color: { rgb: "FFFFFFFF" } },
+        fill: { patternType: "solid", fgColor: { rgb: "FF3B82F6" } },
+        alignment: { vertical: "center", horizontal: "left" },
+        border: {
+          top:{style:"thin",color:{rgb:"FFE5E7EB"}},
+          bottom:{style:"thin",color:{rgb:"FFE5E7EB"}},
+          left:{style:"thin",color:{rgb:"FFE5E7EB"}},
+          right:{style:"thin",color:{rgb:"FFE5E7EB"}},
+        }
+      };
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([HEADERS]);
+
+      // Largeurs colonnes
+      ws["!cols"] = [
+        { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 20 }, { wch: 22 }
+      ];
+
+      // Style header
+      for (let c = 0; c < HEADERS.length; c++) {
+        const addr = XLSX.utils.encode_cell({ r: 0, c });
+        if (ws[addr]) ws[addr].s = HEADER_STYLE;
+      }
+
+      // Filtre + ligne figée
+      ws["!autofilter"] = { ref: "A1:E1" };
+      ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
+
+      XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
+
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob  = new Blob([wbout], { type: "application/octet-stream" });
+
+      // Téléchargement robuste (append + remove)
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = "Modele_OHI.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+
+      toast?.("Modèle téléchargé ✅");
+    } catch (err) {
+      console.error('Erreur modèle:', err);
+      toast?.("Impossible de générer le modèle.", true);
+    }
+  });
+  
 // ---- Exporter (mêmes en-têtes, mêmes styles) ----
 document.getElementById('exportBtn').addEventListener('click', () => {
   if (!Array.isArray(ohis) || !ohis.length) return toast("Aucun OHI à exporter", true);
