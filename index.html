@@ -507,106 +507,56 @@
 
     // ====== IMPORT / EXPORT OHI ======
       
-// -- helpers texte
-function slugifyHeader(s) {
-  if (!s) return "";
-  return String(s)
-    .normalize('NFD')                       // sépare accents
-    .replace(/\p{Diacritic}/gu, '')        // retire accents
-    .toLowerCase()
-    .replace(/\([^)]*\)/g, ' ')            // retire le contenu entre parenthèses
-    .replace(/[^a-z0-9% ]+/g, ' ')         // garde alphanum / %
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Liste élargie d’alias (après slugify)
-const HEADER_ALIASES = {
-  titre: [
-    'titre','intitule','intitulé','objectif','nom','libelle','libellé','title'
-  ],
-  description: [
-    'description','details','detail','desc','commentaire','notes','note'
-  ],
-  priorite: [
-    'priorite','priorité','priority','prio','niveau priorite','niveau de priorite','niveau de priorité'
-  ],
-  echeance: [
-    'echeance','échéance','deadline','date','date limite','date echeance','date d echeance','due','due date','scadence'
-  ],
-  progression: [
-    'progression','avancement','progress','%','pourcentage','taux progression','taux avancement'
-  ],
-};
-
-// Essaie de mapper chaque colonne source -> clé canonique {titre, description, priorite, echeance, progression}
-function buildHeaderMap(rawHeaders) {
-  const map = {};
-  rawHeaders.forEach((h) => {
-    const slug = slugifyHeader(h);
-    for (const [canon, aliases] of Object.entries(HEADER_ALIASES)) {
-      if (aliases.includes(slug) || aliases.some(a => slug.includes(a))) {
-        // on affecte seulement si pas déjà mappé (priorité au 1er match)
-        if (!map[canon]) map[canon] = h;
-      }
-    }
-  });
-  return map;
-}
-
-// Convertit une cellule date potentielle (string "2025-12-31", "31/12/2025" ou numéro Excel)
-function parseDateCell(val) {
-  if (val == null || val === '') return null;
-  if (typeof val === 'number') {
-    // numéro de série Excel -> date JS
-    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-    const ms = val * 86400000;
-    const d = new Date(excelEpoch.getTime() + ms);
-    return d.toISOString().slice(0,10);
+/* ====== STYLES COMMUNS (tu peux ajuster les couleurs) ====== */
+const HEADER_STYLE = {
+  font: { bold: true, color: { rgb: "FFFFFFFF" } },
+  fill: { patternType: "solid", fgColor: { rgb: "FF3B82F6" } }, // bleu #3b82f6
+  alignment: { vertical: "center", horizontal: "left" },
+  border: {
+    top:{style:"thin",color:{rgb:"FFE5E7EB"}},
+    bottom:{style:"thin",color:{rgb:"FFE5E7EB"}},
+    left:{style:"thin",color:{rgb:"FFE5E7EB"}},
+    right:{style:"thin",color:{rgb:"FFE5E7EB"}},
   }
-  const s = String(val).trim();
-  // déjà ISO
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // remplace slash -> tiret et tente un parse
-  const t = s.replace(/\//g, '-');
-  const d = new Date(t);
-  if (!isNaN(d)) return d.toISOString().slice(0,10);
-  return null;
-}
+};
+const BODY_STYLE = {
+  alignment: { vertical: "center", horizontal: "left", wrapText: true },
+  border: {
+    top:{style:"thin",color:{rgb:"FFF3F4F6"}},
+    bottom:{style:"thin",color:{rgb:"FFF3F4F6"}},
+    left:{style:"thin",color:{rgb:"FFF3F4F6"}},
+    right:{style:"thin",color:{rgb:"FFF3F4F6"}},
+  }
+};
+const DATE_STYLE = { ...BODY_STYLE, numFmt: "yyyy-mm-dd" };
 
-// Télécharge un Blob
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+/* En-têtes EXACTS (doivent matcher l’import) */
+const HEADERS = [
+  "Titre",
+  "Description",
+  "Priorité (high|medium|low)",
+  "Échéance (YYYY-MM-DD)",
+  "Progression (0-100)"
+];
+const SHEET_NAME = "OHIs";
 
-// 1) Télécharger le MODÈLE (exactement formaté comme attendu)
-    
+/* ====== TÉLÉCHARGER MODÈLE (avec styles) ====== */
 document.getElementById('templateBtn').addEventListener('click', () => {
   const wb = XLSX.utils.book_new();
-  const data = [HEADERS]; // modèle sans ligne d’exemple
-
-  const ws = XLSX.utils.aoa_to_sheet(data);
+  const ws = XLSX.utils.aoa_to_sheet([HEADERS]);
 
   // Largeurs colonnes
   ws["!cols"] = [
-    { wch: 28 }, // Titre
-    { wch: 40 }, // Description
-    { wch: 26 }, // Priorité
-    { wch: 20 }, // Échéance
-    { wch: 22 }, // Progression
+    { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 20 }, { wch: 22 }
   ];
 
-  // Appliquer style header
+  // Style header
   for (let c = 0; c < HEADERS.length; c++) {
     const addr = XLSX.utils.encode_cell({ r: 0, c });
-    if(!ws[addr]) continue;
-    ws[addr].s = HEADER_STYLE;
+    if (ws[addr]) ws[addr].s = HEADER_STYLE;
   }
 
-  // Filtre et ligne figée
+  // Filtre + ligne figée
   ws["!autofilter"] = { ref: "A1:E1" };
   ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
 
@@ -620,65 +570,43 @@ document.getElementById('templateBtn').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 
-// 2) Exporter les OHI (mêmes en-têtes/ordre que le modèle)
-    
+/* ====== EXPORTER (mêmes styles que le modèle) ====== */
 document.getElementById('exportBtn').addEventListener('click', () => {
-  if (!Array.isArray(ohis) || !ohis.length) {
-    toast("Aucun OHI à exporter", true);
-    return;
-  }
+  if (!Array.isArray(ohis) || !ohis.length) return toast("Aucun OHI à exporter", true);
 
   const wb = XLSX.utils.book_new();
   const rows = [HEADERS];
 
-  // Lignes de données
   ohis.forEach(o => {
-    const deadlineTxt = o.deadline ? String(o.deadline).slice(0,10) : "";
-    const progressTxt = (typeof o.progress === 'number')
-      ? String(Math.max(0, Math.min(100, Math.round(o.progress))))
-      : "0";
-
     rows.push([
       o.title || "",
       o.description || "",
       (o.priority || "medium"),
-      deadlineTxt,
-      progressTxt
+      o.deadline ? String(o.deadline).slice(0,10) : "",
+      String(typeof o.progress === 'number' ? Math.max(0, Math.min(100, Math.round(o.progress))) : 0)
     ]);
   });
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
 
-  // Largeurs identiques
   ws["!cols"] = [
-    { wch: 28 },
-    { wch: 40 },
-    { wch: 26 },
-    { wch: 20 },
-    { wch: 22 },
+    { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 20 }, { wch: 22 }
   ];
 
   // Style header
   for (let c = 0; c < HEADERS.length; c++) {
     const addr = XLSX.utils.encode_cell({ r: 0, c });
-    if(ws[addr]) ws[addr].s = HEADER_STYLE;
+    if (ws[addr]) ws[addr].s = HEADER_STYLE;
   }
-
-  // Style corps + date + pourcentage (texte ici)
+  // Style lignes
   for (let r = 1; r < rows.length; r++) {
     for (let c = 0; c < HEADERS.length; c++) {
       const addr = XLSX.utils.encode_cell({ r, c });
       if (!ws[addr]) continue;
-      // date = col 3 (index 3)
-      if (c === 3 && rows[r][3]) {
-        ws[addr].s = DATE_STYLE;
-      } else {
-        ws[addr].s = BODY_STYLE;
-      }
+      ws[addr].s = (c === 3 && rows[r][3]) ? DATE_STYLE : BODY_STYLE;
     }
   }
 
-  // Filtre + figer la première ligne
   ws["!autofilter"] = { ref: `A1:E${rows.length}` };
   ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
 
