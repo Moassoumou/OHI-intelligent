@@ -6,7 +6,8 @@
   <title>Coach Objectifs IA – OHI & Workflows</title>
 
   <!-- SheetJS pour Excel -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js"></script>
+
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -584,41 +585,34 @@ function downloadBlob(blob, filename) {
 // 1) Télécharger le MODÈLE (exactement formaté comme attendu)
     
 document.getElementById('templateBtn').addEventListener('click', () => {
-  // En-têtes EXACTS du modèle
-  const HEADERS = [
-    "Titre",
-    "Description",
-    "Priorité (high|medium|low)",
-    "Échéance (YYYY-MM-DD)",
-    "Progression (0-100)"
-  ];
-
-  // 1 ligne d’exemple (facultatif). Tu peux la supprimer si tu veux un modèle vide.
-  const SAMPLE = ["Lancer le site","Mettre en ligne la v1","high","2025-12-31","0"];
-
   const wb = XLSX.utils.book_new();
-  const data = [HEADERS, SAMPLE];
+  const data = [HEADERS]; // modèle sans ligne d’exemple
+
   const ws = XLSX.utils.aoa_to_sheet(data);
 
-  // Nom EXACT de la feuille (tu peux mettre ce que tu veux ici)
-  const SHEET_NAME = "OHIs";
-  XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
-
-  // Largeurs de colonnes (ajuste si besoin)
+  // Largeurs colonnes
   ws["!cols"] = [
     { wch: 28 }, // Titre
     { wch: 40 }, // Description
-    { wch: 22 }, // Priorité
-    { wch: 18 }, // Échéance
-    { wch: 20 }  // Progression
+    { wch: 26 }, // Priorité
+    { wch: 20 }, // Échéance
+    { wch: 22 }, // Progression
   ];
 
-  // AutoFilter sur la ligne d’en-tête
-  ws["!autofilter"] = { ref: "A1:E2" }; // couvre au moins l’en-tête + 1 ligne (ok pour un modèle)
+  // Appliquer style header
+  for (let c = 0; c < HEADERS.length; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    if(!ws[addr]) continue;
+    ws[addr].s = HEADER_STYLE;
+  }
 
+  // Filtre et ligne figée
+  ws["!autofilter"] = { ref: "A1:E1" };
+  ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
+
+  XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
   const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   const blob  = new Blob([wbout], { type: "application/octet-stream" });
-
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = "Modele_OHI.xlsx";
@@ -634,21 +628,13 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     return;
   }
 
-  const HEADERS = [
-    "Titre",
-    "Description",
-    "Priorité (high|medium|low)",
-    "Échéance (YYYY-MM-DD)",
-    "Progression (0-100)"
-  ];
-
-  // Construit les lignes dans le même ordre et mêmes formats
+  const wb = XLSX.utils.book_new();
   const rows = [HEADERS];
+
+  // Lignes de données
   ohis.forEach(o => {
-    const deadline = o.deadline
-      ? String(o.deadline).slice(0,10) // force texte YYYY-MM-DD
-      : "";
-    const progress = (typeof o.progress === 'number')
+    const deadlineTxt = o.deadline ? String(o.deadline).slice(0,10) : "";
+    const progressTxt = (typeof o.progress === 'number')
       ? String(Math.max(0, Math.min(100, Math.round(o.progress))))
       : "0";
 
@@ -656,33 +642,50 @@ document.getElementById('exportBtn').addEventListener('click', () => {
       o.title || "",
       o.description || "",
       (o.priority || "medium"),
-      deadline,
-      progress
+      deadlineTxt,
+      progressTxt
     ]);
   });
 
-  const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(rows);
 
-  const SHEET_NAME = "OHIs";
-  XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
-
-  // Largeurs identiques au modèle
+  // Largeurs identiques
   ws["!cols"] = [
     { wch: 28 },
     { wch: 40 },
+    { wch: 26 },
+    { wch: 20 },
     { wch: 22 },
-    { wch: 18 },
-    { wch: 20 }
   ];
 
-  // AutoFilter sur toute la zone
-  const lastRow = rows.length; // nombre de lignes
-  ws["!autofilter"] = { ref: `A1:E${lastRow}` };
+  // Style header
+  for (let c = 0; c < HEADERS.length; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    if(ws[addr]) ws[addr].s = HEADER_STYLE;
+  }
+
+  // Style corps + date + pourcentage (texte ici)
+  for (let r = 1; r < rows.length; r++) {
+    for (let c = 0; c < HEADERS.length; c++) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (!ws[addr]) continue;
+      // date = col 3 (index 3)
+      if (c === 3 && rows[r][3]) {
+        ws[addr].s = DATE_STYLE;
+      } else {
+        ws[addr].s = BODY_STYLE;
+      }
+    }
+  }
+
+  // Filtre + figer la première ligne
+  ws["!autofilter"] = { ref: `A1:E${rows.length}` };
+  ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
+
+  XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
 
   const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   const blob  = new Blob([wbout], { type: "application/octet-stream" });
-
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`;
