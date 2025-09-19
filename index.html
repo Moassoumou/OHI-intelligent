@@ -6,7 +6,7 @@
   <title>Coach Objectifs IA – OHI & Workflows</title>
 
   <!-- SheetJS pour Excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -505,216 +505,121 @@
     }
 
     // ====== IMPORT / EXPORT OHI ======
-
-// ---- STYLES COMMUNS (tu peux ajuster les couleurs) ----
-const HEADER_STYLE = {
-  font: { bold: true, color: { rgb: "FFFFFFFF" } },
-  fill: { patternType: "solid", fgColor: { rgb: "FF3B82F6" } }, // bleu #3b82f6
-  alignment: { vertical: "center", horizontal: "left" },
-  border: {
-    top:{style:"thin",color:{rgb:"FFE5E7EB"}},
-    bottom:{style:"thin",color:{rgb:"FFE5E7EB"}},
-    left:{style:"thin",color:{rgb:"FFE5E7EB"}},
-    right:{style:"thin",color:{rgb:"FFE5E7EB"}},
-  }
-};
-const BODY_STYLE = {
-  alignment: { vertical: "center", horizontal: "left", wrapText: true },
-  border: {
-    top:{style:"thin",color:{rgb:"FFF3F4F6"}},
-    bottom:{style:"thin",color:{rgb:"FFF3F4F6"}},
-    left:{style:"thin",color:{rgb:"FFF3F4F6"}},
-    right:{style:"thin",color:{rgb:"FFF3F4F6"}},
-  }
-};
-const DATE_STYLE = { ...BODY_STYLE, numFmt: "yyyy-mm-dd" };
-
-// ---- ALIASES d’en-têtes pour reconnaître ton modèle (import tolérant) ----
-const HEADER_ALIASES = {
-  titre:       ["titre","title"],
-  description: ["description","desc"],
-  priorite:    ["priorite","priorité","priorite (high|medium|low)","priorité (high|medium|low)","priority"],
-  echeance:    ["echeance","échéance","echeance (yyyy-mm-dd)","échéance (yyyy-mm-dd)","deadline","date"],
-  progression: ["progression","progression (0-100)","progress","avancement"]
-};
-
-// En-têtes EXACTS pour le modèle et l’export
-const HEADERS = [
-  "Titre",
-  "Description",
-  "Priorité (high|medium|low)",
-  "Échéance (YYYY-MM-DD)",
-  "Progression (0-100)"
-];
-const SHEET_NAME = "OHIs";
-
-// ---- Helpers import ----
-function slugifyHeader(h) {
-  return String(h || "")
-    .trim()
+      
+// -- helpers texte
+function slugifyHeader(s) {
+  if (!s) return "";
+  return String(s)
+    .normalize('NFD')                       // sépare accents
+    .replace(/\p{Diacritic}/gu, '')        // retire accents
     .toLowerCase()
-    .normalize("NFD").replace(/\p{Diacritic}/gu, "") // enlève accents
-    .replace(/\s+/g, " ");
+    .replace(/\([^)]*\)/g, ' ')            // retire le contenu entre parenthèses
+    .replace(/[^a-z0-9% ]+/g, ' ')         // garde alphanum / %
+    .replace(/\s+/g, ' ')
+    .trim();
 }
-function buildHeaderMap(headers) {
+
+// Liste élargie d’alias (après slugify)
+const HEADER_ALIASES = {
+  titre: [
+    'titre','intitule','intitulé','objectif','nom','libelle','libellé','title'
+  ],
+  description: [
+    'description','details','detail','desc','commentaire','notes','note'
+  ],
+  priorite: [
+    'priorite','priorité','priority','prio','niveau priorite','niveau de priorite','niveau de priorité'
+  ],
+  echeance: [
+    'echeance','échéance','deadline','date','date limite','date echeance','date d echeance','due','due date','scadence'
+  ],
+  progression: [
+    'progression','avancement','progress','%','pourcentage','taux progression','taux avancement'
+  ],
+};
+
+// Essaie de mapper chaque colonne source -> clé canonique {titre, description, priorite, echeance, progression}
+function buildHeaderMap(rawHeaders) {
   const map = {};
-  const slugs = headers.map(slugifyHeader);
-  const has = (canon) => {
-    const aliases = HEADER_ALIASES[canon] || [];
-    return slugs.some(s => aliases.includes(s));
-  };
-  map.titre       = has("titre");
-  map.description = has("description");
-  map.priorite    = has("priorite");
-  map.echeance    = has("echeance");
-  map.progression = has("progression");
-  return map;
-}
-function parseDateCell(val) {
-  if (val == null || val === "") return null;
-  if (typeof val === "number") {
-    // numéro de série Excel -> date
-    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-    const d = new Date(excelEpoch.getTime() + val * 86400000);
-    return d.toISOString().slice(0,10);
-  }
-  const s = String(val).trim().replace(/\//g, "-");
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const d = new Date(s);
-  return isNaN(d) ? null : d.toISOString().slice(0,10);
-}
-
-// ---- Téléchargement du modèle (avec styles identiques à l’export) ----
-document.addEventListener('DOMContentLoaded', () => {
-  const templateBtn = document.getElementById('templateBtn');
-
-  if (!templateBtn) {
-    console.warn('[OHI] Bouton #templateBtn introuvable dans le DOM.');
-    return;
-  }
-
-  templateBtn.addEventListener('click', () => {
-    try {
-      if (typeof XLSX === 'undefined') {
-        toast?.("Erreur: librairie Excel non chargée (xlsx-js-style).", true);
-        console.error('XLSX est undefined. Vérifie la balise <script> du CDN.');
-        return;
+  rawHeaders.forEach((h) => {
+    const slug = slugifyHeader(h);
+    for (const [canon, aliases] of Object.entries(HEADER_ALIASES)) {
+      if (aliases.includes(slug) || aliases.some(a => slug.includes(a))) {
+        // on affecte seulement si pas déjà mappé (priorité au 1er match)
+        if (!map[canon]) map[canon] = h;
       }
-
-      const HEADERS = [
-        "Titre",
-        "Description",
-        "Priorité (high|medium|low)",
-        "Échéance (YYYY-MM-DD)",
-        "Progression (0-100)"
-      ];
-      const SHEET_NAME = "OHIs";
-
-      // Styles (identiques à ceux déjà définis)
-      const HEADER_STYLE = {
-        font: { bold: true, color: { rgb: "FFFFFFFF" } },
-        fill: { patternType: "solid", fgColor: { rgb: "FF3B82F6" } },
-        alignment: { vertical: "center", horizontal: "left" },
-        border: {
-          top:{style:"thin",color:{rgb:"FFE5E7EB"}},
-          bottom:{style:"thin",color:{rgb:"FFE5E7EB"}},
-          left:{style:"thin",color:{rgb:"FFE5E7EB"}},
-          right:{style:"thin",color:{rgb:"FFE5E7EB"}},
-        }
-      };
-
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet([HEADERS]);
-
-      // Largeurs colonnes
-      ws["!cols"] = [
-        { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 20 }, { wch: 22 }
-      ];
-
-      // Style header
-      for (let c = 0; c < HEADERS.length; c++) {
-        const addr = XLSX.utils.encode_cell({ r: 0, c });
-        if (ws[addr]) ws[addr].s = HEADER_STYLE;
-      }
-
-      // Filtre + ligne figée
-      ws["!autofilter"] = { ref: "A1:E1" };
-      ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
-
-      XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
-
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const blob  = new Blob([wbout], { type: "application/octet-stream" });
-
-      // Téléchargement robuste (append + remove)
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = "Modele_OHI.xlsx";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-
-      toast?.("Modèle téléchargé ✅");
-    } catch (err) {
-      console.error('Erreur modèle:', err);
-      toast?.("Impossible de générer le modèle.", true);
     }
   });
-  
-// ---- Exporter (mêmes en-têtes, mêmes styles) ----
-document.getElementById('exportBtn').addEventListener('click', () => {
-  if (!Array.isArray(ohis) || !ohis.length) return toast("Aucun OHI à exporter", true);
+  return map;
+}
 
+// Convertit une cellule date potentielle (string "2025-12-31", "31/12/2025" ou numéro Excel)
+function parseDateCell(val) {
+  if (val == null || val === '') return null;
+  if (typeof val === 'number') {
+    // numéro de série Excel -> date JS
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const ms = val * 86400000;
+    const d = new Date(excelEpoch.getTime() + ms);
+    return d.toISOString().slice(0,10);
+  }
+  const s = String(val).trim();
+  // déjà ISO
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // remplace slash -> tiret et tente un parse
+  const t = s.replace(/\//g, '-');
+  const d = new Date(t);
+  if (!isNaN(d)) return d.toISOString().slice(0,10);
+  return null;
+}
+
+// Télécharge un Blob
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// 1) Télécharger le MODÈLE (exactement formaté comme attendu)
+document.getElementById('templateBtn').addEventListener('click', () => {
   const wb = XLSX.utils.book_new();
-  const rows = [HEADERS];
+  // En-têtes EXACTES (ligne 1) + une ligne d’exemple
+  const data = [
+    ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"],
+    ["Lancer le site","Mettre en ligne la v1","high","2025-12-31","0"]
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "OHIs"); // nom d’onglet standard
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), "Modele_OHI.xlsx");
+});
 
+// 2) Exporter les OHI (mêmes en-têtes/ordre que le modèle)
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if (!Array.isArray(ohis)) return toast("Aucun OHI à exporter", true);
+  const rows = [
+    ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"]
+  ];
   ohis.forEach(o => {
+    // On force l’ordre/format
     rows.push([
       o.title || "",
       o.description || "",
       (o.priority || "medium"),
-      o.deadline ? String(o.deadline).slice(0,10) : "",
-      String(typeof o.progress === 'number' ? Math.max(0, Math.min(100, Math.round(o.progress))) : 0)
+      (o.deadline || ""),
+      String(o.progress ?? 0)
     ]);
   });
-
+  const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!cols"] = [
-    { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 20 }, { wch: 22 }
-  ];
-
-  // style header
-  for (let c = 0; c < HEADERS.length; c++) {
-    const addr = XLSX.utils.encode_cell({ r: 0, c });
-    if (ws[addr]) ws[addr].s = HEADER_STYLE;
-  }
-  // style corps
-  for (let r = 1; r < rows.length; r++) {
-    for (let c = 0; c < HEADERS.length; c++) {
-      const addr = XLSX.utils.encode_cell({ r, c });
-      if (!ws[addr]) continue;
-      ws[addr].s = (c === 3 && rows[r][3]) ? DATE_STYLE : BODY_STYLE;
-    }
-  }
-
-  ws["!autofilter"] = { ref: `A1:E${rows.length}` };
-  ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
-
-  XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
-
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  const blob  = new Blob([wbout], { type: "application/octet-stream" });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-
+  XLSX.utils.book_append_sheet(wb, ws, "OHIs");
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast("Export créé ✅");
 });
 
-// ---- Importer (tolérant aux petites variations d’en-têtes, CSV/XLS/XLSX) ----
+// 3) Importer (tolérant sur les en-têtes, CSV/XLS/XLSX)
 document.getElementById('importBtn').addEventListener('click', () => {
   document.getElementById('importFile').value = "";
   document.getElementById('importFile').click();
@@ -723,29 +628,28 @@ document.getElementById('importBtn').addEventListener('click', () => {
 document.getElementById('importFile').addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
-
   try {
     const arrayBuffer = await file.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
 
-    // header:1 => on lit la première ligne brute (en-têtes)
+    // IMPORTANT : header:1 -> on lit d’abord les en-têtes bruts
     const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:"" });
     if (!rows.length) return toast("Fichier vide", true);
 
-    const headers = rows[0];
-    const dataRows = rows.slice(1);
+    const headers = rows[0];                  // 1ère ligne
+    const dataRows = rows.slice(1);           // lignes suivantes
     const headerMap = buildHeaderMap(headers);
 
     if (!headerMap.titre) {
-      return toast("Modèle non reconnu : la colonne 'Titre' est requise. Télécharge d’abord le Modèle.", true);
+      return toast("Modèle non reconnu : la colonne 'Titre' (ou équivalent) est requise. Télécharge d’abord le Modèle.", true);
     }
 
     const u = auth.currentUser;
     if (!u) return toast("Connecte-toi d'abord", true);
 
-    // Index par colonne selon aliases
+    // Index des colonnes
     const idx = {};
     headers.forEach((h, i) => {
       const slug = slugifyHeader(h);
@@ -759,16 +663,15 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
     const toCreate = [];
     for (const row of dataRows) {
       if (!Array.isArray(row)) continue;
-
       const title = String(row[idx.titre ?? -1] || "").trim();
-      if (!title) continue; // ignore les lignes sans titre
+      if (!title) continue; // ignore lignes sans titre
 
       const description = idx.description != null ? String(row[idx.description] || "").trim() : "";
       let priority = idx.priorite != null ? String(row[idx.priorite] || "").trim().toLowerCase() : "medium";
       if (!['high','medium','low'].includes(priority)) priority = "medium";
 
-      const deadline = idx.echeance != null ? parseDateCell(row[idx.echeance]) : null;
-
+      const rawDeadline = idx.echeance != null ? row[idx.echeance] : null;
+      const deadline = parseDateCell(rawDeadline);
       let progress = 0;
       if (idx.progression != null) {
         const p = Number(String(row[idx.progression]).replace(',', '.'));
@@ -786,6 +689,7 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
 
     if (!toCreate.length) return toast("Aucune ligne valide trouvée (colonne 'Titre').", true);
 
+    // Écritures Firestore
     for (const doc of toCreate) {
       await db.collection('users').doc(u.uid).collection('ohis').add(doc);
     }
@@ -794,7 +698,7 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
     await loadOhis();
   } catch (err) {
     console.error(err);
-    toast("Échec de l'import. Utilise le Modèle ou vérifie les en-têtes.", true);
+    toast("Échec de l'import. Essaye avec le Modèle ou vérifie les en-têtes.", true);
   }
 });
 
