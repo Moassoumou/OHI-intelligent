@@ -1,49 +1,668 @@
-<!DOCTYPE html><html lang="fr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Diag Firebase</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;margin:40px} button{padding:10px 14px;margin-right:8px}</style>
-</head><body>
-<h1>Diagnostic Firebase Auth</h1>
-<p id="status">Statut: inconnu</p>
-<div>
-  <input id="email" placeholder="email" type="email">
-  <input id="pass" placeholder="mot de passe" type="password">
-  <button id="signup">Créer compte</button>
-  <button id="login">Se connecter</button>
-  <button id="google">Google</button>
-  <button id="logout">Déconnexion</button>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coach Objectifs IA – OHI, Tourbillons & Livrables</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme:{ extend:{ colors:{ primary:'#3b82f6' }}}}
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .card-hover{ transition:transform .2s ease, box-shadow .2s ease }
+    .card-hover:hover{ transform:translateY(-2px); box-shadow:0 10px 24px -8px rgba(0,0,0,.15) }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ============ AUTH ============ -->
+<section id="authScreen" class="min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow">
+    <h1 class="text-2xl font-semibold mb-2">Bienvenue 👋</h1>
+    <p class="text-sm text-gray-600 mb-6">Connecte-toi pour accéder au tableau de bord.</p>
+
+    <form id="emailForm" class="space-y-3">
+      <input id="authEmail" type="email" placeholder="Email" class="w-full border rounded-xl px-4 py-3" required>
+      <input id="authPass" type="password" placeholder="Mot de passe" class="w-full border rounded-xl px-4 py-3" required>
+      <button class="w-full bg-primary text-white rounded-xl py-3 hover:bg-blue-600">Se connecter</button>
+    </form>
+
+    <div class="my-4 flex items-center gap-3">
+      <div class="h-px bg-gray-200 flex-1"></div>
+      <span class="text-xs text-gray-400">ou</span>
+      <div class="h-px bg-gray-200 flex-1"></div>
+    </div>
+
+    <button id="googleBtn" class="w-full border rounded-xl py-3 hover:bg-gray-50">Continuer avec Google</button>
+    <button id="signupBtn" class="mt-3 w-full border rounded-xl py-2 text-sm hover:bg-gray-50">Créer un compte</button>
+  </div>
+</section>
+
+<!-- ============ HEADER ============ -->
+<header id="appHeader" class="hidden bg-primary text-white">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <span class="font-semibold">Tableau de bord</span>
+      <nav class="hidden sm:flex gap-2 text-sm">
+        <button id="navDashboard" class="px-3 py-1 rounded hover:bg-white/10">OHI & Tourbillons</button>
+      </nav>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="userEmail" class="text-sm opacity-90">—</span>
+      <button id="logoutBtn" class="bg-white/20 px-3 py-1 rounded hover:bg-white/30">Déconnexion</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ APP ============ -->
+<main id="appScreen" class="hidden">
+  <div class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- OHI + Progress -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+      <!-- OHI -->
+      <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-900">Mes OHI</h3>
+          <button id="openOhiFormBtn" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">+ Ajouter un OHI</button>
+        </div>
+
+        <!-- Form OHI -->
+        <form id="addOhiForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
+          <input id="title" type="text" placeholder="Titre" required class="border rounded-xl p-3"/>
+          <input id="deadline" type="date" required class="border rounded-xl p-3"/>
+          <textarea id="description" placeholder="Description" class="border rounded-xl p-3 md:col-span-2"></textarea>
+          <select id="priority" class="border rounded-xl p-3">
+            <option value="high">Haute</option>
+            <option value="medium" selected>Moyenne</option>
+            <option value="low">Basse</option>
+          </select>
+          <div class="flex gap-3 md:col-span-2">
+            <button type="button" id="cancelOhiBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">Annuler</button>
+            <button type="submit" class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
+              <span>Ajouter</span>
+              <span id="ohiSpinner" class="hidden w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
+            </button>
+          </div>
+        </form>
+
+        <div id="ohiList" class="space-y-4"></div>
+      </div>
+
+      <!-- Progression Globale -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm">
+        <h3 class="text-xl font-semibold text-gray-900 mb-6">Progression Globale</h3>
+        <div class="flex items-center justify-center mb-6">
+          <div class="relative w-32 h-32">
+            <svg class="w-32 h-32" style="transform:rotate(-90deg)">
+              <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+              <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none"
+                      stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
+            </svg>
+            <div class="absolute inset-0 grid place-items-center">
+              <span id="globalProgress" class="text-2xl font-bold text-gray-900">0%</span>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm"><span class="text-gray-600">OHI total</span><span id="totalObjectives" class="font-medium">0</span></div>
+          <div class="flex justify-between text-sm"><span class="text-gray-600">OHI complétés</span><span id="completedObjectives" class="font-medium">0</span></div>
+          <div class="flex justify-between text-sm"><span class="text-gray-600">Prochaine échéance</span><span id="nextDeadline" class="font-medium text-orange-600">-</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tourbillons -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-orange-500">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-orange-100 rounded-lg grid place-items-center">
+            <svg class="w-6 h-6 text-orange-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">🌪️ Tourbillons du Mois</h3>
+            <p class="text-sm text-gray-600">Actions importantes pour ne pas se disperser</p>
+          </div>
+        </div>
+        <button id="openWhirlwindModalBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700">+ Nouveau Tourbillon</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <h4 class="font-medium text-gray-900 mb-3">Actions en cours</h4>
+          <div id="activeWhirlwinds" class="space-y-3"></div>
+        </div>
+        <div>
+          <h4 class="font-medium text-gray-900 mb-3">Actions terminées</h4>
+          <div id="completedWhirlwinds" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg hidden"></div>
+  </div>
+</main>
+
+<!-- ============ MODALS ============ -->
+<!-- Modal Tourbillon -->
+<div id="whirlwindModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
+    <h3 class="text-xl font-semibold text-gray-900 mb-6">🌪️ Nouveau Tourbillon</h3>
+    <form id="whirlwindForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Action à mener</label>
+        <input type="text" id="whirlwindTitle" class="w-full border rounded-lg px-3 py-2" placeholder="Ex: Établir la masse salariale" required>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+          <select id="whirlwindCategory" class="w-full border rounded-lg px-3 py-2">
+            <option value="management">👥 Management</option>
+            <option value="finance">💰 Finance</option>
+            <option value="operations">⚙️ Opérations</option>
+            <option value="strategy">🎯 Stratégie</option>
+            <option value="hr">👔 RH</option>
+            <option value="communication">📢 Communication</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+          <select id="whirlwindPriority" class="w-full border rounded-lg px-3 py-2">
+            <option value="high">🔴 Haute</option>
+            <option value="medium">🟡 Moyenne</option>
+            <option value="low">🟢 Basse</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label>
+        <input type="date" id="whirlwindDeadline" class="w-full border rounded-lg px-3 py-2" required>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+        <textarea id="whirlwindNotes" rows="3" class="w-full border rounded-lg px-3 py-2" placeholder="Détails, personnes impliquées, ressources nécessaires..."></textarea>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" id="cancelWhirlwindBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">Annuler</button>
+        <button type="submit" class="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700">Créer</button>
+      </div>
+    </form>
+  </div>
 </div>
+
+<!-- Modal Livrables (réutilisé pour OHI et Tourbillons) -->
+<div id="deliverablesModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4">
+    <div class="flex items-start justify-between mb-4">
+      <div>
+        <h3 id="delivModalTitle" class="text-xl font-semibold text-gray-900">Livrables</h3>
+        <p id="delivModalSubtitle" class="text-sm text-gray-500">—</p>
+      </div>
+      <button id="closeDeliverablesBtn" class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200">Fermer</button>
+    </div>
+
+    <!-- Ajout livrable -->
+    <form id="addDeliverableForm" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+      <input id="delivTitle" type="text" placeholder="Intitulé du livrable" class="md:col-span-2 border rounded-lg px-3 py-2" required>
+      <input id="delivDue" type="date" class="border rounded-lg px-3 py-2">
+      <input id="delivNotes" type="text" placeholder="Notes (facultatif)" class="md:col-span-3 border rounded-lg px-3 py-2 hidden">
+      <button class="bg-primary text-white rounded-lg px-4 py-2 hover:bg-blue-600">Ajouter</button>
+    </form>
+
+    <!-- Liste livrables -->
+    <div id="deliverablesList" class="space-y-2 max-h-96 overflow-auto pr-1"></div>
+  </div>
+</div>
+
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyD4JaJelN4LbkbLfGVJVbCAY6gK9sPAN3I",
-  authDomain: "tableau-de-bord-intelligent.firebaseapp.com",
-  projectId: "tableau-de-bord-intelligent",
-  storageBucket: "tableau-de-bord-intelligent.appspot.com",
-  messagingSenderId: "226539421183",
-  appId: "1:226539421183:web:7386e6a4274f1c9fde3bca",
-  measurementId: "G-7K0EN05CJ7"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-auth.useDeviceLanguage();
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  /* ==================== Firebase ==================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyD4JaJelN4LbkbLfGVJVbCAY6gK9sPAN3I",
+    authDomain: "tableau-de-bord-intelligent.firebaseapp.com",
+    projectId: "tableau-de-bord-intelligent",
+    storageBucket: "tableau-de-bord-intelligent.appspot.com",
+    messagingSenderId: "226539421183",
+    appId: "1:226539421183:web:7386e6a4274f1c9fde3bca",
+    measurementId: "G-7K0EN05CJ7"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
+  auth.useDeviceLanguage();
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-const $ = s=>document.querySelector(s);
-auth.onAuthStateChanged(u=>{
-  $('#status').textContent = u ? `Connecté: ${u.email||u.uid}` : 'Déconnecté';
-});
+  /* ==================== Helpers UI ==================== */
+  const $ = s => document.querySelector(s);
+  const show = el => el.classList.remove('hidden');
+  const hide = el => el.classList.add('hidden');
+  function toast(msg, err=false){
+    const t = $('#toast'); if(!t) return;
+    t.textContent = msg;
+    t.classList.remove('hidden');
+    t.classList.toggle('bg-red-600', err);
+    t.classList.toggle('bg-gray-900', !err);
+    setTimeout(()=>t.classList.add('hidden'), 2200);
+  }
+  const fmtDate = (ts) => { if(!ts) return '—'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); };
 
-$('#signup').onclick = async()=>{
-  try{ await auth.createUserWithEmailAndPassword($('#email').value, $('#pass').value); }catch(e){ alert(e.message); }
-};
-$('#login').onclick = async()=>{
-  try{ await auth.signInWithEmailAndPassword($('#email').value, $('#pass').value); }catch(e){ alert(e.message); }
-};
-$('#google').onclick = async()=>{
-  try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ alert(e.message); }
-};
-$('#logout').onclick = ()=>auth.signOut();
+  /* ==================== Auth state ==================== */
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      hide($('#authScreen'));
+      show($('#appHeader')); show($('#appScreen'));
+      $('#userEmail').textContent = user.email || 'Connecté';
+      await Promise.all([loadOhis(), loadWhirlwinds()]);
+    } else {
+      show($('#authScreen'));
+      hide($('#appHeader')); hide($('#appScreen'));
+    }
+  });
+
+  // Login Email
+  $('#emailForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    try {
+      await auth.signInWithEmailAndPassword($('#authEmail').value.trim(), $('#authPass').value.trim());
+    } catch(err) { alert(err.message); }
+  });
+  // Signup Email
+  $('#signupBtn').addEventListener('click', async ()=>{
+    try {
+      await auth.createUserWithEmailAndPassword($('#authEmail').value.trim(), $('#authPass').value.trim());
+    } catch(err) { alert(err.message); }
+  });
+  // Login Google
+  $('#googleBtn').addEventListener('click', async ()=>{
+    try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+    catch(err){ alert(err.message); }
+  });
+  // Logout
+  $('#logoutBtn').addEventListener('click', ()=>auth.signOut());
+
+  // Nav
+  $('#navDashboard')?.addEventListener('click', ()=>{ /* déjà l’écran par défaut */ });
+
+  /* ==================== OHI ==================== */
+  let ohis = [];
+  async function loadOhis(){
+    const u = auth.currentUser; if(!u) return;
+    const snap = await db.collection('users').doc(u.uid).collection('ohis').orderBy('createdAt','desc').get();
+    ohis = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderOhis(); updateStatsFromOhis();
+  }
+
+  function renderOhis(){
+    const list = $('#ohiList'); if(!list) return;
+    if(!ohis.length){
+      list.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+          <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p>Aucun OHI</p><p class="text-sm">Ajoute ton premier OHI</p>
+        </div>`;
+      return;
+    }
+    list.innerHTML = ohis.map(o=>{
+      const pr = (o.priority||'').toLowerCase();
+      const prColor = pr==='high'?'text-red-600': pr==='medium'?'text-yellow-600':'text-green-600';
+      const progress = Number(o.progress||0);
+      const daysLeft = o.deadline ? Math.ceil((new Date(o.deadline) - new Date())/86400000) : null;
+      const badge = o.deadline
+        ? (daysLeft<0 ? `<span class="text-xs text-red-600">${Math.abs(daysLeft)} j de retard</span>`
+                      : `<span class="text-xs text-gray-600">${daysLeft} j restants</span>`)
+        : '';
+      return `
+        <div class="border border-gray-200 rounded-xl p-4 card-hover">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <h4 class="font-semibold text-gray-900">${o.title||'(Sans titre)'}</h4>
+              <p class="text-sm text-gray-600">${o.description||''}</p>
+              <div class="mt-1 text-xs ${prColor}">Priorité: ${o.priority||'-'}</div>
+            </div>
+            <div class="text-right">${badge}</div>
+          </div>
+
+          <!-- Progress -->
+          <div class="mb-3">
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-gray-600">Progression</span>
+              <span class="font-medium">${progress}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-primary h-2 rounded-full" style="width:${progress}%"></div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" data-action="ohiprog" data-delta="-10" data-id="${o.id}">-10%</button>
+            <button class="px-3 py-1 bg-primary text-white hover:bg-blue-600 rounded text-sm" data-action="ohiprog" data-delta="10" data-id="${o.id}">+10%</button>
+            <button class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm" data-action="ohidone" data-id="${o.id}">Terminé</button>
+            <button class="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-sm" data-action="ohideliv" data-id="${o.id}" data-title="${o.title||''}">Livrables</button>
+            <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" data-action="ohidel" data-id="${o.id}">Supprimer</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Actions OHI
+  $('#ohiList')?.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-action]'); if(!btn) return;
+    const id = btn.dataset.id;
+    const u = auth.currentUser; if(!u) return toast('Non connecté', true);
+    const ref = db.collection('users').doc(u.uid).collection('ohis').doc(id);
+
+    try {
+      if (btn.dataset.action==='ohiprog') {
+        const delta = parseInt(btn.dataset.delta, 10);
+        const curr = ohis.find(x=>x.id===id)?.progress||0;
+        const next = Math.max(0, Math.min(100, curr + delta));
+        await ref.update({ progress: next, completed: next===100 });
+        toast('Progression mise à jour');
+      } else if (btn.dataset.action==='ohidone') {
+        await ref.update({ progress: 100, completed: true });
+        toast('OHI terminé 🎯');
+      } else if (btn.dataset.action==='ohidel') {
+        if(!confirm('Supprimer cet OHI ?')) return;
+        await ref.delete();
+        toast('OHI supprimé');
+      } else if (btn.dataset.action==='ohideliv') {
+        openDeliverablesModal('ohi', id, btn.dataset.title||'OHI');
+        return; // on ne recharge pas ici
+      }
+      loadOhis();
+    } catch (err) { console.error(err); toast('Action impossible', true); }
+  });
+
+  // Form OHI
+  $('#openOhiFormBtn').addEventListener('click', ()=>{
+    $('#addOhiForm').classList.remove('hidden');
+    const d=new Date(); d.setMonth(d.getMonth()+1);
+    $('#deadline').value = d.toISOString().split('T')[0];
+  });
+  $('#cancelOhiBtn').addEventListener('click', ()=>{
+    $('#addOhiForm').classList.add('hidden'); $('#addOhiForm').reset();
+  });
+  $('#addOhiForm').addEventListener('submit', async (e)=>{
+    e.preventDefault(); const u=auth.currentUser; if(!u) return;
+    $('#ohiSpinner').classList.remove('hidden');
+    const data = {
+      title: $('#title').value.trim(),
+      description: $('#description').value.trim(),
+      priority: $('#priority').value,
+      deadline: $('#deadline').value || null,
+      progress: 0,
+      completed: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    try {
+      await db.collection('users').doc(u.uid).collection('ohis').add(data);
+      toast('OHI ajouté.'); $('#addOhiForm').reset(); $('#addOhiForm').classList.add('hidden'); loadOhis();
+    } catch (err) { console.error(err); toast('Erreur ajout OHI', true); }
+    finally { $('#ohiSpinner').classList.add('hidden'); }
+  });
+
+  function updateStatsFromOhis(){
+    const total = ohis.length;
+    const completed = ohis.filter(o=>o.completed).length;
+    $('#totalObjectives').textContent = total;
+    $('#completedObjectives').textContent = completed;
+    const next = ohis.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
+    $('#nextDeadline').textContent = next ? `${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours` : '-';
+    const avg = Math.round((ohis.reduce((s,o)=>s+(o.progress||0),0)/Math.max(1,total)));
+    $('#globalProgress').textContent = `${avg}%`;
+    const c = $('#progressCircle'), C = 2*Math.PI*56, off = C-(avg/100)*C; c.style.strokeDashoffset = off;
+  }
+
+  /* ==================== Tourbillons ==================== */
+  let whirlwinds = [];
+  async function loadWhirlwinds(){
+    const u = auth.currentUser; if(!u) return;
+    const snap = await db.collection('users').doc(u.uid).collection('whirlwinds').orderBy('createdAt','desc').get();
+    whirlwinds = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderWhirlwinds();
+  }
+
+  function renderWhirlwinds(){
+    const activeC = $('#activeWhirlwinds'), doneC = $('#completedWhirlwinds');
+    const active = whirlwinds.filter(w=>!w.completed), done = whirlwinds.filter(w=>w.completed);
+
+    activeC.innerHTML = active.length ? active.map(w=>{
+      const daysLeft = w.deadline ? Math.ceil((new Date(w.deadline)-new Date())/86400000) : null;
+      const isOverdue = daysLeft!==null && daysLeft<0;
+      const priColor = w.priority==='high'?'border-red-500 bg-red-50': w.priority==='medium'?'border-yellow-500 bg-yellow-50':'border-green-500 bg-green-50';
+      const priLabel = w.priority==='high'?'🔴 Haute': w.priority==='medium'?'🟡 Moyenne':'🟢 Basse';
+      const icon = {management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category] || '🌪️';
+      return `
+        <div class="border-l-4 ${priColor} p-4 rounded-lg">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-2"><span>${icon}</span><h4 class="font-medium text-gray-900">${w.title}</h4></div>
+            <span class="text-xs ${isOverdue ? 'text-red-600' : 'text-gray-600'}">
+              ${w.deadline ? (isOverdue ? `${Math.abs(daysLeft)}j retard` : `${daysLeft}j restants`) : ''}
+            </span>
+          </div>
+          <p class="text-sm text-gray-600 mb-3">${w.notes||''}</p>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">${priLabel}</span>
+            <div class="space-x-2">
+              <button class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded" data-action="whirl-liv" data-id="${w.id}" data-title="${w.title}">Livrables</button>
+              <button class="text-xs bg-green-600 text-white px-3 py-1 rounded" data-action="done-whirlwind" data-id="${w.id}">✓ Terminé</button>
+              <button class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded" data-action="delete-whirlwind" data-id="${w.id}">Supprimer</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action en cours</div>`;
+
+    doneC.innerHTML = done.length ? done.slice(0,3).map(w=>{
+      const icon = {management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category] || '🌪️';
+      return `
+        <div class="border border-gray-200 p-3 rounded-lg bg-gray-50 opacity-75">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm">${icon}</span>
+            <h4 class="text-sm font-medium text-gray-700 line-through">${w.title}</h4>
+            <span class="text-xs text-green-600">✓</span>
+          </div>
+          <p class="text-xs text-gray-500">${w.notes||''}</p>
+        </div>`;
+    }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action terminée</div>`;
+  }
+
+  // Actions tourbillons
+  $('#activeWhirlwinds').addEventListener('click', async (e)=>{
+    const doneBtn = e.target.closest('[data-action="done-whirlwind"]');
+    const delBtn  = e.target.closest('[data-action="delete-whirlwind"]');
+    const livBtn  = e.target.closest('[data-action="whirl-liv"]');
+    const u = auth.currentUser; if(!u) return;
+
+    if (livBtn){
+      openDeliverablesModal('whirlwind', livBtn.dataset.id, livBtn.dataset.title||'Tourbillon');
+      return;
+    }
+    if(!doneBtn && !delBtn) return;
+
+    const id = (doneBtn||delBtn).dataset.id;
+    const ref = db.collection('users').doc(u.uid).collection('whirlwinds').doc(id);
+    try {
+      if (doneBtn) { await ref.update({ completed:true }); toast('Marqué terminé.'); }
+      if (delBtn)  { if(!confirm('Supprimer ce tourbillon ?')) return; await ref.delete(); toast('Tourbillon supprimé.'); }
+      loadWhirlwinds();
+    } catch { toast('Action impossible', true); }
+  });
+
+  // Création tourbillon
+  $('#openWhirlwindModalBtn').addEventListener('click', ()=>{
+    const d=new Date(); d.setMonth(d.getMonth()+1);
+    $('#whirlwindDeadline').value = d.toISOString().split('T')[0];
+    show($('#whirlwindModal'));
+  });
+  $('#cancelWhirlwindBtn').addEventListener('click', ()=>{
+    hide($('#whirlwindModal')); $('#whirlwindForm').reset();
+  });
+  $('#whirlwindForm').addEventListener('submit', async (e)=>{
+    e.preventDefault(); const u=auth.currentUser; if(!u) return;
+    const data = {
+      title: $('#whirlwindTitle').value.trim(),
+      category: $('#whirlwindCategory').value,
+      priority: $('#whirlwindPriority').value,
+      deadline: $('#whirlwindDeadline').value || null,
+      notes: $('#whirlwindNotes').value.trim(),
+      completed: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    try {
+      await db.collection('users').doc(u.uid).collection('whirlwinds').add(data);
+      hide($('#whirlwindModal')); $('#whirlwindForm').reset(); toast('Tourbillon ajouté.'); loadWhirlwinds();
+    } catch (err) { console.error(err); toast('Erreur ajout tourbillon', true); }
+  });
+
+  /* ==================== Livrables (OHI et Tourbillons) ==================== */
+  let deliverablesUnsub = null;
+  let currentParent = { type:null, id:null, title:'' }; // type: 'ohi' | 'whirlwind'
+
+  function openDeliverablesModal(type, id, title){
+    currentParent = { type, id, title: title||'' };
+    $('#delivModalTitle').textContent = 'Livrables';
+    $('#delivModalSubtitle').textContent = `${type==='ohi'?'OHI':'Tourbillon'} : ${title||id}`;
+    $('#delivTitle').value = ''; $('#delivDue').value=''; $('#delivNotes').value='';
+
+    // stop ancienne écoute
+    if (deliverablesUnsub) { deliverablesUnsub(); deliverablesUnsub=null; }
+
+    const u = auth.currentUser; if(!u) return;
+    const base = db.collection('users').doc(u.uid).collection(type==='ohi'?'ohis':'whirlwinds').doc(id).collection('deliverables');
+    deliverablesUnsub = base.orderBy('order','asc').orderBy('createdAt','asc').onSnapshot(snap=>{
+      const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderDeliverables(items);
+    });
+
+    show($('#deliverablesModal'));
+  }
+  $('#closeDeliverablesBtn').addEventListener('click', ()=>{
+    hide($('#deliverablesModal'));
+    if (deliverablesUnsub){ deliverablesUnsub(); deliverablesUnsub=null; }
+  });
+
+  function renderDeliverables(items){
+    const box = $('#deliverablesList');
+    if (!items.length){
+      box.innerHTML = `<div class="text-center text-gray-500 py-6 text-sm">Aucun livrable. Ajoute ta première étape ci-dessus.</div>`;
+      return;
+    }
+    box.innerHTML = items.map((it,idx)=>`
+      <div class="border border-gray-200 rounded-lg p-3 flex items-start justify-between">
+        <div class="flex items-start gap-3">
+          <input type="checkbox" ${it.done?'checked':''} data-action="toggle" data-id="${it.id}" class="mt-1">
+          <div>
+            <div class="font-medium ${it.done?'line-through text-gray-500':''}">${it.title||'(Sans titre)'}</div>
+            <div class="text-xs text-gray-500">
+              ${it.due ? `Échéance: ${it.due}` : ''} ${it.notes ? ` · ${it.notes}` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200" data-action="order-up" data-id="${it.id}" ${idx===0?'disabled':''}>▲</button>
+          <button class="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200" data-action="order-down" data-id="${it.id}" ${idx===items.length-1?'disabled':''}>▼</button>
+          <button class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200" data-action="del" data-id="${it.id}">Supprimer</button>
+        </div>
+      </div>
+    `).join('');
+
+    // stocker pour les mouvements
+    box.dataset.json = JSON.stringify(items);
+  }
+
+  // Ajouter un livrable
+  $('#addDeliverableForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const u = auth.currentUser; if(!u) return;
+    const {type,id} = currentParent; if(!type||!id) return;
+    const base = db.collection('users').doc(u.uid).collection(type==='ohi'?'ohis':'whirlwinds').doc(id).collection('deliverables');
+
+    // calcule order = max + 1
+    let order = 1;
+    const prev = $('#deliverablesList').dataset.json ? JSON.parse($('#deliverablesList').dataset.json) : [];
+    if (prev.length) order = (Math.max(...prev.map(x=>x.order||1))) + 1;
+
+    const doc = {
+      title: $('#delivTitle').value.trim(),
+      done: false,
+      order,
+      due: $('#delivDue').value || null,
+      notes: $('#delivNotes').value.trim() || null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    if(!doc.title) return;
+    try {
+      await base.add(doc);
+      $('#delivTitle').value=''; $('#delivDue').value=''; $('#delivNotes').value='';
+      await recalcParentProgressIfOHI();
+      toast('Livrable ajouté ✅');
+    } catch(err){ console.error(err); toast('Erreur ajout livrable', true); }
+  });
+
+  // Actions livrables: toggle / delete / move
+  $('#deliverablesList').addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    const action = btn.dataset.action;
+    const delivId = btn.dataset.id;
+    const u = auth.currentUser; if(!u) return;
+    const {type,id} = currentParent; if(!type||!id) return;
+
+    const base = db.collection('users').doc(u.uid).collection(type==='ohi'?'ohis':'whirlwinds').doc(id).collection('deliverables');
+    const items = $('#deliverablesList').dataset.json ? JSON.parse($('#deliverablesList').dataset.json) : [];
+
+    try {
+      if (action==='toggle'){
+        const it = items.find(x=>x.id===delivId); if(!it) return;
+        await base.doc(delivId).update({ done: !it.done });
+        await recalcParentProgressIfOHI();
+      }
+      if (action==='del'){
+        if(!confirm('Supprimer ce livrable ?')) return;
+        await base.doc(delivId).delete();
+        await recalcParentProgressIfOHI();
+      }
+      if (action==='order-up' || action==='order-down'){
+        const idx = items.findIndex(x=>x.id===delivId); if(idx<0) return;
+        const swapWith = action==='order-up' ? idx-1 : idx+1;
+        if (swapWith < 0 || swapWith > items.length-1) return;
+        const a = items[idx], b = items[swapWith];
+        const batch = db.batch();
+        const aRef = base.doc(a.id), bRef = base.doc(b.id);
+        batch.update(aRef, { order: b.order||1 });
+        batch.update(bRef, { order: a.order||1 });
+        await batch.commit();
+      }
+    } catch(err){ console.error(err); toast('Action impossible', true); }
+  });
+
+  // Recalcule la progression de l’OHI si le parent est un OHI
+  async function recalcParentProgressIfOHI(){
+    const u = auth.currentUser; if(!u) return;
+    const {type,id} = currentParent; if(type!=='ohi'||!id) return;
+    const base = db.collection('users').doc(u.uid).collection('ohis').doc(id);
+    const delivsSnap = await base.collection('deliverables').get();
+    const total = delivsSnap.size;
+    if (total===0) return; // ne force pas la progression si aucun livrable
+    const done = delivsSnap.docs.filter(d=>d.data().done===true).length;
+    const progress = Math.round((done/total)*100);
+    await base.update({ progress, completed: progress===100 });
+    await loadOhis(); // refresh liste OHI
+  }
+
+  /* ==================== Defaults ==================== */
+  // open default section
+  // (déjà dashboard)
 </script>
-</body></html>
+</body>
+</html>
