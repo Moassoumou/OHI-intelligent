@@ -3,15 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coach Objectifs IA – OHI & Workflows</title>
-
-  <!-- SheetJS pour Excel -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <title>Coach Objectifs IA – OHI + Livrables</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = { theme: { extend: { colors: { primary:'#3b82f6', secondary:'#8b5cf6', success:'#10b981', warning:'#f59e0b', danger:'#ef4444' } } } };
+    tailwind.config = { theme: { extend: { colors: { primary:'#3b82f6', secondary:'#8b5cf6', success:'#10b981', warning:'#f59e0b', danger:'#ef4444' }}}};
   </script>
 
   <!-- Inter -->
@@ -21,11 +18,10 @@
     .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .card-hover { transition: all .25s ease; }
     .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,.1); }
-    .progress-ring { transform: rotate(-90deg); }
-    .pulse-dot { animation: pulse 2s infinite; } @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .pulse-dot { animation: pulse 2s infinite; } @keyframes pulse {0%,100%{opacity:1} 50%{opacity:.5}}
   </style>
 
-  <!-- Firebase compat -->
+  <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -76,12 +72,7 @@
             <p class="text-white/80 text-sm">Votre compagnon intelligent pour atteindre vos objectifs</p>
           </div>
         </div>
-        <div class="flex items-center gap-6">
-          <nav class="hidden md:flex gap-2">
-            <button id="navDashboard" class="px-3 py-2 rounded-lg hover:bg-white/20 text-sm">Tableau de bord</button>
-            <button id="navWorkflows" class="px-3 py-2 rounded-lg hover:bg-white/20 text-sm">Workflows</button>
-            <button id="navExecution" class="px-3 py-2 rounded-lg hover:bg-white/20 text-sm">Exécution</button>
-          </nav>
+        <div class="flex items-center gap-3">
           <div class="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2">
             <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
             <span id="userEmail" class="text-sm">—</span>
@@ -92,33 +83,29 @@
     </div>
   </header>
 
-  <!-- ===== DASHBOARD ===== -->
+  <!-- ===== APP ===== -->
   <main id="appScreen" class="hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+      <!-- OHI + Progress -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <!-- OHI (col 2) -->
+
+        <!-- OHI -->
         <div class="lg:col-span-2">
           <div class="bg-white rounded-2xl p-6 shadow-sm">
             <div class="flex items-center justify-between mb-6">
               <h3 class="text-xl font-semibold text-gray-900">Mes OHI</h3>
-              <div class="flex flex-wrap gap-2">
-                <button id="openOhiFormBtn" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">+ Ajouter un OHI</button>
-                <input id="importFile" type="file" accept=".xlsx,.xls,.csv" class="hidden">
-                <button id="importBtn" class="border px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Importer</button>
-                <button id="exportBtn" class="border px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Exporter</button>
-                <button id="templateBtn" class="border px-3 py-2 rounded-lg text-sm hover:bg-gray-50">Télécharger Modèle</button>
-              </div>
+              <button id="openOhiFormBtn" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">+ Ajouter un OHI</button>
             </div>
 
-            <!-- Form -->
+            <!-- Form OHI -->
             <form id="addOhiForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
               <input id="title" type="text" placeholder="Titre" required class="border rounded-xl p-3"/>
               <input id="deadline" type="date" required class="border rounded-xl p-3"/>
               <textarea id="description" placeholder="Description" class="border rounded-xl p-3 md:col-span-2"></textarea>
               <select id="priority" class="border rounded-xl p-3">
                 <option value="high">Haute</option>
-                <option value="medium">Moyenne</option>
+                <option value="medium" selected>Moyenne</option>
                 <option value="low">Basse</option>
               </select>
               <div class="flex gap-3 md:col-span-2">
@@ -134,12 +121,12 @@
           </div>
         </div>
 
-        <!-- Progression Globale (col 1) -->
+        <!-- Progression Globale -->
         <div class="bg-white rounded-2xl p-6 shadow-sm">
           <h3 class="text-xl font-semibold text-gray-900 mb-6">Progression Globale</h3>
           <div class="flex items-center justify-center mb-6">
             <div class="relative w-32 h-32">
-              <svg class="w-32 h-32 progress-ring">
+              <svg class="w-32 h-32" style="transform:rotate(-90deg)">
                 <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
                 <circle id="progressCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none"
                         stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
@@ -157,197 +144,22 @@
         </div>
       </div>
 
-      <!-- Tourbillons -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm mb-8 border-l-4 border-orange-500">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-orange-100 rounded-lg grid place-items-center">
-              <svg class="w-6 h-6 text-orange-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
-            </div>
-            <div>
-              <h3 class="text-xl font-semibold text-gray-900">🌪️ Tourbillons du Mois</h3>
-              <p class="text-sm text-gray-600">Actions importantes pour ne pas se disperser</p>
-            </div>
-          </div>
-          <button id="openWhirlwindModalBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700">+ Nouveau Tourbillon</button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <h4 class="font-medium text-gray-900 mb-3">Actions en cours</h4>
-            <div id="activeWhirlwinds" class="space-y-3"></div>
-          </div>
-          <div>
-            <h4 class="font-medium text-gray-900 mb-3">Actions terminées</h4>
-            <div id="completedWhirlwinds" class="space-y-3"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- Toast -->
       <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg hidden"></div>
     </div>
   </main>
 
-  <!-- ===== WORKFLOWS PAGE ===== -->
-  <section id="workflowsScreen" class="hidden">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Workflows disponibles</h2>
-        <span class="text-sm text-gray-500">Depuis Firestore → collection <code>workflows</code></span>
-      </div>
-      <div id="wfList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
-      <div id="wfEmpty" class="hidden text-center text-gray-500 py-16">
-        <p class="mb-2">Aucun workflow trouvé.</p>
-        <p class="text-sm">Ajoute un document dans <code>workflows</code> (ex. <em>SEO → Article → Newsletter</em>).</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== EXECUTION PAGE ===== -->
-  <section id="executionScreen" class="hidden">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Exécution d'un job</h2>
-      </div>
-
-      <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
-        <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div class="flex-1">
-            <label class="block text-sm text-gray-700 mb-1">Job ID</label>
-            <input id="jobIdInput" type="text" class="w-full border rounded-lg px-3 py-2" placeholder="Colle ici un jobId (ou lance un workflow)">
-          </div>
-          <button id="loadJobBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600">Charger</button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div class="lg:col-span-1 bg-white rounded-2xl p-6 shadow-sm">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Statut du job</h3>
-          <div id="jobMeta" class="space-y-2 text-sm text-gray-700">
-            <div><span class="text-gray-500">Workflow:</span> <span id="jobWorkflow">—</span></div>
-            <div><span class="text-gray-500">Statut:</span> <span id="jobStatus" class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">—</span></div>
-            <div><span class="text-gray-500">Créé le:</span> <span id="jobCreated">—</span></div>
-          </div>
-          <div class="mt-6 flex gap-3">
-            <button id="approveBtn" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg opacity-50 cursor-not-allowed" disabled>Approuver</button>
-            <button id="rejectBtn" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg opacity-50 cursor-not-allowed" disabled>Rejeter</button>
-          </div>
-        </div>
-
-        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Étapes (runs)</h3>
-          </div>
-          <div id="runsList" class="space-y-3"></div>
-          <div id="runsEmpty" class="hidden text-center text-gray-500 py-10 text-sm">Aucun run pour l'instant.</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== MODALS ===== -->
-  <div id="whirlwindModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
-      <h3 class="text-xl font-semibold text-gray-900 mb-6">🌪️ Nouveau Tourbillon</h3>
-      <form id="whirlwindForm" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Action à mener</label>
-          <input type="text" id="whirlwindTitle" class="w-full border rounded-lg px-3 py-2" placeholder="Ex: Établir la masse salariale" required>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
-            <select id="whirlwindCategory" class="w-full border rounded-lg px-3 py-2">
-              <option value="management">👥 Management</option>
-              <option value="finance">💰 Finance</option>
-              <option value="operations">⚙️ Opérations</option>
-              <option value="strategy">🎯 Stratégie</option>
-              <option value="hr">👔 RH</option>
-              <option value="communication">📢 Communication</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
-            <select id="whirlwindPriority" class="w-full border rounded-lg px-3 py-2">
-              <option value="high">🔴 Haute</option>
-              <option value="medium">🟡 Moyenne</option>
-              <option value="low">🟢 Basse</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Échéance</label>
-          <input type="date" id="whirlwindDeadline" class="w-full border rounded-lg px-3 py-2" required>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-          <textarea id="whirlwindNotes" rows="3" class="w-full border rounded-lg px-3 py-2" placeholder="Détails, personnes impliquées, ressources nécessaires..."></textarea>
-        </div>
-        <div class="flex gap-3 pt-2">
-          <button type="button" id="cancelWhirlwindBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">Annuler</button>
-          <button type="submit" class="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2">
-            <span>Créer</span>
-            <span id="whirlwindSpinner" class="hidden w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Launch workflow modal -->
-  <div id="launchModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
-      <h3 class="text-xl font-semibold text-gray-900 mb-4">🚀 Lancer le workflow</h3>
-      <p id="launchWfName" class="text-sm text-gray-600 mb-4">—</p>
-      <form id="launchForm" class="space-y-4">
-        <div>
-          <label class="block text-sm text-gray-700 mb-1">Sujet</label>
-          <input id="inSubject" type="text" class="w-full border rounded-lg px-3 py-2" placeholder="Ex: Chaussures de running" required>
-        </div>
-        <div>
-          <label class="block text-sm text-gray-700 mb-1">Audience</label>
-          <input id="inAudience" type="text" class="w-full border rounded-lg px-3 py-2" placeholder="Ex: Débutants, sportifs...">
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm text-gray-700 mb-1">Ton</label>
-            <select id="inTone" class="w-full border rounded-lg px-3 py-2">
-              <option value="expert">Expert</option>
-              <option value="convivial">Convivial</option>
-              <option value="persuasif">Persuasif</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700 mb-1">Langue</label>
-            <select id="inLang" class="w-full border rounded-lg px-3 py-2">
-              <option value="fr">Français</option>
-              <option value="en">English</option>
-            </select>
-          </div>
-        </div>
-        <div class="flex gap-3 pt-2">
-          <button type="button" id="cancelLaunchBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">Annuler</button>
-          <button type="submit" class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
-            <span>Lancer</span>
-            <span id="launchSpinner" class="hidden w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ================= SCRIPTS APP ================= -->
   <script>
     // ---------- CONFIG ----------
     const firebaseConfig = {
-      apiKey: "AIzaSyD4JaJelN4LbkbLfGVJVbCAY6gK9sPAN3I",
-      authDomain: "tableau-de-bord-intelligent.firebaseapp.com",
-      projectId: "tableau-de-bord-intelligent",
-      storageBucket: "tableau-de-bord-intelligent.appspot.com",
-      messagingSenderId: "226539421183",
-      appId: "1:226539421183:web:7386e6a4274f1c9fde3bca",
-      measurementId: "G-7K0EN05CJ7"
+      /* ⬇️⬇️⬇️ METS TA CONFIG EXACTE ICI ⬇️⬇️⬇️
+      apiKey: "...",
+      authDomain: "...",
+      projectId: "...",
+      storageBucket: "...",
+      messagingSenderId: "...",
+      appId: "..."
+      */
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -361,65 +173,55 @@
     const show = (el) => el.classList.remove('hidden');
     const hide = (el) => el.classList.add('hidden');
     const spin = (el, on) => el && el.classList.toggle('hidden', !on);
-    function toast(msg, err=false){ const t=$('#toast'); if(!t) return; t.textContent=msg; t.classList.remove('hidden'); t.classList.toggle('bg-red-600',err); t.classList.toggle('bg-gray-900',!err); setTimeout(()=>t.classList.add('hidden'),2200); }
-    const fmtDate = (ts) => { if(!ts) return '—'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); };
-
-    // ---------- Navigation ----------
-    function showScreen(screen){
-      const map = { dashboard: '#appScreen', workflows: '#workflowsScreen', execution: '#executionScreen' };
-      ['#appScreen','#workflowsScreen','#executionScreen'].forEach(id=>hide($(id)));
-      show($(map[screen]));
+    function toast(msg, err=false){
+      const t = $('#toast'); if(!t) return;
+      t.textContent = msg; t.classList.remove('hidden');
+      t.classList.toggle('bg-red-600', err); t.classList.toggle('bg-gray-900', !err);
+      setTimeout(()=>t.classList.add('hidden'), 2200);
     }
-    $('#navDashboard')?.addEventListener('click', ()=>showScreen('dashboard'));
-    $('#navWorkflows')?.addEventListener('click', ()=>{ showScreen('workflows'); loadWorkflows(); });
-    $('#navExecution')?.addEventListener('click', ()=>showScreen('execution'));
+    const fmtDate = (ts) => { if(!ts) return '—'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); };
 
     // ---------- auth state ----------
     auth.onAuthStateChanged(async (user) => {
       if (user) {
-        hide($('#authScreen'));
-        show($('#appHeader')); show($('#appScreen'));
+        hide($('#authScreen')); show($('#appHeader')); show($('#appScreen'));
         $('#userEmail').textContent = user.email || 'Connecté';
-        await Promise.all([loadOhis(), loadWhirlwinds()]);
+        await loadOhis();
       } else {
-        show($('#authScreen'));
-        hide($('#appHeader')); hide($('#appScreen')); hide($('#workflowsScreen')); hide($('#executionScreen'));
+        show($('#authScreen')); hide($('#appHeader')); hide($('#appScreen'));
       }
     });
 
-    // ---------- email login ----------
+    // ---------- email login / signup / google ----------
     $('#emailForm').addEventListener('submit', async (e)=>{
       e.preventDefault(); spin($('#emailSpinner'), true);
       try { await auth.signInWithEmailAndPassword($('#authEmail').value.trim(), $('#authPass').value.trim()); toast('Connecté ✅'); }
       catch(err){ toast(err.message || 'Erreur de connexion', true); }
       finally { spin($('#emailSpinner'), false); }
     });
-
-    // ---------- signup ----------
     $('#signupBtn').addEventListener('click', async ()=>{
-      const email=$('#authEmail').value.trim(); const pass=$('#authPass').value.trim(); if(!email||!pass) return toast('Renseigne email et mot de passe.');
+      const email=$('#authEmail').value.trim(); const pass=$('#authPass').value.trim();
+      if(!email||!pass) return toast('Renseigne email et mot de passe.');
       try { await auth.createUserWithEmailAndPassword(email, pass); toast('Compte créé 🎉'); }
       catch(err){ toast(err.message || 'Erreur création compte', true); }
     });
-
-    // ---------- Google ----------
     $('#googleBtn').addEventListener('click', async ()=>{
       const provider = new firebase.auth.GoogleAuthProvider(); spin($('#googleSpinner'), true);
       try { await auth.signInWithPopup(provider); }
       catch(err){ if(err && /popup/.test(String(err.message||''))) { await auth.signInWithRedirect(provider); } else { toast(err.message||'Erreur Google', true); } }
       finally { spin($('#googleSpinner'), false); }
     });
-
-    // ---------- logout ----------
     $('#logoutBtn').addEventListener('click', async ()=>{ try { await auth.signOut(); toast('Déconnecté'); } catch { toast('Erreur déconnexion', true); } });
 
-    // ================= DASHBOARD (OHI) =================
+    // ================= OHI (avec livrables) =================
     let ohis = [];
+
     async function loadOhis(){
-      const u=auth.currentUser; if(!u) return;
-      const snap=await db.collection('users').doc(u.uid).collection('ohis').orderBy('createdAt','desc').get();
-      ohis=snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderOhis(); updateStatsFromOhis();
+      const u = auth.currentUser; if(!u) return;
+      const snap = await db.collection('users').doc(u.uid).collection('ohis').orderBy('createdAt','desc').get();
+      ohis = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderOhis();
+      updateStatsFromOhis();
     }
 
     function renderOhis(){
@@ -432,8 +234,10 @@
         </div>`; return;
       }
       list.innerHTML = ohis.map(o=>{
-        const pr=(o.priority||'').toLowerCase(); const prColor = pr==='high'?'text-red-600': pr==='medium'?'text-yellow-600':'text-green-600';
-        const progress=Number(o.progress||0); const daysLeft=o.deadline?Math.ceil((new Date(o.deadline)-new Date())/86400000):null;
+        const pr=(o.priority||'').toLowerCase();
+        const prColor = pr==='high'?'text-red-600': pr==='medium'?'text-yellow-600':'text-green-600';
+        const progress=Number(o.progress||0);
+        const daysLeft=o.deadline?Math.ceil((new Date(o.deadline)-new Date())/86400000):null;
         const badge=o.deadline ? (daysLeft<0?`<span class="text-xs text-red-600">${Math.abs(daysLeft)} jours de retard</span>`:`<span class="text-xs text-gray-600">${daysLeft} jours restants</span>`) : '';
         return `
           <div class="border border-gray-200 rounded-xl p-4 card-hover">
@@ -445,389 +249,226 @@
               </div>
               <div class="text-right">${badge}</div>
             </div>
+
+            <!-- Progress -->
             <div class="mb-3">
-              <div class="flex justify-between text-sm mb-1"><span class="text-gray-600">Progression</span><span class="font-medium">${progress}%</span></div>
-              <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-primary h-2 rounded-full" style="width:${progress}%"></div></div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600">Progression</span>
+                <span class="font-medium">${progress}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-primary h-2 rounded-full" style="width:${progress}%"></div>
+              </div>
             </div>
-            <div class="flex gap-2">
+
+            <!-- Actions OHI -->
+            <div class="flex flex-wrap gap-2 mb-3">
               <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm" data-action="ohiprog" data-delta="-10" data-id="${o.id}">-10%</button>
               <button class="px-3 py-1 bg-primary text-white hover:bg-blue-600 rounded text-sm" data-action="ohiprog" data-delta="10" data-id="${o.id}">+10%</button>
               <button class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm" data-action="ohidone" data-id="${o.id}">Terminé</button>
               <button class="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded text-sm" data-action="ohidel" data-id="${o.id}">Supprimer</button>
+              <button class="px-3 py-1 bg-white border hover:bg-gray-50 rounded text-sm" data-action="toggle-deliv" data-id="${o.id}">📋 Livrables</button>
+              <button class="px-3 py-1 bg-white border hover:bg-gray-50 rounded text-sm" data-action="recalc" data-id="${o.id}">↻ Recalculer depuis livrables</button>
+            </div>
+
+            <!-- Livrables (caché par défaut) -->
+            <div id="delivBox-${o.id}" class="hidden border-t pt-3">
+              <!-- formulaire ajout -->
+              <form class="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" data-deliv-form="${o.id}">
+                <input name="title" class="md:col-span-3 border rounded-lg px-3 py-2" placeholder="Titre du livrable" required>
+                <input name="due" type="date" class="md:col-span-2 border rounded-lg px-3 py-2">
+                <button class="md:col-span-1 bg-primary text-white rounded-lg px-3 py-2 hover:bg-blue-600">Ajouter</button>
+                <textarea name="notes" class="md:col-span-6 border rounded-lg px-3 py-2" placeholder="Notes (optionnel)"></textarea>
+              </form>
+              <!-- liste -->
+              <div id="delivList-${o.id}" class="space-y-2"></div>
             </div>
           </div>`;
       }).join('');
     }
 
-    $('#ohiList')?.addEventListener('click', async (e)=>{
-      const btn=e.target.closest('[data-action]'); if(!btn) return; const id=btn.dataset.id; const u=auth.currentUser; if(!u) return toast('Non connecté', true);
-      const ref=db.collection('users').doc(u.uid).collection('ohis').doc(id);
-      try{
-        if(btn.dataset.action==='ohiprog'){
-          const delta=parseInt(btn.dataset.delta,10);
-          const curr=ohis.find(x=>x.id===id)?.progress||0;
-          const next=Math.max(0,Math.min(100,curr+delta));
-          await ref.update({progress:next,completed:next===100});
-          toast('Progression mise à jour');
-        } else if(btn.dataset.action==='ohidone'){
-          await ref.update({progress:100,completed:true}); toast('OHI terminé 🎯');
-        } else if(btn.dataset.action==='ohidel'){
-          if(!confirm('Supprimer cet OHI ?')) return; await ref.delete(); toast('OHI supprimé');
-        }
-        loadOhis();
-      } catch(err){ toast('Action impossible', true); }
-    });
+    // Actions OHI (progress/done/delete + toggle livrables + recalc)
+    $('#ohiList').addEventListener('click', async (e)=>{
+      const btn = e.target.closest('[data-action]'); if(!btn) return;
+      const action = btn.dataset.action; const ohiId = btn.dataset.id;
+      const u = auth.currentUser; if(!u) return toast('Non connecté', true);
+      const ref = db.collection('users').doc(u.uid).collection('ohis').doc(ohiId);
 
-    $('#openOhiFormBtn')?.addEventListener('click', ()=>{
-      $('#addOhiForm').classList.remove('hidden');
-      const d=new Date(); d.setMonth(d.getMonth()+1); $('#deadline').value=d.toISOString().split('T')[0];
-    });
-    $('#cancelOhiBtn')?.addEventListener('click', ()=>{ $('#addOhiForm').classList.add('hidden'); $('#addOhiForm').reset(); });
-
-    $('#addOhiForm')?.addEventListener('submit', async (e)=>{
-      e.preventDefault(); const u=auth.currentUser; if(!u) return; spin($('#ohiSpinner'), true);
-      const data={ title:$('#title').value.trim(), description:$('#description').value.trim(), priority:$('#priority').value, deadline:$('#deadline').value||null, progress:0, completed:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-      try{ await db.collection('users').doc(u.uid).collection('ohis').add(data); toast('OHI ajouté.'); $('#addOhiForm').reset(); $('#addOhiForm').classList.add('hidden'); loadOhis(); }
-      catch(err){ console.error('OHI error:',err); toast(err.message||'Erreur ajout OHI', true); }
-      finally{ spin($('#ohiSpinner'), false); }
-    });
-
-    function updateStatsFromOhis(){
-      const total=ohis.length;
-      const completed=ohis.filter(o=>o.completed).length;
-      $('#totalObjectives').textContent=total;
-      $('#completedObjectives').textContent=completed;
-      const next=ohis.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
-      $('#nextDeadline').textContent= next?`${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours`:'-';
-      const avg=Math.round((ohis.reduce((s,o)=>s+(o.progress||0),0)/Math.max(1,total)));
-      $('#globalProgress').textContent=`${avg}%`;
-      const c=$('#progressCircle'), C=2*Math.PI*56, off=C-(avg/100)*C; c.style.strokeDashoffset=off;
-    }
-
-    // ====== IMPORT / EXPORT OHI ======
-      
-// -- helpers texte
-function slugifyHeader(s) {
-  if (!s) return "";
-  return String(s)
-    .normalize('NFD')                       // sépare accents
-    .replace(/\p{Diacritic}/gu, '')        // retire accents
-    .toLowerCase()
-    .replace(/\([^)]*\)/g, ' ')            // retire le contenu entre parenthèses
-    .replace(/[^a-z0-9% ]+/g, ' ')         // garde alphanum / %
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Liste élargie d’alias (après slugify)
-const HEADER_ALIASES = {
-  titre: [
-    'titre','intitule','intitulé','objectif','nom','libelle','libellé','title'
-  ],
-  description: [
-    'description','details','detail','desc','commentaire','notes','note'
-  ],
-  priorite: [
-    'priorite','priorité','priority','prio','niveau priorite','niveau de priorite','niveau de priorité'
-  ],
-  echeance: [
-    'echeance','échéance','deadline','date','date limite','date echeance','date d echeance','due','due date','scadence'
-  ],
-  progression: [
-    'progression','avancement','progress','%','pourcentage','taux progression','taux avancement'
-  ],
-};
-
-// Essaie de mapper chaque colonne source -> clé canonique {titre, description, priorite, echeance, progression}
-function buildHeaderMap(rawHeaders) {
-  const map = {};
-  rawHeaders.forEach((h) => {
-    const slug = slugifyHeader(h);
-    for (const [canon, aliases] of Object.entries(HEADER_ALIASES)) {
-      if (aliases.includes(slug) || aliases.some(a => slug.includes(a))) {
-        // on affecte seulement si pas déjà mappé (priorité au 1er match)
-        if (!map[canon]) map[canon] = h;
-      }
-    }
-  });
-  return map;
-}
-
-// Convertit une cellule date potentielle (string "2025-12-31", "31/12/2025" ou numéro Excel)
-function parseDateCell(val) {
-  if (val == null || val === '') return null;
-  if (typeof val === 'number') {
-    // numéro de série Excel -> date JS
-    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-    const ms = val * 86400000;
-    const d = new Date(excelEpoch.getTime() + ms);
-    return d.toISOString().slice(0,10);
-  }
-  const s = String(val).trim();
-  // déjà ISO
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // remplace slash -> tiret et tente un parse
-  const t = s.replace(/\//g, '-');
-  const d = new Date(t);
-  if (!isNaN(d)) return d.toISOString().slice(0,10);
-  return null;
-}
-
-// Télécharge un Blob
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-// 1) Télécharger le MODÈLE (exactement formaté comme attendu)
-document.getElementById('templateBtn').addEventListener('click', () => {
-  const wb = XLSX.utils.book_new();
-  // En-têtes EXACTES (ligne 1) + une ligne d’exemple
-  const data = [
-    ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"],
-    ["Lancer le site","Mettre en ligne la v1","high","2025-12-31","0"]
-  ];
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, "OHIs"); // nom d’onglet standard
-  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-  downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), "Modele_OHI.xlsx");
-});
-
-// 2) Exporter les OHI (mêmes en-têtes/ordre que le modèle)
-document.getElementById('exportBtn').addEventListener('click', () => {
-  if (!Array.isArray(ohis)) return toast("Aucun OHI à exporter", true);
-  const rows = [
-    ["Titre","Description","Priorité (high|medium|low)","Échéance (YYYY-MM-DD)","Progression (0-100)"]
-  ];
-  ohis.forEach(o => {
-    // On force l’ordre/format
-    rows.push([
-      o.title || "",
-      o.description || "",
-      (o.priority || "medium"),
-      (o.deadline || ""),
-      String(o.progress ?? 0)
-    ]);
-  });
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, "OHIs");
-  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-  downloadBlob(new Blob([wbout], {type:"application/octet-stream"}), `Export_OHI_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast("Export créé ✅");
-});
-
-// 3) Importer (tolérant sur les en-têtes, CSV/XLS/XLSX)
-document.getElementById('importBtn').addEventListener('click', () => {
-  document.getElementById('importFile').value = "";
-  document.getElementById('importFile').click();
-});
-
-document.getElementById('importFile').addEventListener('change', async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-
-    // IMPORTANT : header:1 -> on lit d’abord les en-têtes bruts
-    const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:"" });
-    if (!rows.length) return toast("Fichier vide", true);
-
-    const headers = rows[0];                  // 1ère ligne
-    const dataRows = rows.slice(1);           // lignes suivantes
-    const headerMap = buildHeaderMap(headers);
-
-    if (!headerMap.titre) {
-      return toast("Modèle non reconnu : la colonne 'Titre' (ou équivalent) est requise. Télécharge d’abord le Modèle.", true);
-    }
-
-    const u = auth.currentUser;
-    if (!u) return toast("Connecte-toi d'abord", true);
-
-    // Index des colonnes
-    const idx = {};
-    headers.forEach((h, i) => {
-      const slug = slugifyHeader(h);
-      for (const [canon, aliases] of Object.entries(HEADER_ALIASES)) {
-        if (aliases.includes(slug) || aliases.some(a => slug.includes(a))) {
-          if (idx[canon] == null) idx[canon] = i;
-        }
-      }
-    });
-
-    const toCreate = [];
-    for (const row of dataRows) {
-      if (!Array.isArray(row)) continue;
-      const title = String(row[idx.titre ?? -1] || "").trim();
-      if (!title) continue; // ignore lignes sans titre
-
-      const description = idx.description != null ? String(row[idx.description] || "").trim() : "";
-      let priority = idx.priorite != null ? String(row[idx.priorite] || "").trim().toLowerCase() : "medium";
-      if (!['high','medium','low'].includes(priority)) priority = "medium";
-
-      const rawDeadline = idx.echeance != null ? row[idx.echeance] : null;
-      const deadline = parseDateCell(rawDeadline);
-      let progress = 0;
-      if (idx.progression != null) {
-        const p = Number(String(row[idx.progression]).replace(',', '.'));
-        progress = isNaN(p) ? 0 : Math.max(0, Math.min(100, Math.round(p)));
-      }
-
-      toCreate.push({
-        title, description, priority,
-        deadline,
-        progress,
-        completed: progress === 100,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-    }
-
-    if (!toCreate.length) return toast("Aucune ligne valide trouvée (colonne 'Titre').", true);
-
-    // Écritures Firestore
-    for (const doc of toCreate) {
-      await db.collection('users').doc(u.uid).collection('ohis').add(doc);
-    }
-
-    toast(`Import terminé : ${toCreate.length} OHI${toCreate.length>1?'s':''} créés ✅`);
-    await loadOhis();
-  } catch (err) {
-    console.error(err);
-    toast("Échec de l'import. Essaye avec le Modèle ou vérifie les en-têtes.", true);
-  }
-});
-
-    // ================= WORKFLOWS =================
-    let workflows = [];
-    async function loadWorkflows(){
-      const snap = await db.collection('workflows').get();
-      workflows = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      renderWorkflows();
-    }
-    function renderWorkflows(){
-      const list=$('#wfList'); const empty=$('#wfEmpty'); if(!list) return;
-      if(!workflows.length){ list.innerHTML=''; show(empty); return; }
-      hide(empty);
-      list.innerHTML = workflows.map(w=>{
-        const steps = Array.isArray(w.steps)? w.steps.length : 0;
-        return `
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover border border-gray-100">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <h4 class="text-lg font-semibold text-gray-900">${w.name || '(Sans nom)'}</h4>
-                <p class="text-sm text-gray-600 mt-1">${w.description || ''}</p>
-                <div class="mt-3 text-xs text-gray-500">${steps} étape(s)</div>
-              </div>
-              <button class="shrink-0 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600" data-action="launch" data-id="${w.id}">Lancer</button>
-            </div>
-          </div>`;
-      }).join('');
-    }
-    $('#wfList')?.addEventListener('click', (e)=>{
-      const btn = e.target.closest('[data-action="launch"]'); if(!btn) return; const wf = workflows.find(x=>x.id===btn.dataset.id); if(!wf) return;
-      $('#launchWfName').textContent = wf.name || wf.id; $('#launchForm').dataset.wfid = wf.id; show($('#launchModal'));
-    });
-    $('#cancelLaunchBtn')?.addEventListener('click', ()=>{ hide($('#launchModal')); $('#launchForm').reset(); });
-
-    $('#launchForm')?.addEventListener('submit', async (e)=>{
-      e.preventDefault(); const u=auth.currentUser; if(!u) return toast('Non connecté', true);
-      const wfId = e.currentTarget.dataset.wfid; if(!wfId) return toast('Workflow introuvable', true);
-      const inputs = { subject: $('#inSubject').value.trim(), audience: $('#inAudience').value.trim(), tone: $('#inTone').value, language: $('#inLang').value };
-      spin($('#launchSpinner'), true);
       try {
-        const job = { workflowType: wfId, inputs, status: 'queued', createdBy: u.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-        const ref = await db.collection('jobs').add(job);
-        toast('Job créé 🚀'); hide($('#launchModal')); $('#launchForm').reset();
-        $('#jobIdInput').value = ref.id; showScreen('execution'); startWatchingJob(ref.id);
-      } catch(err){ console.error('Launch error:', err); toast(err.message||'Erreur création job', true); }
-      finally{ spin($('#launchSpinner'), false); }
+        if (action === 'ohiprog') {
+          const delta = parseInt(btn.dataset.delta, 10);
+          const curr = ohis.find(x=>x.id===ohiId)?.progress||0;
+          const next = Math.max(0, Math.min(100, curr + delta));
+          await ref.update({ progress: next, completed: next===100 });
+          toast('Progression mise à jour');
+          loadOhis();
+        }
+        else if (action === 'ohidone') {
+          await ref.update({ progress: 100, completed: true });
+          toast('OHI terminé 🎯'); loadOhis();
+        }
+        else if (action === 'ohidel') {
+          if(!confirm('Supprimer cet OHI ?')) return;
+          await ref.delete(); toast('OHI supprimé'); loadOhis();
+        }
+        else if (action === 'toggle-deliv') {
+          const box = document.getElementById(`delivBox-${ohiId}`);
+          box.classList.toggle('hidden');
+          if (!box.classList.contains('hidden')) { await loadDeliverables(ohiId); }
+        }
+        else if (action === 'recalc') {
+          await recalcProgressFromDeliverables(ohiId);
+        }
+      } catch (err) {
+        console.error(err); toast('Action impossible', true);
+      }
     });
 
-    // ================= EXECUTION =================
-    let unsubJob = null, unsubRuns = null;
-    function clearWatchers(){ if(unsubJob){unsubJob();unsubJob=null;} if(unsubRuns){unsubRuns();unsubRuns=null;} }
-    function badge(text, kind){
-      const cls = { queued:'bg-gray-100 text-gray-700', pending:'bg-gray-100 text-gray-700', running:'bg-blue-100 text-blue-700', completed:'bg-green-100 text-green-700', finished:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' }[kind] || 'bg-gray-100 text-gray-700';
-      return `<span class="px-2 py-0.5 rounded-full text-xs ${cls}">${text}</span>`;
+    // Afficher formulaire ajout livrable (déjà dans le DOM) + Submit
+    $('#ohiList').addEventListener('submit', async (e)=>{
+      const form = e.target.closest('form[data-deliv-form]'); if(!form) return;
+      e.preventDefault();
+      const ohiId = form.getAttribute('data-deliv-form');
+      const title = form.querySelector('input[name="title"]').value.trim();
+      const due   = form.querySelector('input[name="due"]').value || null;
+      const notes = form.querySelector('textarea[name="notes"]').value.trim();
+      if(!title) return;
+
+      try {
+        await addDeliverable(ohiId, title, due, notes);
+        form.reset();
+        await loadDeliverables(ohiId);
+        await recalcProgressFromDeliverables(ohiId);
+      } catch(err){ console.error(err); toast("Ajout impossible", true); }
+    });
+
+    // ---------- Deliverables: CRUD ----------
+    async function addDeliverable(ohiId, title, due=null, notes=""){
+      const u = auth.currentUser; if(!u) throw new Error('Non connecté');
+      const data = {
+        title,
+        done: false,
+        order: Date.now(),
+        due,
+        notes,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await db.collection('users').doc(u.uid)
+        .collection('ohis').doc(ohiId)
+        .collection('deliverables').add(data);
+      toast("Livrable ajouté ✅");
     }
-    function startWatchingJob(jobId){
-      if(!jobId) return; clearWatchers();
-      unsubJob = db.collection('jobs').doc(jobId).onSnapshot(doc=>{
-        if(!doc.exists){ toast('Job introuvable', true); return; }
-        const j = { id: doc.id, ...doc.data() };
-        $('#jobWorkflow').textContent = j.workflowType || '—';
-        $('#jobStatus').outerHTML = badge(j.status||'—', (j.status||'queued'));
-        $('#jobCreated').textContent = fmtDate(j.createdAt);
-      }, err=>{ console.error(err); toast('Erreur lecture job', true); });
-      unsubRuns = db.collection('runs').where('jobId','==',jobId).orderBy('startedAt','asc').onSnapshot(snap=>{
-        const items = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-        renderRuns(items);
-      }, err=>{ console.error(err); toast('Erreur lecture runs', true); });
+
+    async function loadDeliverables(ohiId){
+      const u = auth.currentUser; if(!u) return;
+      const snap = await db.collection('users').doc(u.uid)
+        .collection('ohis').doc(ohiId)
+        .collection('deliverables').orderBy('order','asc').get();
+      const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderDeliverables(ohiId, items);
     }
-    function renderRuns(items){
-      const list = $('#runsList'), empty=$('#runsEmpty'); if(!list) return; if(!items.length){ list.innerHTML=''; show(empty); return; } hide(empty);
-      list.innerHTML = items.map(r=>{
-        const started = fmtDate(r.startedAt), ended = fmtDate(r.endedAt);
-        const st = r.status || 'running';
+
+    function renderDeliverables(ohiId, items){
+      const list = document.getElementById(`delivList-${ohiId}`); if(!list) return;
+      if(!items.length){ list.innerHTML = `<div class="text-sm text-gray-500">Aucun livrable pour l’instant.</div>`; return; }
+      list.innerHTML = items.map(d=>{
+        const checked = d.done ? 'checked' : '';
+        const due = d.due ? `<span class="text-xs text-gray-500">· Échéance: ${d.due}</span>` : '';
+        const notes = d.notes ? `<div class="text-xs text-gray-500 mt-1">${d.notes}</div>` : '';
         return `
-          <div class="border border-gray-200 rounded-xl p-4">
-            <div class="flex items-center justify-between">
+          <div class="border rounded-lg p-3 flex items-start justify-between">
+            <label class="flex items-start gap-2">
+              <input type="checkbox" data-action="toggle-done" data-ohi="${ohiId}" data-id="${d.id}" ${checked} class="mt-1">
               <div>
-                <div class="font-medium text-gray-900">${r.step || '(Étape)'} ${badge(st, st)}</div>
-                <div class="text-xs text-gray-500 mt-1">Début: ${started} · Fin: ${ended}</div>
+                <div class="text-sm ${d.done ? 'line-through text-gray-500' : 'text-gray-800'}">${d.title||''} ${due}</div>
+                ${notes}
               </div>
-              <div class="text-right text-sm text-gray-700">
-                ${r.output && r.output.summary ? `<span class='text-gray-500'>Résumé:</span> ${r.output.summary}` : ''}
-              </div>
-            </div>
+            </label>
+            <button class="text-xs text-red-600 hover:bg-red-50 px-2 py-1 rounded" data-action="del-deliv" data-ohi="${ohiId}" data-id="${d.id}">Supprimer</button>
           </div>`;
       }).join('');
     }
-    $('#loadJobBtn')?.addEventListener('click', ()=>{ const id=$('#jobIdInput').value.trim(); if(!id) return toast('Entre un jobId.'); startWatchingJob(id); });
 
-    // ================= TOURBILLONS =================
-    let whirlwinds = [];
-    async function loadWhirlwinds(){ const u=auth.currentUser; if(!u) return; const snap=await db.collection('users').doc(u.uid).collection('whirlwinds').orderBy('createdAt','desc').get(); whirlwinds=snap.docs.map(d=>({id:d.id,...d.data()})); renderWhirlwinds(); }
-    function renderWhirlwinds(){
-      const activeC=$('#activeWhirlwinds'), doneC=$('#completedWhirlwinds'); if(!activeC||!doneC) return; const active=whirlwinds.filter(w=>!w.completed), done=whirlwinds.filter(w=>w.completed);
-      activeC.innerHTML = active.length ? active.map(w=>{ const daysLeft=w.deadline?Math.ceil((new Date(w.deadline)-new Date())/86400000):null; const isOverdue=daysLeft!==null && daysLeft<0; const priColor=w.priority==='high'?'border-red-500 bg-red-50': w.priority==='medium'?'border-yellow-500 bg-yellow-50':'border-green-500 bg-green-50'; const priLabel=w.priority==='high'?'🔴 Haute': w.priority==='medium'?'🟡 Moyenne':'🟢 Basse'; const icon={management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category]||'🌪️'; return `
-          <div class="border-l-4 ${priColor} p-4 rounded-lg">
-            <div class="flex items-start justify-between mb-2">
-              <div class="flex items-center gap-2"><span>${icon}</span><h4 class="font-medium text-gray-900">${w.title}</h4></div>
-              <span class="text-xs ${isOverdue ? 'text-red-600' : 'text-gray-600'}">${w.deadline ? (isOverdue ? `${Math.abs(daysLeft)}j retard` : `${daysLeft}j restants`) : ''}</span>
-            </div>
-            <p class="text-sm text-gray-600 mb-3">${w.notes||''}</p>
-            <div class="flex items-center justify-between">
-              <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">${priLabel}</span>
-              <div class="space-x-2">
-                <button class="text-xs bg-green-600 text-white px-3 py-1 rounded" data-action="done-whirlwind" data-id="${w.id}">✓ Terminé</button>
-                <button class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded" data-action="delete-whirlwind" data-id="${w.id}">Supprimer</button>
-              </div>
-            </div>
-          </div>`; }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action en cours</div>`;
-      doneC.innerHTML = done.length ? done.slice(0,3).map(w=>{ const icon={management:'👥', finance:'💰', operations:'⚙️', strategy:'🎯', hr:'👔', communication:'📢'}[w.category]||'🌪️'; return `
-          <div class="border border-gray-200 p-3 rounded-lg bg-gray-50 opacity-75">
-            <div class="flex items-center gap-2 mb-1"><span class="text-sm">${icon}</span><h4 class="text-sm font-medium text-gray-700 line-through">${w.title}</h4><span class="text-xs text-green-600">✓</span></div>
-            <p class="text-xs text-gray-500">${w.notes||''}</p>
-          </div>`; }).join('') : `<div class="text-center text-gray-500 py-4 text-sm">Aucune action terminée</div>`;
-    }
-    $('#openWhirlwindModalBtn')?.addEventListener('click', ()=>{ const d=new Date(); d.setMonth(d.getMonth()+1); $('#whirlwindDeadline').value=d.toISOString().split('T')[0]; show($('#whirlwindModal')); });
-    $('#cancelWhirlwindBtn')?.addEventListener('click', ()=>{ hide($('#whirlwindModal')); $('#whirlwindForm').reset(); });
-    $('#whirlwindForm')?.addEventListener('submit', async (e)=>{ e.preventDefault(); const u=auth.currentUser; if(!u) return; spin($('#whirlwindSpinner'), true);
-      const data={ title:$('#whirlwindTitle').value.trim(), category:$('#whirlwindCategory').value, priority:$('#whirlwindPriority').value, deadline:$('#whirlwindDeadline').value||null, notes:$('#whirlwindNotes').value.trim(), completed:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-      try{ await db.collection('users').doc(u.uid).collection('whirlwinds').add(data); hide($('#whirlwindModal')); $('#whirlwindForm').reset(); toast('Tourbillon ajouté.'); loadWhirlwinds(); }
-      catch(err){ toast('Erreur ajout tourbillon', true); }
-      finally{ spin($('#whirlwindSpinner'), false); }
+    // Toggle done / delete deliverable
+    $('#ohiList').addEventListener('click', async (e)=>{
+      const delBtn = e.target.closest('[data-action="del-deliv"]');
+      const chk = e.target.closest('input[type="checkbox"][data-action="toggle-done"]');
+
+      // delete
+      if (delBtn) {
+        const ohiId = delBtn.dataset.ohi, delivId = delBtn.dataset.id;
+        const u = auth.currentUser; if(!u) return;
+        try {
+          await db.collection('users').doc(u.uid).collection('ohis').doc(ohiId)
+            .collection('deliverables').doc(delivId).delete();
+          await loadDeliverables(ohiId);
+          await recalcProgressFromDeliverables(ohiId);
+        } catch(err){ console.error(err); toast("Suppression impossible", true); }
+      }
+
+      // toggle done
+      if (chk) {
+        const ohiId = chk.dataset.ohi, delivId = chk.dataset.id;
+        const u = auth.currentUser; if(!u) return;
+        try {
+          await db.collection('users').doc(u.uid).collection('ohis').doc(ohiId)
+            .collection('deliverables').doc(delivId).update({ done: chk.checked });
+          await recalcProgressFromDeliverables(ohiId);
+        } catch(err){ console.error(err); toast("Mise à jour impossible", true); }
+      }
     });
-    $('#activeWhirlwinds')?.addEventListener('click', async (e)=>{ const doneBtn=e.target.closest('[data-action="done-whirlwind"]'); const delBtn=e.target.closest('[data-action="delete-whirlwind"]'); if(!doneBtn && !delBtn) return; const u=auth.currentUser; if(!u) return; const id=(doneBtn||delBtn).dataset.id; const ref=db.collection('users').doc(u.uid).collection('whirlwinds').doc(id); try{ if(doneBtn){ await ref.update({completed:true}); toast('Marqué terminé.'); } if(delBtn){ if(!confirm('Supprimer ce tourbillon ?')) return; await ref.delete(); toast('Tourbillon supprimé.'); } loadWhirlwinds(); } catch { toast('Action impossible', true); } });
 
-    // Écran par défaut
-    showScreen('dashboard');
+    // Recalcule et met à jour la progression d’un OHI depuis ses livrables
+    async function recalcProgressFromDeliverables(ohiId){
+      const u = auth.currentUser; if(!u) return;
+      const ref = db.collection('users').doc(u.uid).collection('ohis').doc(ohiId);
+      const snap = await ref.collection('deliverables').get();
+      const total = snap.size;
+      if (total === 0) { toast("Aucun livrable : progression manuelle conservée"); return; }
+      const done = snap.docs.filter(d=>d.data().done).length;
+      const pct = Math.round((done/total)*100);
+      await ref.update({ progress: pct, completed: pct===100 });
+      loadOhis();
+    }
+
+    // OHI: ouvrir/fermer form + submit
+    $('#openOhiFormBtn').addEventListener('click', ()=>{
+      $('#addOhiForm').classList.remove('hidden');
+      const d=new Date(); d.setMonth(d.getMonth()+1); $('#deadline').value = d.toISOString().split('T')[0];
+    });
+    $('#cancelOhiBtn').addEventListener('click', ()=>{ $('#addOhiForm').classList.add('hidden'); $('#addOhiForm').reset(); });
+    $('#addOhiForm').addEventListener('submit', async (e)=>{
+      e.preventDefault(); const u = auth.currentUser; if(!u) return;
+      spin($('#ohiSpinner'), true);
+      const data = {
+        title: $('#title').value.trim(),
+        description: $('#description').value.trim(),
+        priority: $('#priority').value,
+        deadline: $('#deadline').value || null,
+        progress: 0,
+        completed: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      try {
+        await db.collection('users').doc(u.uid).collection('ohis').add(data);
+        toast('OHI ajouté.'); $('#addOhiForm').reset(); $('#addOhiForm').classList.add('hidden'); loadOhis();
+      } catch (err) { console.error(err); toast('Erreur ajout OHI', true); }
+      finally { spin($('#ohiSpinner'), false); }
+    });
+
+    // Stats
+    function updateStatsFromOhis(){
+      const total = ohis.length;
+      const completed = ohis.filter(o=>o.completed).length;
+      $('#totalObjectives').textContent = total;
+      $('#completedObjectives').textContent = completed;
+      const next = ohis.filter(o=>!o.completed && o.deadline).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0];
+      $('#nextDeadline').textContent = next ? `${Math.ceil((new Date(next.deadline)-new Date())/86400000)} jours` : '-';
+      const avg = Math.round((ohis.reduce((s,o)=>s+(o.progress||0),0)/Math.max(1,total)));
+      $('#globalProgress').textContent = `${avg}%`;
+      const c = $('#progressCircle'), C = 2*Math.PI*56, off = C-(avg/100)*C; c.style.strokeDashoffset = off;
+    }
+
   </script>
 </body>
 </html>
